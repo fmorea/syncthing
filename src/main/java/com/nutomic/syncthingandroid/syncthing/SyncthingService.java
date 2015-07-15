@@ -6,17 +6,20 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
@@ -100,9 +103,27 @@ public class SyncthingService extends Service implements
 
     private RestApi mApi;
 
+    private EventProcessor mEventProcessor;
+
     private LinkedList<FolderObserver> mObservers = new LinkedList<>();
 
     private final SyncthingServiceBinder mBinder = new SyncthingServiceBinder(this);
+
+    /**
+     * Processes the local broadcast message if an item was finished.
+     * Launches the media scanner to update the media library.
+     */
+    private final BroadcastReceiver mItemFinishedBroadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final File updatedFile = new File(intent.getStringExtra("_localItemPath"));
+
+            Log.d(TAG, "Notified media scanner about " + updatedFile.toString());
+
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(updatedFile)));
+        }
+    };
 
     /**
      * Callback for when the Syncthing web interface becomes first available after service start.
@@ -220,6 +241,7 @@ public class SyncthingService extends Service implements
             if (mConfig != null) {
                 mCurrentState = State.STARTING;
                 registerOnWebGuiAvailableListener(mApi);
+                registerOnWebGuiAvailableListener(mEventProcessor);
                 new PollWebGuiAvailableTaskImpl(getFilesDir() + "/" + HTTPS_CERT_FILE)
                         .execute(mConfig.getWebGuiUrl());
                 mRunnable = new SyncthingRunnable(this, SyncthingRunnable.Command.main);
@@ -302,6 +324,7 @@ public class SyncthingService extends Service implements
         registerReceiver(mDeviceStateHolder, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         new StartupTask(sp.getString("gui_user",""), sp.getString("gui_password","")).execute();
         sp.registerOnSharedPreferenceChangeListener(this);
+        LocalBroadcastManager.getInstance(this).registerReceiver(this.mItemFinishedBroadcastReceiver, new IntentFilter(EventProcessor.getEventIntentAction("itemfinished")));
     }
 
     /**
@@ -365,7 +388,11 @@ public class SyncthingService extends Service implements
                     }).start();
                 }
             });
+
+            mEventProcessor = new EventProcessor(SyncthingService.this, mApi);
+
             registerOnWebGuiAvailableListener(mApi);
+            registerOnWebGuiAvailableListener(mEventProcessor);
             Log.i(TAG, "Web GUI will be available at " + mConfig.getWebGuiUrl());
             updateState();
         }
@@ -386,9 +413,13 @@ public class SyncthingService extends Service implements
         shutdown();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.unregisterOnSharedPreferenceChangeListener(this);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(this.mItemFinishedBroadcastReceiver);
     }
 
     private void shutdown() {
+        if (mEventProcessor != null)
+            mEventProcessor.shutdown();
+
         if (mRunnable != null)
             mRunnable.killSyncthing();
 
@@ -587,14 +618,12 @@ public class SyncthingService extends Service implements
         } finally {
             try {
                 if (is != null)
-                  is.close();
+                    is.close();
                 if (os != null)
-                  os.close();
+                    os.close();
             } catch (IOException e) {
                 Log.w(TAG, "Failed to close stream", e);
             }
         }
     }
-
-
 }
