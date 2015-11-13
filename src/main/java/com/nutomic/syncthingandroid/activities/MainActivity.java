@@ -1,7 +1,7 @@
 package com.nutomic.syncthingandroid.activities;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -14,7 +14,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -32,6 +34,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.fragments.DevicesFragment;
@@ -40,6 +43,7 @@ import com.nutomic.syncthingandroid.fragments.FolderListFragment;
 import com.nutomic.syncthingandroid.syncthing.RestApi;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -62,70 +66,82 @@ public class MainActivity extends SyncthingActivity
      */
     private static final long USAGE_REPORTING_DIALOG_DELAY = TimeUnit.DAYS.toMillis(3);
 
-    private AlertDialog mLoadingDialog;
+    private static final int REQUEST_WRITE_STORAGE = 142;
 
+    private AlertDialog mLoadingDialog;
     private AlertDialog mDisabledDialog;
 
+    private ViewPager mViewPager;
+
+    private FolderListFragment mFolderListFragment;
+    private DeviceListFragment mDeviceListFragment;
+    private DrawerFragment     mDrawerFragment;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout          mDrawerLayout;
+
+    private SharedPreferences mPreferences;
+
     /**
-     * Causes population of folder and device lists, unlocks info drawer.
+     * Handles various dialogs based on current state.
      */
     @Override
-    @SuppressLint("InflateParams")
     public void onApiChange(SyncthingService.State currentState) {
-        if (currentState == SyncthingService.State.ACTIVE &&
-                new Date().getTime() > getFirstStartTime() + USAGE_REPORTING_DIALOG_DELAY &&
-                getApi().getUsageReportAccepted() == RestApi.UsageReportSetting.UNDECIDED) {
-            showUsageReportingDialog();
-        } else if (currentState == SyncthingService.State.ERROR) {
-            finish();
-        } else if (currentState != SyncthingService.State.ACTIVE && !isFinishing()) {
-            if (currentState == SyncthingService.State.DISABLED) {
-                if (mLoadingDialog != null) {
-                    mLoadingDialog.dismiss();
-                    mLoadingDialog = null;
-                }
-                mDisabledDialog = SyncthingService.showDisabledDialog(MainActivity.this);
-            } else if (mLoadingDialog == null) {
-                LayoutInflater inflater = getLayoutInflater();
-                View dialogLayout = inflater.inflate(R.layout.dialog_loading, null);
-                TextView loadingText = (TextView) dialogLayout.findViewById(R.id.loading_text);
-                loadingText.setText((getService().isFirstStart())
-                        ? R.string.web_gui_creating_key
-                        : R.string.api_loading);
-
-                mLoadingDialog = new AlertDialog.Builder(MainActivity.this)
-                        .setCancelable(false)
-                        .setView(dialogLayout)
-                        .show();
-
-                final SharedPreferences sp =
-                        PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-
+        switch (currentState) {
+            case INIT:
+                mLoadingDialog.show();
                 // Make sure the first start dialog is shown on top.
-                if (sp.getBoolean("first_start", true)) {
-                    showFirstStartDialog(sp);
+                if (isFirstStart()) {
+                    showFirstStartDialog();
                 }
-            }
-            return;
+                break;
+            case STARTING:
+                mLoadingDialog.show();
+                dismissDisabledDialog();
+                int permissionState = ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                if (permissionState != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            REQUEST_WRITE_STORAGE);
+                }
+                break;
+            case ACTIVE:
+                mLoadingDialog.hide();
+                dismissDisabledDialog();
+                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                mDrawerFragment.requestGuiUpdate();
+                if (new Date().getTime() > getFirstStartTime() + USAGE_REPORTING_DIALOG_DELAY &&
+                        getApi().getUsageReportAccepted() == RestApi.UsageReportSetting.UNDECIDED) {
+                    showUsageReportingDialog();
+                }
+                break;
+            case ERROR:
+                finish();
+                break;
+            case DISABLED:
+                mLoadingDialog.hide();
+                if (!isFinishing()) {
+                    mDisabledDialog = SyncthingService.showDisabledDialog(MainActivity.this);
+                }
+                break;
         }
+    }
 
-        if (mLoadingDialog != null) {
-            mLoadingDialog.dismiss();
-            mLoadingDialog = null;
-        }
+    private void dismissDisabledDialog() {
         if (mDisabledDialog != null) {
-            mDisabledDialog.dismiss();
+            mDisabledDialog.cancel();
             mDisabledDialog = null;
         }
+    }
 
-        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-        mDrawerFragment.requestGuiUpdate();
+    private boolean isFirstStart() {
+        return mPreferences.getBoolean("first_start", true);
     }
 
     /**
      * Returns the unix timestamp at which the app was first installed.
      */
-    @TargetApi(9)
     private long getFirstStartTime() {
         PackageManager pm = getPackageManager();
         long firstInstallTime = 0;
@@ -143,14 +159,14 @@ public class MainActivity extends SyncthingActivity
     /**
      * Displays information for first app start.
      */
-    private void showFirstStartDialog(final SharedPreferences sp) {
+    private void showFirstStartDialog() {
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle(R.string.welcome_title)
                 .setMessage(R.string.welcome_text)
                 .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        sp.edit().putBoolean("first_start", false).apply();
+                        mPreferences.edit().putBoolean("first_start", false).apply();
                     }
                 })
                 .show();
@@ -208,6 +224,7 @@ public class MainActivity extends SyncthingActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -239,13 +256,27 @@ public class MainActivity extends SyncthingActivity
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         mDrawerLayout.setDrawerListener(mDrawerToggle);
         setOptimalDrawerWidth(findViewById(R.id.drawer));
+
+        LayoutInflater inflater = getLayoutInflater();
+        @SuppressLint("InflateParams")
+        View dialogLayout = inflater.inflate(R.layout.dialog_loading, null);
+        TextView loadingText = (TextView) dialogLayout.findViewById(R.id.loading_text);
+        loadingText.setText((isFirstStart())
+                ? R.string.web_gui_creating_key
+                : R.string.api_loading);
+
+        mLoadingDialog = new AlertDialog.Builder(MainActivity.this)
+                .setCancelable(false)
+                .setView(dialogLayout)
+                .create();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mLoadingDialog != null) {
-            mLoadingDialog.dismiss();
+        mLoadingDialog.dismiss();
+        if (mDisabledDialog != null) {
+            mDisabledDialog.dismiss();
         }
         if (getService() != null) {
             getService().unregisterOnApiChangeListener(this);
@@ -402,11 +433,28 @@ public class MainActivity extends SyncthingActivity
                         .setView(v)
                         .setPositiveButton(R.string.yes, listener)
                         .setNegativeButton(R.string.no, listener)
-                        .setNeutralButton("Open Website", listener)
-                        .setCancelable(false)
+                        .setNeutralButton(R.string.open_website, listener)
                         .show();
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_WRITE_STORAGE:
+                Log.d(TAG, Arrays.toString(grantResults));
+                if (grantResults.length == 0 ||
+                        grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, R.string.toast_write_storage_permission_required,
+                                   Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
 }
