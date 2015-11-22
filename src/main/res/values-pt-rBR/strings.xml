@@ -17,6 +17,9 @@
 As estatísticas agregadas estão disponíveis publicamente em https://data.syncthing.net.</string>
   <string name="yes">Sim</string>
   <string name="no">Não</string>
+  <string name="off">off</string>
+  <string name="open_website">Abrir site</string>
+  <string name="toast_write_storage_permission_required">A permissão de escrita em armazenamento é obrigatória para este aplicativo</string>
   <!--FoldersFragment-->
   <string name="folders_fragment_title">Pastas</string>
   <!--Format string for folder progress. First parameter is status string, second is sync percentage-->
@@ -144,6 +147,8 @@ Por favor, informe-nos sobre quaisquer problemas via Github.</string>
   <string name="advanced_folder_picker_summary">Selecione qualquer pasta do dispositivo para sincronização</string>
   <string name="use_root_title">Sincronizar como usuário root</string>
   <string name="use_root_summary">Executar Syncthing como Superusuário</string>
+  <string name="root_dialog_title">Tem certeza de que que habilitar o acesso como Superusuário?</string>
+  <string name="root_dialog_message">Isto pode causar alguns problemas com o Syncthing e com seu aparelho. Use por sua conta e risco.</string>
   <string name="notification_type_title">Notificação</string>
   <string name="notification_type_summary">Escolha o tipo da notificação</string>
   <string-array name="notification_type_entries">

@@ -142,6 +142,8 @@ S\'il vous plait, signalez les problèmes que vous rencontrez via Gihub.</string
   <string name="advanced_folder_picker_summary">Autorise la sélection n\'importe quel dossier de cette machine pour la synchronisation</string>
   <string name="use_root_title">Sync en root</string>
   <string name="use_root_summary">Faire fonctionner syncthing en super-utilisateur</string>
+  <string name="root_dialog_title">Êtes-vous sûr de vouloir activer le mode root (superutilisateur) ?</string>
+  <string name="root_dialog_message">Ceci peut causer divers problèmes entre Syncthing et votre appareil. A utiliser à vos risques.</string>
   <string name="notification_type_title">Notification</string>
   <string name="notification_type_summary">Choisissez le type de notification</string>
   <string-array name="notification_type_entries">

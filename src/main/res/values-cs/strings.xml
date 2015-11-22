@@ -142,6 +142,8 @@ Všechny problémy, se kterými se setkáte, nahlašte prosím přes Github.</st
   <string name="advanced_folder_picker_summary">Vyberte jakýkoliv adresář v přístroji pro synchronizaci</string>
   <string name="use_root_title">Synchronizovat jako root</string>
   <string name="use_root_summary">Spustit syncthing jako superuživatel</string>
+  <string name="root_dialog_title">Jste si jistí, že chcete povolit režim superuživatele?</string>
+  <string name="root_dialog_message">Toto může způsobit různé problémy se Syncthing a s vaším zařízením. Pouze na vlastní riziko.</string>
   <string name="notification_type_title">Upozornění</string>
   <string name="notification_type_summary">Vybrat typ upozornění</string>
   <string-array name="notification_type_entries">
