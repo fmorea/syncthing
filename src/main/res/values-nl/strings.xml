@@ -73,7 +73,7 @@
   <!--Menu item to confirm folder creation-->
   <string name="create">Creëren</string>
   <!--Dialog shown when attempting to delete a folder-->
-  <string name="delete_folder_confirm">Weet je zeker dat je deze map wil verwijderen?</string>
+  <string name="delete_folder_confirm">Weet je zeker dat je deze map wilt verwijderen?</string>
   <!--Toast shown when trying to create a folder with an invalid ID-->
   <string name="folder_id_invalid">De map-ID moet een korte aanduiding (64 of minder tekens) zijn, bestaande uit enkel letters, cijfers, punten (.), streepjes (-) en onderstrepingstekens (_).</string>
   <!--Toast shown when trying to create a folder with an empty path-->
@@ -106,7 +106,7 @@
   <!--Title for DeviceSettingsFragment in edit mode-->
   <string name="edit_device">Apparaat bewerken</string>
   <!--Dialog shown when attempting to delete a device-->
-  <string name="delete_device_confirm">Weet je zeker dat je dit apparaat wil verwijderen?</string>
+  <string name="delete_device_confirm">Weet je zeker dat je dit apparaat wilt verwijderen?</string>
   <!--Toast shown when trying to create a device with an empty ID-->
   <string name="device_id_required">De apparaat-ID kan niet leeg zijn</string>
   <!--Toast shown when trying to create a device with an empty name-->
@@ -124,7 +124,7 @@
   <string name="welcome_title">Welkom bij Syncthing voor Android</string>
   <!--Text for dialog displayed on first start-->
   <string name="welcome_text">Syncthing is een open-source applicatie voor bestandssynchronisatie.\n\n
-Om gegevens te delen met anderen apparaten moet je hun unieke apparaat-ID toevoegen aan de lijst met apparaten. Nadien kan je kiezen welke mappen je wil delen met welke apparaten.\n\n
+Om gegevens te delen met anderen apparaten moet je hun unieke apparaat-ID toevoegen aan de lijst met apparaten. Nadien kun je kiezen welke mappen je wilt delen met welke apparaten.\n\n
 Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
@@ -177,7 +177,7 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <string name="streset_title">Database opnieuw instellen</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Deze actie moet je enkel uitvoeren wanneer ons ondersteuningsteam je dit aanraadt.
-\nBen je zeker dat je de indexdatabase van Syncthing wil wissen?</string>
+\nZeker dat je de indexdatabase van Syncthing wilt wissen?</string>
   <!--Syncthing was reset-->
   <string name="streset_done">Opnieuw instellen van Syncthing-database geslaagd</string>
   <string name="category_about">Over</string>
@@ -219,7 +219,7 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--Title of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_title">Syncthing is uitgezet</string>
   <!--Message of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_message">Wil je je voorkeuren wijzigen?</string>
+  <string name="syncthing_disabled_message">Wil je voorkeuren wijzigen?</string>
   <!--Button text on the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_change_settings">Instellingen wijzigen</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->

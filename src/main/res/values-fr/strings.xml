@@ -86,7 +86,7 @@
   <!--Setting title-->
   <string name="addresses">Adresses</string>
   <!--Setting title-->
-  <string name="current_address">Adresses actuelles</string>
+  <string name="current_address">Adresse actuelle</string>
   <!--Setting title-->
   <string name="compression">Compression</string>
   <!--Strings representing compression options-->
