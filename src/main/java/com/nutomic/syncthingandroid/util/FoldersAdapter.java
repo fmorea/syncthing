@@ -67,7 +67,7 @@ public class FoldersAdapter extends ArrayAdapter<RestApi.Folder>
         viewHolder.directory.setText((folder.path));
         if (model != null) {
             int percentage = (model.globalBytes != 0)
-                    ? (int) Math.floor(100 * model.inSyncBytes / model.globalBytes)
+                    ? Math.round(100 * model.inSyncBytes / model.globalBytes)
                     : 100;
             viewHolder.state.setText(getContext().getString(R.string.folder_progress_format,
                     RestApi.getLocalizedState(getContext(), model.state),
