@@ -64,8 +64,8 @@ public class GetTask extends AsyncTask<String, Void, String> {
             fullUri += "?" + URLEncodedUtils.format(urlParams, HTTP.UTF_8);
         }
 
-        // Retry at most 10 times before failing
-        for (int i = 0; i < 10; i++) {
+        // Retry at most 5 times before failing
+        for (int i = 0; i < 5; i++) {
             HttpClient httpclient = Https.createHttpsClient(mHttpsCertPath);
             HttpGet get = new HttpGet(fullUri);
             get.addHeader(new BasicHeader(RestApi.HEADER_API_KEY, params[2]));
@@ -91,7 +91,7 @@ public class GetTask extends AsyncTask<String, Void, String> {
                     return result;
                 }
             } catch (IOException|IllegalArgumentException e) {
-                Log.w(TAG, "Failed to call Rest API at " + fullUri, e);
+                Log.w(TAG, "Failed to call Rest API at " + fullUri);
             }
             try {
                 // Don't push the API too hard
