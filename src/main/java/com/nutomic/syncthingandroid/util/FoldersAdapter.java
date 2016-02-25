@@ -2,6 +2,7 @@ package com.nutomic.syncthingandroid.util;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,12 +112,9 @@ public class FoldersAdapter extends ArrayAdapter<RestApi.Folder>
     /**
      * Requests updated model info from the api for all visible items.
      */
-    public void updateModel(RestApi api, ListView listView) {
+    public void updateModel(RestApi api) {
         for (int i = 0; i < getCount(); i++) {
-            if (i >= listView.getFirstVisiblePosition() &&
-                    i <= listView.getLastVisiblePosition()) {
-                api.getModel(getItem(i).id, this);
-            }
+            api.getModel(getItem(i).id, this);
         }
     }
 
@@ -127,8 +125,7 @@ public class FoldersAdapter extends ArrayAdapter<RestApi.Folder>
     }
 
     private void setTextOrHide(TextView view, String text) {
-        boolean isEmpty = TextUtils.isEmpty(text);
-        if (isEmpty) {
+        if (TextUtils.isEmpty(text)) {
             view.setVisibility(GONE);
         } else {
             view.setText(text);
