@@ -172,6 +172,9 @@ Por favor, informe-nos sobre quaisquer problemas via Github.</string>
   <string name="gui_user">Nome de usuário da interface</string>
   <string name="gui_password">Senha da interface</string>
   <string name="export_config">Exportar configuração</string>
+  <string name="experimental_settings">Experimental</string>
+  <string name="keep_wakelock_while_binary_running">Manter a CPU acordada enquanto o Syncthing estiver rodando</string>
+  <string name="keep_wakelock_while_binary_running_summary">Marque esta opção se você observar desconexões inesperadas enquanto a bateria do dispositivo não está sendo carregada. Isto resultará em maior uso da bateria.</string>
   <!--Toast shown after config was successfully exported-->
   <string name="config_export_successful">A configuração foi exportada para %1$s</string>
   <string name="import_config">Importar configuração</string>
