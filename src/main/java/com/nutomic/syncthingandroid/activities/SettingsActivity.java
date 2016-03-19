@@ -43,7 +43,7 @@ public class SettingsActivity extends SyncthingActivity {
         if (savedInstanceState != null) {
             mFragment = fm.getFragment(savedInstanceState,
                     savedInstanceState.getString("fragment_name"));
-        } else if (getIntent().getAction() != null) {
+        } else {
             switch (getIntent().getAction()) {
                 case ACTION_APP_SETTINGS_FRAGMENT:
                     setTitle(R.string.settings_title);
@@ -57,17 +57,11 @@ public class SettingsActivity extends SyncthingActivity {
                     break;
                 case ACTION_REPO_SETTINGS_FRAGMENT:
                     mFragment = new FolderFragment();
-                    if (!getIntent().hasExtra(EXTRA_IS_CREATE)) {
-                        throw new IllegalArgumentException("EXTRA_IS_CREATE must be set");
-                    }
                     break;
                 default:
                     throw new IllegalArgumentException(
                             "You must provide the requested fragment type as an extra.");
             }
-        } else {
-            setTitle(R.string.settings_title);
-            mFragment = new SettingsFragment();
         }
 
         fm.beginTransaction()
@@ -82,6 +76,11 @@ public class SettingsActivity extends SyncthingActivity {
         outState.putString("fragment_name", fragmentClassName);
         FragmentManager fm = getSupportFragmentManager();
         fm.putFragment(outState, fragmentClassName, mFragment);
+    }
+
+    private void assertHasCreateExtra() {
+        if (!getIntent().hasExtra(EXTRA_IS_CREATE))
+            throw new IllegalArgumentException("EXTRA_IS_CREATE must be set");
     }
 
     public boolean getIsCreate() {
