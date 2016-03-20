@@ -14,9 +14,13 @@ import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.activities.MainActivity;
 import com.nutomic.syncthingandroid.activities.SettingsActivity;
 import com.nutomic.syncthingandroid.activities.SyncthingActivity;
+import com.nutomic.syncthingandroid.syncthing.RestApi;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 import com.nutomic.syncthingandroid.util.DevicesAdapter;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,6 +29,13 @@ import java.util.TimerTask;
  */
 public class DevicesFragment extends ListFragment implements SyncthingService.OnApiChangeListener,
         ListView.OnItemClickListener {
+
+    private final static Comparator<RestApi.Device> DEVICES_COMPARATOR = new Comparator<RestApi.Device>() {
+        @Override
+        public int compare(RestApi.Device lhs, RestApi.Device rhs) {
+            return lhs.name.compareTo(rhs.name);
+        }
+    };
 
     private DevicesAdapter mAdapter;
 
@@ -95,7 +106,9 @@ public class DevicesFragment extends ListFragment implements SyncthingService.On
         }
 
         mAdapter.clear();
-        mAdapter.add(activity.getApi().getDevices(false));
+        List<RestApi.Device> devices = activity.getApi().getDevices(false);
+        Collections.sort(devices, DEVICES_COMPARATOR);
+        mAdapter.addAll(devices);
         mAdapter.updateConnections(activity.getApi());
         setListShown(true);
     }

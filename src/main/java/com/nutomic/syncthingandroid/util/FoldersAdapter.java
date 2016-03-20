@@ -2,20 +2,16 @@ package com.nutomic.syncthingandroid.util;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.syncthing.RestApi;
 
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -29,13 +25,6 @@ public class FoldersAdapter extends ArrayAdapter<RestApi.Folder>
 
     private HashMap<String, RestApi.Model> mModels = new HashMap<>();
     private LayoutInflater mInflater;
-
-    private final static Comparator<RestApi.Folder> COMPARATOR = new Comparator<RestApi.Folder>() {
-        @Override
-        public int compare(RestApi.Folder lhs, RestApi.Folder rhs) {
-            return lhs.id.compareTo(rhs.id);
-        }
-    };
 
     public FoldersAdapter(Context context) {
         super(context, R.layout.item_folder_list);
