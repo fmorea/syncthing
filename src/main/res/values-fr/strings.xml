@@ -145,10 +145,10 @@ S\'il vous plait, signalez les problèmes que vous rencontrez via Gihub.</string
   <string name="root_dialog_title">Êtes-vous sûr de vouloir activer le mode root (superutilisateur) ?</string>
   <string name="root_dialog_message">Ceci peut causer divers problèmes entre Syncthing et votre appareil. A utiliser à vos risques.</string>
   <string name="notification_type_title">Notification</string>
-  <string name="notification_type_summary">Choisissez le type de notification</string>
+  <string name="notification_type_summary">Choisissez le mode de notification</string>
   <string-array name="notification_type_entries">
-    <item>Normal</item>
-    <item>Basse priorité</item>
+    <item>Permanente</item>
+    <item>Discrète</item>
     <item>Aucune</item>
   </string-array>
   <string name="category_syncthing">Syncthing</string>
