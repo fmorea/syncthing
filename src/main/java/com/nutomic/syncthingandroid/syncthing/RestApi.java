@@ -83,6 +83,7 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
 
     public static class Folder implements Serializable {
         public String path;
+        public String label;
         public String id;
         public String invalid;
         public List<String> deviceIds;
@@ -468,6 +469,7 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
                 JSONObject json = folders.getJSONObject(i);
                 Folder r = new Folder();
                 r.path = json.getString("path");
+                r.label = json.getString("label");
                 r.id = json.getString("id");
                 // TODO: Field seems to be missing sometimes.
                 // https://github.com/syncthing/syncthing-android/issues/291
@@ -888,6 +890,7 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
                 }
             }
             r.put("path", folder.path);
+            r.put("label", folder.label);
             r.put("id", folder.id);
             r.put("ignorePerms", true);
             r.put("readOnly", folder.readOnly);

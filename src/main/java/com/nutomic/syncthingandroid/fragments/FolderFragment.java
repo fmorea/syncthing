@@ -67,21 +67,18 @@ public class FolderFragment extends Fragment
 
     private RestApi.Folder mFolder;
 
+    private EditText mLabelView;
     private EditText mIdView;
-
     private TextView mPathView;
-
     private SwitchCompat mFolderMasterView;
-
     private ViewGroup mDevicesContainer;
-
     private TextView mVersioningKeepView;
 
     private boolean mIsCreate;
 
     private KeepVersionsDialogFragment mKeepVersionsDialogFragment = new KeepVersionsDialogFragment();
 
-    private TextWatcher mIdTextWatcher = new TextWatcherAdapter() {
+    private TextWatcher mTextWatcher = new TextWatcherAdapter() {
         @Override
         public void afterTextChanged(Editable s) {
             mFolder.id = s.toString();
@@ -89,14 +86,8 @@ public class FolderFragment extends Fragment
         }
     };
 
-    private TextWatcher mPathTextWatcher = new TextWatcherAdapter() {
-        @Override
-        public void afterTextChanged(Editable s) {
-            mFolder.path = s.toString();
-        }
-    };
-
-    private CompoundButton.OnCheckedChangeListener mMasterCheckedListener = new CompoundButton.OnCheckedChangeListener() {
+    private CompoundButton.OnCheckedChangeListener mCheckedListener =
+            new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton view, boolean isChecked) {
             mFolder.readOnly = isChecked;
@@ -117,7 +108,8 @@ public class FolderFragment extends Fragment
         }
     };
 
-    private KeepVersionsDialogFragment.OnValueChangeListener mOnValueChangeListener = new KeepVersionsDialogFragment.OnValueChangeListener() {
+    private KeepVersionsDialogFragment.OnValueChangeListener mOnValueChangeListener =
+            new KeepVersionsDialogFragment.OnValueChangeListener() {
         @Override
         public void onValueChange(int intValue) {
             if (intValue == 0) {
@@ -140,13 +132,6 @@ public class FolderFragment extends Fragment
                 intent.putExtra(FolderPickerActivity.EXTRA_INITIAL_DIRECTORY, mFolder.path);
             }
             startActivityForResult(intent, DIRECTORY_REQUEST_CODE);
-        }
-    };
-
-    private View.OnClickListener mVersioningContainerClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            mKeepVersionsDialogFragment.show(getFragmentManager(), KEEP_VERSIONS_DIALOG_TAG);
         }
     };
 
@@ -188,6 +173,7 @@ public class FolderFragment extends Fragment
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        mLabelView = (EditText) view.findViewById(R.id.label);
         mIdView = (EditText) view.findViewById(R.id.id);
         mPathView = (TextView) view.findViewById(R.id.directory);
         mFolderMasterView = (SwitchCompat) view.findViewById(R.id.master);
@@ -195,7 +181,12 @@ public class FolderFragment extends Fragment
         mDevicesContainer = (ViewGroup) view.findViewById(R.id.devicesContainer);
 
         mPathView.setOnClickListener(mPathViewClickListener);
-        view.findViewById(R.id.versioningContainer).setOnClickListener(mVersioningContainerClickListener);
+        view.findViewById(R.id.versioningContainer).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mKeepVersionsDialogFragment.show(getFragmentManager(), KEEP_VERSIONS_DIALOG_TAG);
+            }
+        });
 
         if (isEditingFolder()) {
             prepareEditMode();
@@ -203,21 +194,23 @@ public class FolderFragment extends Fragment
     }
 
     private void updateViewsAndSetListeners() {
-        mIdView.removeTextChangedListener(mIdTextWatcher);
-        mPathView.removeTextChangedListener(mPathTextWatcher);
+        mLabelView.removeTextChangedListener(mTextWatcher);
+        mIdView.removeTextChangedListener(mTextWatcher);
+        mPathView.removeTextChangedListener(mTextWatcher);
         mFolderMasterView.setOnCheckedChangeListener(null);
         mKeepVersionsDialogFragment.setOnValueChangeListener(null);
 
         // Update views
+        mLabelView.setText(mFolder.label);
         mIdView.setText(mFolder.id);
         mPathView.setText(mFolder.path);
         mFolderMasterView.setChecked(mFolder.readOnly);
         List<RestApi.Device> devicesList = mSyncthingService.getApi().getDevices(false);
 
+        mDevicesContainer.removeAllViews();
         if (devicesList.isEmpty()) {
             addEmptyDeviceListView();
         } else {
-            mDevicesContainer.removeAllViews();
             for (RestApi.Device n : devicesList) {
                 addDeviceViewAndSetListener(n, getLayoutInflater(null));
             }
@@ -234,9 +227,10 @@ public class FolderFragment extends Fragment
         mKeepVersionsDialogFragment.setValue(versions);
 
         // Keep state updated
-        mIdView.addTextChangedListener(mIdTextWatcher);
-        mPathView.addTextChangedListener(mPathTextWatcher);
-        mFolderMasterView.setOnCheckedChangeListener(mMasterCheckedListener);
+        mLabelView.addTextChangedListener(mTextWatcher);
+        mIdView.addTextChangedListener(mTextWatcher);
+        mPathView.addTextChangedListener(mTextWatcher);
+        mFolderMasterView.setOnCheckedChangeListener(mCheckedListener);
         mKeepVersionsDialogFragment.setOnValueChangeListener(mOnValueChangeListener);
     }
 
@@ -379,7 +373,7 @@ public class FolderFragment extends Fragment
         deviceView.setChecked(mFolder.deviceIds.contains(device.deviceID));
         deviceView.setText(RestApi.getDeviceDisplayName(device));
         deviceView.setTag(device);
-        deviceView.setOnCheckedChangeListener(mOnShareChangeListener);
+        deviceView.setOnCheckedChangeListener(mCheckedListener);
     }
 
     private void updateRepo() {
