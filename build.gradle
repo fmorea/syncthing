@@ -23,7 +23,6 @@ repositories {
         url 'http://jcenter.bintray.com'
     }
 }
-
 dependencies {
     compile 'eu.chainfire:libsuperuser:1.0.0.201510071325'
     compile 'com.android.support:appcompat-v7:23.1.0'
@@ -38,8 +37,6 @@ project.archivesBaseName = 'syncthing'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
-    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "com.nutomic.syncthingandroid"
@@ -58,6 +55,15 @@ android {
             jniLibs.srcDir file("libs/")
         }
     }
+
+    // Without this parameter, all builds fail with error:
+    //     Execution failed for task ':mergeArmeabiDebugResources'.
+    //     > Some file crunching failed, see logs for details
+    // https://code.google.com/p/android/issues/detail?id=163378
+    aaptOptions.setProperty("cruncherEnabled", false)
+
+    // We haven't upgraded to the new HTTP library yet.
+    useLibrary 'org.apache.http.legacy'
 
     signingConfigs {
         release {
