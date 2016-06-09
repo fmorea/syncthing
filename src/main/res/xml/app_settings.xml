@@ -52,7 +52,7 @@
                 android:persistent="false" />
 
             <EditTextPreference
-                android:key="listenAddress"
+                android:key="listenAddresses"
                 android:title="@string/listen_address"
                 android:persistent="false" />
 
@@ -81,7 +81,7 @@
             <CheckBoxPreference
                 android:key="upnpEnabled"
                 android:title="@string/upnp_enabled"
-                android:persistent="false" />
+                android:persistent="false"/>
 
             <EditTextPreference
                 android:key="globalAnnounceServers"
