@@ -173,7 +173,7 @@
   <!--Toast shown after config was successfully imported-->
   <string name="config_import_failed">Неудачное импортирование настроек, убедитесь что файлы находятся в %1$s</string>
   <!--Title for the preference to set STTRACE parameters-->
-  <string name="sttrace_title">Опции Отладки</string>
+  <string name="sttrace_title">Настройки режима отладки</string>
   <!--Toast after entering invalid STTRACE params-->
   <string name="toast_invalid_sttrace">В настройках STTRACE можно использовать только символы a-z и \',\'</string>
   <!--Toast after entering invalid username-->
