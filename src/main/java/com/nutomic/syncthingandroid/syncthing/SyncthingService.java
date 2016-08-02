@@ -6,10 +6,12 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SyncStatusObserver;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
@@ -124,6 +126,13 @@ public class SyncthingService extends Service implements
 
     private final HashSet<OnApiChangeListener> mOnApiChangeListeners =
             new HashSet<>();
+
+    private final SyncStatusObserver mSyncStatusObserver = new SyncStatusObserver() {
+        @Override
+        public void onStatusChanged(int i) {
+            updateState();
+        }
+    };
 
     /**
      * INIT: Service is starting up and initializing.
@@ -315,6 +324,8 @@ public class SyncthingService extends Service implements
         registerReceiver(mDeviceStateHolder, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         new StartupTask(sp.getString("gui_user",""), sp.getString("gui_password","")).execute();
         sp.registerOnSharedPreferenceChangeListener(this);
+        ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_SETTINGS,
+                                                mSyncStatusObserver);
     }
 
     /**
@@ -416,6 +427,7 @@ public class SyncthingService extends Service implements
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.unregisterOnSharedPreferenceChangeListener(this);
+        ContentResolver.removeStatusChangeListener(mSyncStatusObserver);
     }
 
     private void shutdown() {
