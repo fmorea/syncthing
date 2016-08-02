@@ -10,6 +10,8 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
+import android.os.Build;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -105,14 +107,16 @@ public class DeviceStateHolder extends BroadcastReceiver {
     /**
      * Determines if Syncthing should currently run.
      */
+    @TargetApi(21)
     public boolean shouldRun() {
-        if (!ContentResolver.getMasterSyncAutomatically()) {
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB && pm.isPowerSaveMode()) {
+            return false;
+        }
+        else if (!ContentResolver.getMasterSyncAutomatically()) {
             return false;
         }
         else if (SyncthingService.alwaysRunInBackground(mContext)) {
-            return true;
-        }
-        else {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
             // Check wifi/charging state against preferences and start if ok.
             boolean prefStopMobileData = prefs.getBoolean(SyncthingService.PREF_SYNC_ONLY_WIFI, false);
@@ -120,6 +124,9 @@ public class DeviceStateHolder extends BroadcastReceiver {
 
             return (isCharging() || !prefStopNotCharging) &&
                     (!prefStopMobileData || isAllowedWifiConnected());
+        }
+        else {
+            return true;
         }
     }
 
