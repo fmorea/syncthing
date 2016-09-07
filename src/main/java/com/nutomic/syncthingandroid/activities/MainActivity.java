@@ -1,22 +1,17 @@
 package com.nutomic.syncthingandroid.activities;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -28,14 +23,8 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.fragments.DevicesFragment;
 import com.nutomic.syncthingandroid.fragments.DrawerFragment;
@@ -43,7 +32,6 @@ import com.nutomic.syncthingandroid.fragments.FolderListFragment;
 import com.nutomic.syncthingandroid.syncthing.RestApi;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +46,8 @@ public class MainActivity extends SyncthingActivity
         implements SyncthingService.OnApiChangeListener {
 
     private static final String TAG = "MainActivity";
+
+    static final String EXTRA_FIRST_START = "com.nutomic.syncthing-android.MainActivity.FIRST_START";
 
     /**
      * Time after first start when usage reporting dialog should be shown.
@@ -83,8 +73,6 @@ public class MainActivity extends SyncthingActivity
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout          mDrawerLayout;
 
-    private SharedPreferences mPreferences;
-
     /**
      * Handles various dialogs based on current state.
      */
@@ -93,21 +81,10 @@ public class MainActivity extends SyncthingActivity
         switch (currentState) {
             case INIT:
                 showLoadingDialog();
-                // Make sure the first start dialog is shown on top.
-                if (isFirstStart()) {
-                    showFirstStartDialog();
-                }
                 break;
             case STARTING:
                 showLoadingDialog();
                 dismissDisabledDialog();
-                int permissionState = ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                if (permissionState != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this,
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            REQUEST_WRITE_STORAGE);
-                }
                 break;
             case ACTIVE:
                 dismissDisabledDialog();
@@ -138,10 +115,6 @@ public class MainActivity extends SyncthingActivity
         }
     }
 
-    private boolean isFirstStart() {
-        return mPreferences.getBoolean("first_start", true);
-    }
-
     /**
      * Returns the unix timestamp at which the app was first installed.
      */
@@ -160,22 +133,6 @@ public class MainActivity extends SyncthingActivity
     }
 
     /**
-     * Displays information for first app start.
-     */
-    private void showFirstStartDialog() {
-        new AlertDialog.Builder(MainActivity.this)
-                .setTitle(R.string.welcome_title)
-                .setMessage(R.string.welcome_text)
-                .setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        mPreferences.edit().putBoolean("first_start", false).apply();
-                    }
-                })
-                .show();
-    }
-
-    /**
      * Shows the loading dialog with the correct text ("creating keys" or "loading").
      */
     private void showLoadingDialog() {
@@ -186,7 +143,7 @@ public class MainActivity extends SyncthingActivity
         @SuppressLint("InflateParams")
         View dialogLayout = inflater.inflate(R.layout.dialog_loading, null);
         TextView loadingText = (TextView) dialogLayout.findViewById(R.id.loading_text);
-        loadingText.setText((isFirstStart())
+        loadingText.setText((getIntent().getBooleanExtra(EXTRA_FIRST_START, false))
                 ? R.string.web_gui_creating_key
                 : R.string.api_loading);
 
@@ -255,7 +212,6 @@ public class MainActivity extends SyncthingActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -417,7 +373,7 @@ public class MainActivity extends SyncthingActivity
     /**
      * Handles drawer opened and closed events, toggling option menu state.
      */
-    public class Toggle extends ActionBarDrawerToggle {
+    private class Toggle extends ActionBarDrawerToggle {
         public Toggle(Activity activity, DrawerLayout drawerLayout) {
             super(activity, drawerLayout, R.string.app_name, R.string.app_name);
         }
@@ -535,24 +491,6 @@ public class MainActivity extends SyncthingActivity
                         .show();
             }
         });
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_WRITE_STORAGE:
-                Log.d(TAG, Arrays.toString(grantResults));
-                if (grantResults.length == 0 ||
-                        grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, R.string.toast_write_storage_permission_required,
-                                   Toast.LENGTH_LONG).show();
-                    finish();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
     }
 
 }
