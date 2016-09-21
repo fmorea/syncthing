@@ -41,7 +41,7 @@ android {
     defaultConfig {
         applicationId "com.nutomic.syncthingandroid"
         minSdkVersion 11
-        targetSdkVersion 23
+        targetSdkVersion 24
         versionCode 103
         versionName "0.8.4"
         testApplicationId 'com.nutomic.syncthingandroid.test'
