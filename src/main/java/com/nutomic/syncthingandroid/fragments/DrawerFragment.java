@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -168,9 +169,9 @@ public class DrawerFragment extends Fragment implements RestApi.OnReceiveSystemI
         mAnnounceServer.setText(Integer.toString(info.extAnnounceConnected) + "/" +
                 Integer.toString(info.extAnnounceTotal));
         if (info.extAnnounceConnected > 0) {
-            mAnnounceServer.setTextColor(getResources().getColor(R.color.text_green));
+            mAnnounceServer.setTextColor(ContextCompat.getColor(getContext(), R.color.text_green));
         } else {
-            mAnnounceServer.setTextColor(getResources().getColor(R.color.text_red));
+            mAnnounceServer.setTextColor(ContextCompat.getColor(getContext(), R.color.text_red));
         }
     }
 
