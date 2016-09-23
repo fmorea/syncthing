@@ -27,7 +27,7 @@ import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.activities.MainActivity;
 import com.nutomic.syncthingandroid.util.ConfigXml;
 import com.nutomic.syncthingandroid.util.FolderObserver;
-import com.nutomic.syncthingandroid.util.PRNGFixes;
+import com.android.PRNGFixes;
 
 import java.io.File;
 import java.io.FileInputStream;
