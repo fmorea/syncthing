@@ -7,7 +7,7 @@
         android:id="@+id/create"
         android:icon="@drawable/ic_save_white_24dp_active"
         android:title="@string/create"
-        app:showAsAction="always" />
+        app:showAsAction="always|withText" />
 
     <item
         android:id="@+id/delete"
