@@ -337,7 +337,7 @@ Please report any problems you encounter via Github.</string>
     <string name="sttrace_title">Debug Options</string>
 
     <!-- Toast after entering invalid STTRACE params -->
-    <string name="toast_invalid_sttrace">Only a-z and \',\' are allowed in STTRACE options</string>
+    <string name="toast_invalid_sttrace">Only 0-9, a-z and \',\' are allowed in STTRACE options</string>
 
     <!-- Toast after entering invalid username -->
     <string name="toast_invalid_username">Characters : and \' are not allowed in username</string>
