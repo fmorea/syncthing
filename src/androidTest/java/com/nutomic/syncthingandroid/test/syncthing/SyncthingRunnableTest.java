@@ -6,21 +6,29 @@ import android.test.suitebuilder.annotation.SmallTest;
 import com.nutomic.syncthingandroid.syncthing.SyncthingRunnable;
 import com.nutomic.syncthingandroid.test.MockContext;
 
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+
 import java.io.File;
 
 /**
  * NOTE: This test will cause a "syncthing binary crashed" notification, because
  * {@code -home " + mContext.getFilesDir()} is run as a "command" and fails.
  */
-public class SyncthingRunnableTest extends AndroidTestCase {
+public class SyncthingRunnableTest {
 
+    @Rule
+    public final ServiceTestRule mServiceRule = new ServiceTestRule();
+
+    @Test
     public void testRunning() throws InterruptedException {
-        MockContext context = new MockContext(getContext());
+        MockContext context = new MockContext(InstrumentationRegistry.getTargetContext());
         File testFile = new File(context.getFilesDir(), SyncthingRunnable.UNIT_TEST_PATH);
-        assertFalse(testFile.exists());
+        Assert.assertFalse(testFile.exists());
         // Inject a different command instead of the Syncthing binary for testing.
         new SyncthingRunnable(context, new String[]{"touch", testFile.getAbsolutePath()}).run();
-        assertTrue(testFile.exists());
+        Assert.assertTrue(testFile.exists());
         testFile.delete();
     }
 

@@ -17,23 +17,20 @@ public class ConfigXmlTest extends AndroidTestCase {
 
     private ConfigXml mConfig;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContext = new MockContext(getContext());
-        assertFalse(ConfigXml.getConfigFile(mContext).exists());
+    @Before
+    public void setUp() throws Exception {
+        mContext = new MockContext(InstrumentationRegistry.getTargetContext());
+        Assert.assertFalse(ConfigXml.getConfigFile(mContext).exists());
         mConfig = new ConfigXml(mContext);
-        assertTrue(ConfigXml.getConfigFile(mContext).exists());
+        Assert.assertTrue(ConfigXml.getConfigFile(mContext).exists());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
+    @After
+    public void tearDown() throws Exception {
         ConfigXml.getConfigFile(mContext).delete();
     }
 
+    @Test
     public void testGetWebGuiUrl() {
         assertTrue(mConfig.getWebGuiUrl().startsWith("https://127.0.0.1:"));
     }
