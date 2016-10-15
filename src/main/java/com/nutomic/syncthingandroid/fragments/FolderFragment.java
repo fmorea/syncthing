@@ -29,9 +29,8 @@ import com.nutomic.syncthingandroid.activities.FolderPickerActivity;
 import com.nutomic.syncthingandroid.activities.SettingsActivity;
 import com.nutomic.syncthingandroid.activities.SyncthingActivity;
 import com.nutomic.syncthingandroid.fragments.dialog.KeepVersionsDialogFragment;
+import com.nutomic.syncthingandroid.model.Folder;
 import com.nutomic.syncthingandroid.syncthing.RestApi;
-import com.nutomic.syncthingandroid.syncthing.RestApi.SimpleVersioning;
-import com.nutomic.syncthingandroid.syncthing.RestApi.Versioning;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 
 import java.util.ArrayList;
@@ -65,7 +64,7 @@ public class FolderFragment extends Fragment
 
     private SyncthingService mSyncthingService;
 
-    private RestApi.Folder mFolder;
+    private Folder mFolder;
 
     private EditText mLabelView;
     private EditText mIdView;
@@ -113,11 +112,10 @@ public class FolderFragment extends Fragment
         @Override
         public void onValueChange(int intValue) {
             if (intValue == 0) {
-                mFolder.versioning = new Versioning();
+                mFolder.versioning = new Folder.Versioning();
                 mVersioningKeepView.setText(R.string.off);
             } else {
-                mFolder.versioning = new SimpleVersioning();
-                ((SimpleVersioning) mFolder.versioning).setParams(intValue);
+                mFolder.versioning.params.put("keep", valueOf(intValue));
                 mVersioningKeepView.setText(valueOf(intValue));
             }
             updateRepo();
@@ -147,7 +145,7 @@ public class FolderFragment extends Fragment
 
         if (isCreatingFolder()) {
             if (savedInstanceState != null) {
-                mFolder = (RestApi.Folder) savedInstanceState.getSerializable("folder");
+                mFolder = (Folder) savedInstanceState.getSerializable("folder");
             }
             if (mFolder == null) {
                 initFolder();
@@ -204,7 +202,7 @@ public class FolderFragment extends Fragment
         mLabelView.setText(mFolder.label);
         mIdView.setText(mFolder.id);
         mPathView.setText(mFolder.path);
-        mFolderMasterView.setChecked(mFolder.readOnly);
+        mFolderMasterView.setChecked(mFolder.type.equals("readonly"));
         List<RestApi.Device> devicesList = mSyncthingService.getApi().getDevices(false);
 
         mDevicesContainer.removeAllViews();
@@ -216,10 +214,10 @@ public class FolderFragment extends Fragment
             }
         }
 
-        boolean versioningEnabled = mFolder.versioning instanceof SimpleVersioning;
+        boolean versioningEnabled = mFolder.versioning.type.equals("simple");
         int versions = 0;
         if (versioningEnabled) {
-            versions = Integer.valueOf(mFolder.versioning.getParams().get("keep"));
+            versions = Integer.valueOf(mFolder.versioning.params.get("keep"));
             mVersioningKeepView.setText(valueOf(versions));
         } else {
             mVersioningKeepView.setText(R.string.off);
@@ -370,7 +368,7 @@ public class FolderFragment extends Fragment
     private void addDeviceViewAndSetListener(RestApi.Device device, LayoutInflater inflater) {
         inflater.inflate(R.layout.item_device_form, mDevicesContainer);
         SwitchCompat deviceView = (SwitchCompat) mDevicesContainer.getChildAt(mDevicesContainer.getChildCount()-1);
-        deviceView.setChecked(mFolder.deviceIds.contains(device.deviceID));
+        deviceView.setChecked(mFolder.getDevices().contains(device.deviceID));
         deviceView.setText(RestApi.getDeviceDisplayName(device));
         deviceView.setTag(device);
         deviceView.setOnCheckedChangeListener(mCheckedListener);

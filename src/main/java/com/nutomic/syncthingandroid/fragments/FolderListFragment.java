@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.activities.SettingsActivity;
 import com.nutomic.syncthingandroid.activities.SyncthingActivity;
+import com.nutomic.syncthingandroid.model.Folder;
 import com.nutomic.syncthingandroid.syncthing.RestApi;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 import com.nutomic.syncthingandroid.util.FoldersAdapter;
@@ -114,7 +115,7 @@ public class FolderListFragment extends ListFragment implements SyncthingService
         // Prevent scroll position reset due to list update from clear().
         mAdapter.setNotifyOnChange(false);
         mAdapter.clear();
-        List<RestApi.Folder> folders = activity.getApi().getFolders();
+        List<Folder> folders = activity.getApi().getFolders();
         Collections.sort(folders, FOLDERS_COMPARATOR);
         mAdapter.addAll(folders);
         mAdapter.updateModel(activity.getApi());

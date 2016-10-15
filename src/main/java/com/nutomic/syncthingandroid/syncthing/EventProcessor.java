@@ -13,11 +13,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.activities.MainActivity;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Random;
@@ -91,7 +89,7 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
     public void onEvent(long id, String type, JSONObject data) throws JSONException {
         switch (type) {
             case "DeviceRejected":
-                String deviceId = data.getString("device");
+                String deviceId = data.get("device").getAsString();
                 Log.d(TAG, "Unknwon device " + deviceId + " wants to connect");
 
                 Intent intent = new Intent(mContext, MainActivity.class);
@@ -114,7 +112,8 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
                 // Use random ID so previous notifications are not replaced.
                 nm.notify(new Random().nextInt(), n);
             case "ItemFinished":
-                File updatedFile = new File(data.getString("folderpath"), data.getString("item"));
+                File updatedFile = new File(data.get("folderpath").getAsString(),
+                                            data.get("item").getAsString());
                 Log.i(TAG, "Notified media scanner about " + updatedFile.toString());
                 mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
                         Uri.fromFile(updatedFile)));
