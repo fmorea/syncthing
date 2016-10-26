@@ -89,7 +89,7 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
     public void onEvent(long id, String type, JSONObject data) throws JSONException {
         switch (type) {
             case "DeviceRejected":
-                String deviceId = data.get("device").getAsString();
+                String deviceId = (String) event.data.get("device");
                 Log.d(TAG, "Unknwon device " + deviceId + " wants to connect");
 
                 Intent intent = new Intent(mContext, MainActivity.class);
@@ -112,8 +112,15 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
                 // Use random ID so previous notifications are not replaced.
                 nm.notify(new Random().nextInt(), n);
             case "ItemFinished":
-                File updatedFile = new File(data.get("folderpath").getAsString(),
-                                            data.get("item").getAsString());
+                String folder = (String) event.data.get("folder");
+                String folderPath = null;
+                for (Folder f : mApi.getFolders()) {
+                    if (f.id.equals(folder)) {
+                        folderPath = f.path;
+                    }
+                }
+                File updatedFile = new File(folderPath,
+                                            (String) event.data.get("item"));
                 Log.i(TAG, "Notified media scanner about " + updatedFile.toString());
                 mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
                         Uri.fromFile(updatedFile)));
@@ -122,7 +129,7 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
                 // Ignored.
                 break;
             default:
-                Log.i(TAG, "Unhandled event " + type);
+                Log.i(TAG, "Unhandled event " + event.type);
         }
     }
 
