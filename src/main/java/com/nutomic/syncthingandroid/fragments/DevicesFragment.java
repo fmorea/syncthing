@@ -70,7 +70,14 @@ public class DevicesFragment extends ListFragment implements SyncthingService.On
         if (currentState != SyncthingService.State.ACTIVE)
             return;
 
-        updateList();
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(DeviceListFragment.this::updateList);
+            }
+
+        }, 0, SyncthingService.GUI_UPDATE_INTERVAL);
     }
 
     @Override

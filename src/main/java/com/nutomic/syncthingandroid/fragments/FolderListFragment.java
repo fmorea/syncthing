@@ -76,7 +76,14 @@ public class FolderListFragment extends ListFragment implements SyncthingService
         if (currentState != SyncthingService.State.ACTIVE)
             return;
 
-        updateList();
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(FolderListFragment.this::updateList);
+            }
+
+        }, 0, SyncthingService.GUI_UPDATE_INTERVAL);
     }
 
     @Override
