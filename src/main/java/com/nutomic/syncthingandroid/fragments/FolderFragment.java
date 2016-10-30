@@ -116,6 +116,7 @@ public class FolderFragment extends Fragment
                 mFolder.versioning = new Folder.Versioning();
                 mVersioningKeepView.setText(R.string.off);
             } else {
+                mFolder.versioning.type = "simple";
                 mFolder.versioning.params.put("keep", valueOf(intValue));
                 mVersioningKeepView.setText(valueOf(intValue));
             }
