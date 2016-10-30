@@ -74,6 +74,9 @@ public class DevicesFragment extends ListFragment implements SyncthingService.On
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
+                if (getActivity() == null)
+                    return;
+
                 getActivity().runOnUiThread(DeviceListFragment.this::updateList);
             }
 
@@ -103,8 +106,7 @@ public class DevicesFragment extends ListFragment implements SyncthingService.On
      */
     private void updateList() {
         SyncthingActivity activity = (SyncthingActivity) getActivity();
-        if (activity == null || activity.getApi() == null || getView() == null ||
-                activity.isFinishing())
+        if (activity.getApi() == null || getView() == null || activity.isFinishing())
             return;
 
         if (mAdapter == null) {

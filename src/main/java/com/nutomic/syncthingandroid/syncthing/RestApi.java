@@ -338,6 +338,11 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
         }
     }
 
+    private void sendConfig() {
+        new PostTask(mUrl, PostTask.URI_CONFIG, mHttpsCertPath, mApiKey, null)
+                .execute(new Gson().toJson(mConfig));
+    }
+
     /**
      * Sends the current config to Syncthing and restarts it.
      *

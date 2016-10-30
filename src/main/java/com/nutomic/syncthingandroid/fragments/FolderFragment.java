@@ -215,7 +215,7 @@ public class FolderFragment extends Fragment
             }
         }
 
-        boolean versioningEnabled = mFolder.versioning.type.equals("simple");
+        boolean versioningEnabled = Objects.equal(mFolder.versioning.type, "simple");
         int versions = 0;
         if (versioningEnabled) {
             versions = Integer.valueOf(mFolder.versioning.params.get("keep"));
