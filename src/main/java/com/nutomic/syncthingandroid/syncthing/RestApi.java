@@ -360,9 +360,7 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
     }
 
     /**
-     * Returns a list of all existing devices.
-     *
-     * @param includeLocal True if the local device should be included in the result.
+     * Stops syncthing and cancels notification.
      */
     public List<Device> getDevices(boolean includeLocal) {
         if (mConfig == null)
@@ -409,9 +407,17 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
     }
 
     /**
-     * Requests and parses information about current system status and resource usage.
+     * Returns a deep copy of object.
      *
-     * @param listener Callback invoked when the result is received.
+     * This method uses Gson and only works with objects that can be converted with Gson.
+     */
+    public <T> T deepCopy(T object, Type type) {
+        Gson gson = new Gson();
+        return gson.fromJson(gson.toJson(object, type), type);
+    }
+
+    /**
+     * Requests and parses information about current system status and resource usage.
      */
     public void getSystemInfo(final OnReceiveSystemInfoListener listener) {
         new GetTask(mHttpsCertPath) {
@@ -427,8 +433,6 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
 
     /**
      * Requests and parses system version information.
-     *
-     * @param listener Callback invoked when the result is received.
      */
     public void getSystemVersion(final OnReceiveSystemVersionListener listener) {
         new GetTask(mHttpsCertPath) {
@@ -1059,9 +1063,6 @@ public class RestApi implements SyncthingService.OnWebGuiAvailableListener,
         }.execute(mUrl, GetTask.URI_REPORT, mApiKey);
     }
 
-    /**
-     * Sets {@link #mRestartPostponed} to true.
-     */
     public void setRestartPostponed() {
         mRestartPostponed = true;
     }
