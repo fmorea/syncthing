@@ -629,7 +629,8 @@ public class SyncthingService extends Service implements
         copyFile(privateKey, new File(getFilesDir(), PRIVATE_KEY_FILE));
         copyFile(publicKey, new File(getFilesDir(), PUBLIC_KEY_FILE));
         mCurrentState = State.INIT;
-        updateState();
+        onApiChange();
+        new StartupTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         return true;
     }
 
