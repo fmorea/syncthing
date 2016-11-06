@@ -62,7 +62,9 @@ public class DevicesFragment extends ListFragment implements SyncthingService.On
     @Override
     public void onPause() {
         super.onPause();
-        mTimer.cancel();
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
     }
 
     @Override
