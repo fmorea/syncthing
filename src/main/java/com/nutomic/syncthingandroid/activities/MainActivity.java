@@ -59,8 +59,6 @@ public class MainActivity extends SyncthingActivity
 
     private static final String TAG = "MainActivity";
 
-    static final String EXTRA_FIRST_START = "com.nutomic.syncthing-android.MainActivity.FIRST_START";
-
     /**
      * Time after first start when usage reporting dialog should be shown.
      *
@@ -91,16 +89,11 @@ public class MainActivity extends SyncthingActivity
     @Override
     public void onApiChange(SyncthingService.State currentState) {
         switch (currentState) {
-            case INIT:
-                showLoadingDialog();
-                break;
             case STARTING:
-                showLoadingDialog();
                 dismissDisabledDialog();
                 break;
             case ACTIVE:
                 dismissDisabledDialog();
-                dismissLoadingDialog();
                 showBatteryOptimizationDialogIfNecessary();
                 mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                 mDrawerFragment.requestGuiUpdate();
@@ -113,7 +106,6 @@ public class MainActivity extends SyncthingActivity
                 finish();
                 break;
             case DISABLED:
-                dismissLoadingDialog();
                 if (!isFinishing()) {
                     showDisabledDialog();
                 }
@@ -168,34 +160,6 @@ public class MainActivity extends SyncthingActivity
             Log.w(TAG, "This should never happen", e);
         }
         return firstInstallTime;
-    }
-
-    /**
-     * Shows the loading dialog with the correct text ("creating keys" or "loading").
-     */
-    private void showLoadingDialog() {
-        if (isFinishing() || mLoadingDialog != null)
-            return;
-
-        LayoutInflater inflater = getLayoutInflater();
-        @SuppressLint("InflateParams")
-        View dialogLayout = inflater.inflate(R.layout.dialog_loading, null);
-        TextView loadingText = (TextView) dialogLayout.findViewById(R.id.loading_text);
-        loadingText.setText((getIntent().getBooleanExtra(EXTRA_FIRST_START, false))
-                ? R.string.web_gui_creating_key
-                : R.string.api_loading);
-
-        mLoadingDialog = new AlertDialog.Builder(MainActivity.this)
-                .setCancelable(false)
-                .setView(dialogLayout)
-                .show();
-    }
-
-    private void dismissLoadingDialog() {
-        if (mLoadingDialog != null) {
-            mLoadingDialog.dismiss();
-            mLoadingDialog = null;
-        }
     }
 
     private final FragmentPagerAdapter mSectionsPagerAdapter =
@@ -320,7 +284,6 @@ public class MainActivity extends SyncthingActivity
     public void onDestroy() {
         super.onDestroy();
         dismissDisabledDialog();
-        dismissLoadingDialog();
         if (getService() != null) {
             getService().unregisterOnApiChangeListener(this);
             getService().unregisterOnApiChangeListener(mFolderFragment);
