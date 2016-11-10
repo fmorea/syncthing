@@ -73,6 +73,7 @@ public class MainActivity extends SyncthingActivity
 
     private AlertDialog mLoadingDialog;
     private AlertDialog mDisabledDialog;
+    private AlertDialog mBatteryOptimizationsDialog;
 
     private ViewPager mViewPager;
 
@@ -118,12 +119,13 @@ public class MainActivity extends SyncthingActivity
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean dontShowAgain = sp.getBoolean("battery_optimization_dont_show_again", false);
-        if (dontShowAgain || Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+        if (dontShowAgain || mBatteryOptimizationsDialog != null ||
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 pm.isIgnoringBatteryOptimizations(getPackageName())) {
             return;
         }
 
-        new AlertDialog.Builder(this)
+        mBatteryOptimizationsDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.dialog_disable_battery_optimization_title)
                 .setMessage(R.string.dialog_disable_battery_optimization_message)
                 .setPositiveButton(R.string.dialog_disable_battery_optimization_turn_off, (d, i) -> {
