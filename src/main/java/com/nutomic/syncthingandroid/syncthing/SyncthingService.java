@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
@@ -105,6 +106,8 @@ public class SyncthingService extends Service implements
     private LinkedList<FolderObserver> mObservers = new LinkedList<>();
 
     private final SyncthingServiceBinder mBinder = new SyncthingServiceBinder(this);
+
+    private final NetworkReceiver mNetworkReceiver = new NetworkReceiver();
 
     /**
      * Callback for when the Syncthing web interface becomes first available after service start.
@@ -429,6 +432,8 @@ public class SyncthingService extends Service implements
         sp.unregisterOnSharedPreferenceChangeListener(this);
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB)
             unregisterReceiver(mPowerSaveModeChangedReceiver);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N)
+            unregisterReceiver(mNetworkReceiver);
     }
 
     private void shutdown() {
