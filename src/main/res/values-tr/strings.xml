@@ -6,9 +6,9 @@
   <!--Title of the "add folder" menu action-->
   <string name="add_folder">Klasör Ekleme</string>
   <!--Title of the "share device id" menu action-->
-  <string name="share_device_id">Cihaz ID Paylaş</string>
+  <string name="share_device_id">Aygıt ID Paylaş</string>
   <!--Shown in the chooser dialog when sharing a Device ID-->
-  <string name="send_device_id_to">İle Cihaz ID Gönder</string>
+  <string name="send_device_id_to">İle Aygıt ID Gönder</string>
   <!--Text for FoldersFragment and DevicesFragment loading view-->
   <string name="api_loading">Yükleniyor...</string>
   <!--FoldersFragment-->
@@ -20,9 +20,9 @@
   <!--Format string for folder file count-->
   <string name="files">%1$d / %2$d Dosya</string>
   <!--DevicesFragment-->
-  <string name="devices_fragment_title">Cihazlar</string>
+  <string name="devices_fragment_title">Aygıtlar</string>
   <!--Shown if no devices exist-->
-  <string name="devices_list_empty">Cihaz bulunamadı</string>
+  <string name="devices_list_empty">Aygıt bulunamadı</string>
   <!--Indicates that a folder is fully synced to the local device-->
   <string name="device_up_to_date">Güncel</string>
   <!--Indicates that the device is currently syncing. Parameter is sync percentage-->
@@ -55,7 +55,7 @@
   <!--Setting title-->
   <string name="folder_master">Ana Klasör</string>
   <!--Setting title-->
-  <string name="devices">Cihazlar</string>
+  <string name="devices">Aygıtlar</string>
   <!--Setting title-->
   <string name="file_versioning">Dosya Sürümlendirme</string>
   <!--Setting title-->
@@ -76,7 +76,7 @@
   <string name="folder_path_required">Klasör yolu boş olmamalı</string>
   <!--DeviceSettingsFragment-->
   <!--Setting title-->
-  <string name="device_id">Cihaz ID</string>
+  <string name="device_id">Aygıt ID</string>
   <!--Setting title-->
   <string name="name">Adı</string>
   <!--Setting title-->
@@ -88,7 +88,7 @@
   <!--Strings representing compression options-->
   <string-array name="compress_entries">
     <item>Asla</item>
-    <item>Metadata</item>
+    <item>Üstveri</item>
     <item>Her zaman</item>
   </string-array>
   <!--Setting title-->
@@ -129,7 +129,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Preference title-->
   <string name="always_run_in_background">Arkaplanda herzaman çalış</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing, herzaman aşağıdaki tercihlere göre arkaplanda çalışır.</string>
+  <string name="always_run_in_background_enabled">Syncthing, her zaman aşağıdaki tercihlere göre arka planda çalışır.</string>
   <!--Preference summary in case it is disabled-->
   <string name="always_run_in_background_disabled">Syncthing, sadece doğrudan başlatıldığında çalışır ve menü tuşu tarafından durdurulur.</string>
   <string name="sync_only_charging">Sadece şarj ederken eşitle</string>
@@ -172,7 +172,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Syncthing was reset-->
   <string name="category_about">Hakkında</string>
   <!--Settings item that opens the log activity-->
-  <string name="open_log">Günlük Aç</string>
+  <string name="open_log">Günlüğü Aç</string>
   <!--Summary for the log activity-->
   <string name="open_log_summary">Syncthing ve Android günlük penceresi aç</string>
   <!--Settings item that opens issue tracker-->
@@ -207,7 +207,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <string name="share_title">Paylaş</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing devredışı</string>
+  <string name="syncthing_disabled_title">Syncthing devre dışı</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Tercihlerinizi değiştirmek istiyor musunuz?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -216,18 +216,19 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <string name="exit">Çık</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
   <string name="syncthing_active">Syncthing çalışıyor</string>
+  <string name="syncthing_active_foreground">Hizmet ön plan önceliğiyle çalışıyor.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <!--Toast shown if syncthing failed to create a config-->
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <!--RestApi-->
   <!--Title of the notification shown when a restart is needed-->
-  <string name="restart_title">Yeniden Başlatılması Gerekli</string>
+  <string name="restart_title">Yeniden Başlatma Gerekli</string>
   <!--Text for positive button in restart dialog-->
   <!--Text for the dismiss button of the restart Activity-->
   <!--Text of the notification shown when a restart is needed-->
   <string name="restart_notification_text">Şimdi syncthing yeniden başlatmak için tıkla</string>
   <!--Shown when a device ID is copied to the clipboard-->
-  <string name="device_id_copied_to_clipboard">Cihaz ID panoya kopyalandı</string>
+  <string name="device_id_copied_to_clipboard">Aygıt ID panoya kopyalandı</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
   <string-array name="file_size_units">
     <item>B</item>
