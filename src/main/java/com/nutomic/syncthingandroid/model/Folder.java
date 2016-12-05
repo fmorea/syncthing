@@ -33,7 +33,7 @@ public class Folder implements Serializable {
 
     public static class Versioning implements Serializable {
         public String type;
-        public Map<String, String> params;
+        public Map<String, String> params = new HashMap<>();
     }
 
     public List<String> getDevices() {
