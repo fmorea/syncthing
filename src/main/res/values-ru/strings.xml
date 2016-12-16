@@ -46,7 +46,7 @@
   <!--Title for current CPU usage-->
   <string name="cpu_usage">Загрузка процессора</string>
   <!--Title for current RAM usage-->
-  <string name="ram_usage">Объём памяти</string>
+  <string name="ram_usage">Использование памяти</string>
   <!--Title for announce server status-->
   <string name="announce_server">Сервера анонсов</string>
   <!--Menu item to donate-->
@@ -86,7 +86,7 @@
   <!--Setting title-->
   <string name="addresses">Адреса</string>
   <!--Setting title-->
-  <string name="current_address">Текущий Адрес</string>
+  <string name="current_address">Текущий адрес</string>
   <!--Setting title-->
   <string name="compression">Сжатие</string>
   <!--Strings representing compression options-->
@@ -208,12 +208,12 @@
   <!--Toast shown on devices with kitkat or higher-->
   <string name="kitkat_external_storage_warning">Внимание: Ваша версия Android не позволяет синхронизацию на внешние хранилища</string>
   <!--ListView empty text-->
-  <string name="directory_empty">Папка Пуста</string>
+  <string name="directory_empty">Папка пуста</string>
   <!--Menu item to create folder on the file system-->
   <string name="create_fs_folder">Создать новую папку</string>
   <!--Menu item to select the current folder-->
-  <string name="select_folder">Выбрать Папку</string>
-  <string name="create_folder_failed">Неудачное создание папки</string>
+  <string name="select_folder">Выбрать папку</string>
+  <string name="create_folder_failed">Не удалось создать папку</string>
   <!--LogActivity-->
   <!--Title of the "log" activity-->
   <string name="log_title">Лог</string>
@@ -221,6 +221,7 @@
   <string name="log_android_title">Логи Android</string>
   <!--Title of the "log Syncthing" menu button-->
   <string name="log_syncthing_title">Логи Syncthing</string>
+  <string name="retrieving_logs">Получение логов...</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Поделиться</string>
   <!--SyncthingService-->
@@ -229,11 +230,12 @@
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Вы хотите изменить ваши настройки?</string>
   <!--Button text on the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_change_settings">Изменить Настройки</string>
+  <string name="syncthing_disabled_change_settings">Изменить настройки</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Выход</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
   <string name="syncthing_active">Syncthing запущен</string>
+  <string name="syncthing_active_foreground">Сервис выполняется с высоким приоритетом.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Слишком глубокая папка. Проверьте на цикличные симлинки</string>
   <!--Toast shown if syncthing failed to create a config-->
@@ -242,13 +244,13 @@
   <string name="default_folder_id">%1$s фото</string>
   <!--RestApi-->
   <!--Title of the notification shown when a restart is needed-->
-  <string name="restart_title">Необходим Перезапуск</string>
+  <string name="restart_title">Необходим перезапуск</string>
   <!--Text for positive button in restart dialog-->
   <string name="restart_now">Перезапустить сейчас</string>
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Позже</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Нажмите здесь чтобы перезагрузить syncthing</string>
+  <string name="restart_notification_text">Нажмите здесь чтобы перезапустить Syncthing</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">ID устройства копирован в буфер обмена</string>
   <!--Strings representing units for file sizes, from smallest to largest-->

@@ -2,9 +2,19 @@
 <resources>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
+  <string name="add_folder">إضافة مجلد</string>
   <!--Title of the "share device id" menu action-->
+  <string name="share_device_id">مشاركة معرف الجهاز</string>
   <!--Shown in the chooser dialog when sharing a Device ID-->
+  <string name="send_device_id_to">مشاركة معرف الجهاز إلى</string>
   <!--Text for FoldersFragment and DevicesFragment loading view-->
+  <string name="api_loading">تحميل ...</string>
+  <string name="yes">نعم</string>
+  <string name="no">لا</string>
+  <string name="off">مغلق</string>
+  <string name="open_website">فتح موقع الويب</string>
+  <string name="dialog_disable_battery_optimization_later">فيما بعد</string>
+  <string name="dialog_disable_battery_optimization_dont_show_again">لا تظهر ثانيةً</string>
   <!--FoldersFragment-->
   <!--Format string for folder progress. First parameter is status string, second is sync percentage-->
   <!--Shown if no folders exist-->
@@ -43,6 +53,7 @@
   <!--DeviceSettingsFragment-->
   <!--Setting title-->
   <!--Setting title-->
+  <string name="name">الاسم</string>
   <!--Setting title-->
   <!--Setting title-->
   <!--Setting title-->
@@ -108,7 +119,9 @@
   <!--RestApi-->
   <!--Title of the notification shown when a restart is needed-->
   <!--Text for positive button in restart dialog-->
+  <string name="restart_now">إعادة تشغيل اﻵن</string>
   <!--Text for the dismiss button of the restart Activity-->
+  <string name="restart_later">فيما بعد</string>
   <!--Text of the notification shown when a restart is needed-->
   <!--Shown when a device ID is copied to the clipboard-->
   <!--Strings representing units for file sizes, from smallest to largest-->
