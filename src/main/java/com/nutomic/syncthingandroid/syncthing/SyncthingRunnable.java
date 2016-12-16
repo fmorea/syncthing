@@ -9,6 +9,9 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.annimon.stream.Stream;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.nutomic.syncthingandroid.BuildConfig;
 
 import java.io.BufferedReader;
@@ -30,29 +33,24 @@ import eu.chainfire.libsuperuser.Shell;
 public class SyncthingRunnable implements Runnable {
 
     private static final String TAG = "SyncthingRunnable";
-
     private static final String TAG_NATIVE = "SyncthingNativeCode";
-
     private static final String TAG_NICE = "SyncthingRunnableIoNice";
-
     private static final String TAG_KILL = "SyncthingRunnableKill";
-
     public static final String UNIT_TEST_PATH = "was running";
-
     /**
      * Path to the native, integrated syncthing binary, relative to the data folder
      */
     public static final String BINARY_NAME = "lib/libsyncthing.so";
+    private static final int LOG_FILE_MAX_LINES = 1000;
 
     private static final AtomicReference<Process> mSyncthing = new AtomicReference<>();
-
     private final Context mContext;
 
     private String mSyncthingBinary;
 
     private String[] mCommand;
-
     private String mErrorLog;
+    private final File mLogFile;
 
     public enum Command {
         generate, // Generate keys, a config file and immediately exit.
@@ -68,6 +66,7 @@ public class SyncthingRunnable implements Runnable {
     public SyncthingRunnable(Context context, Command command) {
         mContext = context;
         mSyncthingBinary = mContext.getApplicationInfo().dataDir + "/" + BINARY_NAME;
+        mLogFile = new File(mContext.getExternalFilesDir(null), "syncthing.log");
         switch (command) {
             case generate:
                 mCommand = new String[]{ mSyncthingBinary, "-generate", mContext.getFilesDir().toString() };
@@ -92,10 +91,12 @@ public class SyncthingRunnable implements Runnable {
         mContext = context;
         mSyncthingBinary = mContext.getApplicationInfo().dataDir + "/" + BINARY_NAME;
         mCommand = manualCommand;
+        mLogFile = new File(mContext.getExternalFilesDir(null), "syncthing.log");
     }
 
     @Override
     public void run() {
+        trimLogFile();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
         int ret = 1;
         // Make sure Syncthing is executable
@@ -347,6 +348,20 @@ public class SyncthingRunnable implements Runnable {
         });
         t.start();
         return t;
+    }
+
+    /**
+     * Only keep last {@link #LOG_FILE_MAX_LINES} lines in log file, to avoid bloat.
+     */
+    private void trimLogFile() {
+        try {
+            String lines = Stream.of(Files.readLines(mLogFile, Charsets.UTF_8))
+                    .limit(LOG_FILE_MAX_LINES)
+                    .reduce("", (a, b) -> a + b + "\n");
+            Files.write(lines, mLogFile, Charsets.UTF_8);
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to trim log file", e);
+        }
     }
 
 }
