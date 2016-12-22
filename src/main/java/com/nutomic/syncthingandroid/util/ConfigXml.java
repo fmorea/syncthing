@@ -68,6 +68,7 @@ public class ConfigXml {
         }
 
         if (isFirstStart) {
+            changeLocalDeviceName();
             changeDefaultFolder();
         }
         updateIfNeeded();
@@ -159,6 +160,23 @@ public class ConfigXml {
     private Element getGuiElement() {
         return (Element) mConfig.getDocumentElement()
                 .getElementsByTagName("gui").item(0);
+    }
+
+    /**
+     * Set model name as device name for Syncthing.
+     *
+     * We need to iterate through XML nodes manually, as mConfig.getDocumentElement() will also
+     * return nested elements inside folder element.
+     */
+    private void changeLocalDeviceName() {
+        NodeList childNodes = mConfig.getDocumentElement().getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node node = childNodes.item(i);
+            if (node.getNodeName().equals("device")) {
+                ((Element) node).setAttribute("name", Build.MODEL);
+            }
+        }
+        saveChanges();
     }
 
     /**
