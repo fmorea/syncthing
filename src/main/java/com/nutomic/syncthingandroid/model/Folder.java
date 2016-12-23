@@ -14,7 +14,7 @@ public class Folder implements Serializable {
     public String type;
     private transient List<Map<String, String>> devices = new ArrayList<>();
     public int rescanIntervalS;
-    public boolean ignorePerms;
+    public final boolean ignorePerms = true;
     public boolean autoNormalize;
     public int minDiskFreePct;
     public Versioning versioning;
