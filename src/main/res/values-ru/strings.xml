@@ -4,7 +4,7 @@
   <string name="app_description">Открытое, надёжное и децентрализованное приложение для синхронизации файлов.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
-  <string name="add_folder">Доб папку</string>
+  <string name="add_folder">Добавить папку</string>
   <!--Title of the "share device id" menu action-->
   <string name="share_device_id">Поделиться ID устройства</string>
   <!--Shown in the chooser dialog when sharing a Device ID-->
@@ -23,6 +23,7 @@
   <string name="folder_list_empty">Папки не найдены</string>
   <!--Format string for folder file count-->
   <string name="files">%1$d / %2$d файлов</string>
+  <string name="toast_no_file_manager">Не найдено совместимого файлового менеджера</string>
   <!--DevicesFragment-->
   <string name="devices_fragment_title">Устройства</string>
   <!--Shown if no devices exist-->
@@ -193,6 +194,8 @@
   <string name="open_log">Открыть лог</string>
   <!--Summary for the log activity-->
   <string name="open_log_summary">Открывает логи Syncthing и Android</string>
+  <string name="syncthing_forum_title">Форум Syncthing</string>
+  <string name="syncthing_forum_summary">Перейти на форум Syncthing</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Сообщить о проблеме</string>
   <!--Summary for the issue tracker settings item-->
@@ -242,6 +245,8 @@
   <string name="config_create_failed">Не смог создать конфигурацию Syncthing. Посмотрите журнал.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">%1$s фото</string>
+  <string name="notification_crash_title">Syncthing завершился из-за сбоя</string>
+  <string name="notification_crash_text">Нажмите для просмотра логов</string>
   <!--RestApi-->
   <!--Title of the notification shown when a restart is needed-->
   <string name="restart_title">Необходим перезапуск</string>

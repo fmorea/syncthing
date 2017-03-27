@@ -191,6 +191,8 @@ Riferisci tramite Github i problemi che incontri.</string>
   <string name="open_log">Apri Registro</string>
   <!--Summary for the log activity-->
   <string name="open_log_summary">Apre la finestra di log di Syncthing e Android</string>
+  <string name="syncthing_forum_title">Forum di Syncthing</string>
+  <string name="syncthing_forum_summary">Vai al Forum di Syncthing</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Segnala Problema</string>
   <!--Summary for the issue tracker settings item-->
