@@ -1,5 +1,7 @@
 package com.nutomic.syncthingandroid.model;
 
+import android.text.TextUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,5 +56,10 @@ public class Folder implements Serializable {
             map.put("deviceID", d);
             devices.add(map);
         }
+    }
+
+    @Override
+    public String toString() {
+        return !TextUtils.isEmpty(label) ? label : id;
     }
 }
