@@ -18,7 +18,7 @@ public class Folder implements Serializable {
     public int rescanIntervalS;
     public final boolean ignorePerms = true;
     public boolean autoNormalize;
-    public float minDiskFreePct;
+    public MinDiskFree minDiskFree;
     public Versioning versioning;
     public int copiers;
     public int pullers;
