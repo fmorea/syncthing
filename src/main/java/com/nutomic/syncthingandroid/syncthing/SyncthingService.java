@@ -438,7 +438,7 @@ public class SyncthingService extends Service implements
         sp.unregisterOnSharedPreferenceChangeListener(this);
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB)
             unregisterReceiver(mPowerSaveModeChangedReceiver);
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             unregisterReceiver(mNetworkReceiver);
     }
 
