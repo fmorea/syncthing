@@ -307,7 +307,6 @@ public class SyncthingService extends Service implements
      * Starts the native binary.
      */
     @Override
-    @TargetApi(21)
     public void onCreate() {
         PRNGFixes.apply();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);

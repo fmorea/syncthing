@@ -1,6 +1,5 @@
 package com.nutomic.syncthingandroid.syncthing;
 
-import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,7 +46,6 @@ public class DeviceStateHolder extends BroadcastReceiver {
 
     private boolean mIsCharging = false;
 
-    @TargetApi(16)
     public DeviceStateHolder(Context context) {
         mContext = context;
         ConnectivityManager cm = (ConnectivityManager)
@@ -109,7 +107,6 @@ public class DeviceStateHolder extends BroadcastReceiver {
     /**
      * Determines if Syncthing should currently run.
      */
-    @TargetApi(21)
     public boolean shouldRun() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);

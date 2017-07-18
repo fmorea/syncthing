@@ -1,7 +1,6 @@
 package com.nutomic.syncthingandroid.activities;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -114,8 +113,9 @@ public class MainActivity extends SyncthingActivity
         }
     }
 
-    @TargetApi(23)
     private void showBatteryOptimizationDialogIfNecessary() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            return;
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean dontShowAgain = sp.getBoolean("battery_optimization_dont_show_again", false);
