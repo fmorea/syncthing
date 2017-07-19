@@ -125,6 +125,36 @@ public class ConfigXml {
             changed = true;
         }
 
+        // Set user to "syncthing"
+        Node user = gui.getElementsByTagName("user").item(0);
+        if (user == null) {
+            user = mConfig.createElement("user");
+            gui.appendChild(user);
+        }
+        if (!user.getTextContent().equals("syncthing")) {
+            user.setTextContent("syncthing");
+            changed = true;
+        }
+
+        // Set password to the API key
+        Node password = gui.getElementsByTagName("password").item(0);
+        if (password == null) {
+            password = mConfig.createElement("password");
+            gui.appendChild(password);
+        }
+        String apikey = getApiKey();
+        boolean passwordOk;
+        try {
+            passwordOk = BCrypt.checkpw(apikey, password.getTextContent());
+        } catch (RuntimeException e) {
+            Log.w(TAG, e);
+            passwordOk = false;
+        }
+        if (!passwordOk) {
+            password.setTextContent(BCrypt.hashpw(apikey, BCrypt.gensalt()));
+            changed = true;
+        }
+
         if (changed) {
             saveChanges();
         }
