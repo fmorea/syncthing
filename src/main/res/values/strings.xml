@@ -346,6 +346,8 @@ Please report any problems you encounter via Github.</string>
     <!-- Title for the preference to set STTRACE parameters -->
     <string name="sttrace_title">Debug Options</string>
 
+    <string name="environment_variables">Environment variables</string>
+
     <!-- Toast after entering invalid STTRACE params -->
     <string name="toast_invalid_sttrace">Only 0-9, a-z and \',\' are allowed in STTRACE options</string>
 
