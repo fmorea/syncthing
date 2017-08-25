@@ -131,7 +131,15 @@ public class MainActivity extends SyncthingActivity
                 .setPositiveButton(R.string.dialog_disable_battery_optimization_turn_off, (d, i) -> {
                     Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                     intent.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        // Some devices dont seem to support this request (according to Google Play
+                        // crash reports).
+                        Log.w(TAG, "Request ignore battery optimizations not supported", e);
+                        Toast.makeText(this, R.string.dialog_disable_battery_optimizations_not_supported, Toast.LENGTH_LONG).show();
+                        sp.edit().putBoolean("battery_optimization_dont_show_again", true).apply();
+                    }
                 })
                 .setNeutralButton(R.string.dialog_disable_battery_optimization_later, null)
                 .setNegativeButton(R.string.dialog_disable_battery_optimization_dont_show_again, (d, i) -> {
