@@ -55,7 +55,6 @@ public class SyncthingRunnable implements Runnable {
     private String mSyncthingBinary;
 
     private String[] mCommand;
-    private String mErrorLog;
     private final File mLogFile;
     private final SharedPreferences mPreferences;
 
@@ -151,7 +150,6 @@ public class SyncthingRunnable implements Runnable {
             process = pb.start();
             mSyncthing.set(process);
 
-            mErrorLog = "";
             Thread lInfo = log(process.getInputStream(), Log.INFO, true);
             Thread lWarn = log(process.getErrorStream(), Log.WARN, true);
 
@@ -340,7 +338,7 @@ public class SyncthingRunnable implements Runnable {
      *
      * @param is The stream to log.
      * @param priority The priority level.
-     * @param saveLog True if the log should be stored to {@link #mErrorLog}.
+     * @param saveLog True if the log should be stored to {@link #mLogFile}.
      */
     private Thread log(final InputStream is, final int priority, final boolean saveLog) {
         Thread t = new Thread(new Runnable() {
