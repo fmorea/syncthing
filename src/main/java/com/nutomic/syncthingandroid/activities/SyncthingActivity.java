@@ -142,7 +142,7 @@ public abstract class SyncthingActivity extends ToolbarBindingActivity implement
     }
 
     private void dismissLoadingDialog() {
-        if (mLoadingDialog != null) {
+        if (mLoadingDialog != null && mLoadingDialog.isShowing()) {
             mLoadingDialog.dismiss();
             mLoadingDialog = null;
         }
