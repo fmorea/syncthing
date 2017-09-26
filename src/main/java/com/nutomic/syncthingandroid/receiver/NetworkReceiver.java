@@ -1,10 +1,12 @@
 package com.nutomic.syncthingandroid.receiver;
 
+import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.util.Log;
 
 import com.nutomic.syncthingandroid.syncthing.DeviceStateHolder;
