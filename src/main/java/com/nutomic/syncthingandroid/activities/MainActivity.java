@@ -53,7 +53,7 @@ import static java.lang.Math.min;
  * {@link com.nutomic.syncthingandroid.fragments.DevicesFragment} in different tabs, and
  * {@link com.nutomic.syncthingandroid.fragments.DrawerFragment} in the navigation drawer.
  */
-public class MainActivity extends SyncthingActivity
+public class MainActivity extends StateDialogActivity
         implements SyncthingService.OnApiChangeListener {
 
     private static final String TAG = "MainActivity";
@@ -90,10 +90,8 @@ public class MainActivity extends SyncthingActivity
     public void onApiChange(SyncthingService.State currentState) {
         switch (currentState) {
             case STARTING:
-                dismissDisabledDialog();
                 break;
             case ACTIVE:
-                dismissDisabledDialog();
                 showBatteryOptimizationDialogIfNecessary();
                 mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                 mDrawerFragment.requestGuiUpdate();
@@ -106,9 +104,6 @@ public class MainActivity extends SyncthingActivity
                 finish();
                 break;
             case DISABLED:
-                if (!isFinishing()) {
-                    showDisabledDialog();
-                }
                 break;
         }
     }
@@ -146,13 +141,6 @@ public class MainActivity extends SyncthingActivity
                     sp.edit().putBoolean("battery_optimization_dont_show_again", true).apply();
                 })
                 .show();
-    }
-
-    private void dismissDisabledDialog() {
-        if (mDisabledDialog != null && mDisabledDialog.isShowing()) {
-            mDisabledDialog.dismiss();
-            mDisabledDialog = null;
-        }
     }
 
     /**
@@ -293,7 +281,6 @@ public class MainActivity extends SyncthingActivity
     @Override
     public void onDestroy() {
         super.onDestroy();
-        dismissDisabledDialog();
         if (getService() != null) {
             getService().unregisterOnApiChangeListener(this);
             getService().unregisterOnApiChangeListener(mFolderFragment);
