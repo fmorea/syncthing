@@ -15,5 +15,4 @@ public class BootReceiver extends BroadcastReceiver {
 
         context.startService(new Intent(context, SyncthingService.class));
     }
-
 }
