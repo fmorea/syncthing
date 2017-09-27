@@ -36,6 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.annimon.stream.function.Consumer;
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.fragments.DevicesFragment;
 import com.nutomic.syncthingandroid.fragments.DrawerFragment;
@@ -310,6 +311,7 @@ public class MainActivity extends StateDialogActivity
             fm.putFragment(outState, DrawerFragment.class.getName(), mDrawerFragment);
             outState.putInt("currentTab", mViewPager.getCurrentItem());
         }
+        Util.dismissDialogSafe(mRestartDialog, this);
     }
 
     @Override
