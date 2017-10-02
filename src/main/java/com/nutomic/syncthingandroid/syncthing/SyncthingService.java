@@ -128,13 +128,6 @@ public class SyncthingService extends Service implements
 
     private final HashSet<OnApiChangeListener> mOnApiChangeListeners =
             new HashSet<>();
-    
-    private final BroadcastReceiver mPowerSaveModeChangedReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            updateState();
-        }
-    };
 
     /**
      * Indicates the current state of SyncthingService and of Syncthing itself.
@@ -153,6 +146,19 @@ public class SyncthingService extends Service implements
     }
 
     private State mCurrentState = State.INIT;
+
+    private ConfigXml mConfig;
+
+    private RestApi mApi;
+
+    private EventProcessor mEventProcessor;
+
+    private final LinkedList<FolderObserver> mObservers = new LinkedList<>();
+
+    private final SyncthingServiceBinder mBinder = new SyncthingServiceBinder(this);
+
+    private final NetworkReceiver mNetworkReceiver = new NetworkReceiver();
+    private final BroadcastReceiver mPowerSaveModeChangedReceiver = new PowerSaveModeChangedReceiver();
 
     /**
      * Object that can be locked upon when accessing mCurrentState
@@ -187,9 +193,6 @@ public class SyncthingService extends Service implements
                 new SyncthingRunnable(this, SyncthingRunnable.Command.reset).run();
                 new StartupTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             });
-        } else {
-            mDeviceStateHolder.update(intent);
-            updateState();
         }
         return START_STICKY;
     }
@@ -323,7 +326,7 @@ public class SyncthingService extends Service implements
                      .putString("gui_password", sb.toString()).apply();
         }
 
-        mDeviceStateHolder = new DeviceStateHolder(SyncthingService.this);
+        mDeviceStateHolder = new DeviceStateHolder(SyncthingService.this, this::updateState);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             registerReceiver(mPowerSaveModeChangedReceiver,
                     new IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED));
@@ -460,6 +463,7 @@ public class SyncthingService extends Service implements
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.unregisterOnSharedPreferenceChangeListener(this);
+        mDeviceStateHolder.shutdown();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             unregisterReceiver(mPowerSaveModeChangedReceiver);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
