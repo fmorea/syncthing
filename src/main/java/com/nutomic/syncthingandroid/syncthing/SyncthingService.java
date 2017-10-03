@@ -25,6 +25,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.nutomic.syncthingandroid.R;
+import com.nutomic.syncthingandroid.SyncthingApp;
 import com.nutomic.syncthingandroid.activities.FirstStartActivity;
 import com.nutomic.syncthingandroid.activities.MainActivity;
 import com.nutomic.syncthingandroid.util.ConfigXml;
@@ -43,6 +44,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.inject.Inject;
 
 /**
  * Holds the native syncthing instance and provides an API to access it.
@@ -176,6 +179,8 @@ public class SyncthingService extends Service implements
 
     private SyncthingRunnable mSyncthingRunnable;
 
+    @Inject SharedPreferences mPreferences;
+
     /**
      * Handles intents, either {@link #ACTION_RESTART}, or intents having
      * {@link DeviceStateHolder#EXTRA_IS_ALLOWED_NETWORK_CONNECTION} or
@@ -255,9 +260,8 @@ public class SyncthingService extends Service implements
      * {@link #PREF_NOTIFICATION_TYPE}.
      */
     private void updateNotification() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        String type = sp.getString(PREF_NOTIFICATION_TYPE, "low_priority");
-        boolean foreground = sp.getBoolean(PREF_FOREGROUND_SERVICE, false);
+        String type = mPreferences.getString(PREF_NOTIFICATION_TYPE, "low_priority");
+        boolean foreground = mPreferences.getBoolean(PREF_FOREGROUND_SERVICE, false);
         if ("none".equals(type) && foreground) {
             // foreground priority requires any notification
             // so this ensures that we either have a "default" or "low_priority" notification,
@@ -461,8 +465,7 @@ public class SyncthingService extends Service implements
             }
         }
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        sp.unregisterOnSharedPreferenceChangeListener(this);
+        mPreferences.unregisterOnSharedPreferenceChangeListener(this);
         mDeviceStateHolder.shutdown();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             unregisterReceiver(mPowerSaveModeChangedReceiver);

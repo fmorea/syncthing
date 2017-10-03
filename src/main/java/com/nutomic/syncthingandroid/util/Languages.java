@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.nutomic.syncthingandroid.R;
+import com.nutomic.syncthingandroid.SyncthingApp;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +23,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.inject.Inject;
 
 /**
  * Based on https://gitlab.com/fdroid/fdroidclient/blob/master/app/src/main/java/org/fdroid/fdroid/Languages.java
@@ -34,7 +37,7 @@ public final class Languages {
     private static final Locale DEFAULT_LOCALE;
     public static final String PREFERENCE_LANGUAGE = "pref_current_language";
 
-    private final SharedPreferences mPreferences;
+    @Inject SharedPreferences mPreferences;
     private static Map<String, String> mAvailableLanguages;
 
     static {
@@ -42,6 +45,7 @@ public final class Languages {
     }
 
     public Languages(Context context) {
+        ((SyncthingApp) context.getApplicationContext()).component().inject(this);
         Map<String, String> tmpMap = new TreeMap<>();
         List<Locale> locales = Arrays.asList(LOCALES_TO_TEST);
         // Capitalize language names
@@ -58,7 +62,6 @@ public final class Languages {
         /* SYSTEM_DEFAULT is a fake one for displaying in a chooser menu. */
         tmpMap.put(USE_SYSTEM_DEFAULT, context.getString(R.string.pref_language_default));
         mAvailableLanguages = Collections.unmodifiableMap(tmpMap);
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     /**

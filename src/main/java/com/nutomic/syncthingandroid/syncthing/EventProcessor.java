@@ -21,6 +21,8 @@ import java.io.File;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 /**
  * Run by the syncthing service to convert syncthing events into local broadcasts.
  *
@@ -49,8 +51,10 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
 
     private final Context mContext;
     private final RestApi mApi;
+    @Inject SharedPreferences mPreferences;
 
     public EventProcessor(Context context, RestApi api) {
+        ((SyncthingApp) context.getApplicationContext()).component().inject(this);
         mContext = context;
         mApi = api;
     }
@@ -59,8 +63,7 @@ public class EventProcessor implements SyncthingService.OnWebGuiAvailableListene
     public void run() {
         // Restore the last event id if the event processor may have been restartet.
         if (mLastEventId == 0) {
-            mLastEventId = PreferenceManager.getDefaultSharedPreferences(mContext)
-                    .getLong(PREF_LAST_SYNC_ID, 0);
+            mLastEventId = mPreferences.getLong(PREF_LAST_SYNC_ID, 0);
         }
 
         // First check if the event number ran backwards.

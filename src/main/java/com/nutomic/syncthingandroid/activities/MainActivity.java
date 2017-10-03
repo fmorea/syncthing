@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -46,6 +45,8 @@ import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import static java.lang.Math.min;
 
@@ -83,6 +84,7 @@ public class MainActivity extends StateDialogActivity
 
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout          mDrawerLayout;
+    @Inject SharedPreferences mPreferences;
 
     /**
      * Handles various dialogs based on current state.
@@ -112,9 +114,8 @@ public class MainActivity extends StateDialogActivity
     private void showBatteryOptimizationDialogIfNecessary() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return;
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        boolean dontShowAgain = sp.getBoolean("battery_optimization_dont_show_again", false);
+        boolean dontShowAgain = mPreferences.getBoolean("battery_optimization_dont_show_again", false);
         if (dontShowAgain || mBatteryOptimizationsDialog != null ||
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                 pm.isIgnoringBatteryOptimizations(getPackageName())) {
@@ -134,7 +135,7 @@ public class MainActivity extends StateDialogActivity
                         // crash reports).
                         Log.w(TAG, "Request ignore battery optimizations not supported", e);
                         Toast.makeText(this, R.string.dialog_disable_battery_optimizations_not_supported, Toast.LENGTH_LONG).show();
-                        sp.edit().putBoolean("battery_optimization_dont_show_again", true).apply();
+                        mPreferences.edit().putBoolean("battery_optimization_dont_show_again", true).apply();
                     }
                 })
                 .setNeutralButton(R.string.dialog_disable_battery_optimization_later, null)
@@ -211,6 +212,7 @@ public class MainActivity extends StateDialogActivity
      */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ((SyncthingApp) getApplication()).component().inject(this);
 
         setContentView(R.layout.activity_main);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
