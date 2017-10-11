@@ -2,7 +2,7 @@
 
 set -e
 
-version=$(git describe --always)
+version=$(git describe --tags)
 regex='^[0-9]+\.[0-9]+\.[0-9]+$'
 if [[ ! ${version} =~ $regex ]]
 then
@@ -41,7 +41,7 @@ Push to Google Play
 
 read -p "Enter signing password: " password
 
-SIGNING_PASSWORD=$password ./gradlew assembleRelease
+SIGNING_PASSWORD=${password} ./gradlew assembleRelease
 
 # Upload apk and listing to Google Play
 ./gradlew publishRelease
