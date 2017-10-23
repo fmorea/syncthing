@@ -14,9 +14,7 @@ import com.nutomic.syncthingandroid.activities.MainActivity;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
 
 /**
- * Broadcast-receiver to control and configure SyncThing remotely
- *
- * Created by sqrt-1764 on 25.03.16.
+ * Broadcast-receiver to control and configure Syncthing remotely.
  */
 public class AppConfigReceiver extends BroadcastReceiver {
     private static final int ID_NOTIFICATION_BACKGROUND_ACTIVE = 3;
@@ -37,9 +35,8 @@ public class AppConfigReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         switch (intent.getAction()) {
             case ACTION_START:
-                context.startService(new Intent(context, SyncthingService.class));
+                BootReceiver.startServiceCompat(context);
                 break;
-
             case ACTION_STOP:
                 if (SyncthingService.alwaysRunInBackground(context)) {
                     final String msg = context.getString(R.string.appconfig_receiver_background_enabled);
