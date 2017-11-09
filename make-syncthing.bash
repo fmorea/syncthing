@@ -39,12 +39,12 @@ for ANDROID_ARCH in arm x86 arm64; do
 
     # Build standalone NDK toolchain if it doesn't exist.
     # https://developer.android.com/ndk/guides/standalone_toolchain.html
-    STANDALONE_NDK_DIR="${BUILD_DIR}/standalone-ndk/android-${TARGET_SDK}-${GOARCH}"
+    STANDALONE_NDK_DIR="${BUILD_DIR}/standalone-ndk/android-${MIN_SDK}-${GOARCH}"
 
     if [ ! -d "$STANDALONE_NDK_DIR" ]; then
         echo -e "Building standalone NDK\n"
         ${ANDROID_NDK_HOME}/build/tools/make-standalone-toolchain.sh \
-          --platform=android-${TARGET_SDK} --arch=${ANDROID_ARCH} \
+          --platform=android-${MIN_SDK} --arch=${ANDROID_ARCH} \
           --install-dir=${STANDALONE_NDK_DIR}
     fi
 
