@@ -124,7 +124,7 @@ public abstract class StateDialogActivity extends SyncthingActivity {
                 .setView(binding.getRoot())
                 .show();
 
-        if (!isFirstStart) {
+        if (!isGeneratingKeys) {
             new Handler().postDelayed(() -> {
                 if (isFinishing() || mLoadingDialog == null)
                     return;
