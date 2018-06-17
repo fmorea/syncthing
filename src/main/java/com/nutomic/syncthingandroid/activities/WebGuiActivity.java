@@ -19,6 +19,7 @@ import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import com.nutomic.syncthingandroid.R;
 import com.nutomic.syncthingandroid.syncthing.SyncthingService;
@@ -179,10 +180,16 @@ public class WebGuiActivity extends StateDialogActivity
     }
 
     /**
-     * Reads the SyncthingService.HTTPS_CERT_FILE Ca Cert key  and loads it in memory
+     * Reads the SyncthingService.HTTPS_CERT_FILE Ca Cert key and loads it in memory
      */
     private void loadCaCert() {
         InputStream inStream = null;
+        File httpsCertFile = Constants.getHttpsCertFile(this);
+        if (!httpsCertFile.exists()) {
+            Toast.makeText(WebGuiActivity.this, R.string.config_file_missing, Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
         try {
             String httpsCertPath = getFilesDir() + "/" + SyncthingService.HTTPS_CERT_FILE;
             inStream = new FileInputStream(httpsCertPath);
