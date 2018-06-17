@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -220,11 +221,21 @@ public class ShareActivity extends StateDialogActivity
         }
 
         protected void onPreExecute() {
-            mProgress = ProgressDialog.show(ShareActivity.this, null,
-                    getString(R.string.copy_progress), true);
+            // Get a reference to the activity if it is still there.
+            ShareActivity shareActivity = refShareActivity.get();
+            // shareActivity cannot be null before the task executes.
+            mProgress = ProgressDialog.show(shareActivity, null,
+                    shareActivity.getString(R.string.copy_progress), true);
         }
 
         protected Boolean doInBackground(Void... params) {
+            // Get a reference to the activity if it is still there.
+            ShareActivity shareActivity = refShareActivity.get();
+            if (shareActivity == null || shareActivity.isFinishing()) {
+                cancel(true);
+                return true;
+            }
+
             boolean isError = false;
             for (Map.Entry<Uri, String> entry : mFiles.entrySet()) {
                 InputStream inputStream = null;
@@ -234,7 +245,7 @@ public class ShareActivity extends StateDialogActivity
                         mIgnored++;
                         continue;
                     }
-                    inputStream = getContentResolver().openInputStream(entry.getKey());
+                    inputStream = shareActivity.getContentResolver().openInputStream(entry.getKey());
                     Files.asByteSink(outFile).writeFrom(inputStream);
                     mCopied++;
                 } catch (FileNotFoundException e) {
@@ -266,10 +277,10 @@ public class ShareActivity extends StateDialogActivity
                             mFolder.label),
                     Toast.LENGTH_LONG).show();
             if (isError) {
-                Toast.makeText(ShareActivity.this, getString(R.string.copy_exception),
+                Toast.makeText(shareActivity, shareActivity.getString(R.string.copy_exception),
                         Toast.LENGTH_SHORT).show();
             }
-            finish();
+            shareActivity.finish();
         }
     }
 }
