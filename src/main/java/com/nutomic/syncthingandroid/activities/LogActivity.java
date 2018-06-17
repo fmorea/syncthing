@@ -19,6 +19,7 @@ import com.nutomic.syncthingandroid.R;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 
 /**
  * Shows the log information from Syncthing.
@@ -29,7 +30,7 @@ public class LogActivity extends SyncthingActivity {
 
     private TextView mLog;
     private boolean mSyncthingLog = true;
-    private AsyncTask mFetchLogTask;
+    private AsyncTask mFetchLogTask = null;
     private ScrollView mScrollView;
     private Intent mShareIntent;
 
@@ -102,7 +103,7 @@ public class LogActivity extends SyncthingActivity {
     }
 
     private void updateLog() {
-        if (mFetchLogTask != null)
+        if (mFetchLogTask != null) {
             mFetchLogTask.cancel(true);
         mLog.setText("Retrieving logs...");
         mFetchLogTask = new AsyncTask<Void, Void, String>() {
@@ -153,7 +154,6 @@ public class LogActivity extends SyncthingActivity {
                 process.destroy();
             }
         }
-        return "";
     }
 
 }
