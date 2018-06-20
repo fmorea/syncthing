@@ -232,6 +232,17 @@ public class MainActivity extends StateDialogActivity
                     savedInstanceState, DevicesFragment.class.getName());
             mDrawerFragment = (DrawerFragment) fm.getFragment(
                     savedInstanceState, DrawerFragment.class.getName());
+        } else {
+            mFolderListFragment = new FolderListFragment();
+            mDeviceListFragment = new DeviceListFragment();
+            mDrawerFragment = new DrawerFragment();
+        }
+
+        mViewPager = findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+        TabLayout tabLayout = findViewById(R.id.tabContainer);
+        tabLayout.setupWithViewPager(mViewPager);
+        if (savedInstanceState != null) {
             mViewPager.setCurrentItem(savedInstanceState.getInt("currentTab"));
         } else {
             mFolderFragment = new FolderListFragment();
@@ -239,10 +250,7 @@ public class MainActivity extends StateDialogActivity
             mDrawerFragment = new DrawerFragment();
         }
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.drawer, mDrawerFragment)
-                .commit();
+        fm.beginTransaction().replace(R.id.drawer, mDrawerFragment).commit();
         mDrawerToggle = new Toggle(this, mDrawerLayout);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         mDrawerLayout.addDrawerListener(mDrawerToggle);
