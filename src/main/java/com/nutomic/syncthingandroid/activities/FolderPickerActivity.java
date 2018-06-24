@@ -82,7 +82,8 @@ public class FolderPickerActivity extends SyncthingActivity
             displayRoot();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        Boolean prefUseRoot = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Constants.PREF_USE_ROOT, false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !prefUseRoot) {
             Toast.makeText(this, R.string.kitkat_external_storage_warning, Toast.LENGTH_LONG)
                     .show();
         }
