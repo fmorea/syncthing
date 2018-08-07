@@ -131,6 +131,7 @@ public class SyncthingRunnable implements Runnable {
         try {
             if (wakeLock != null)
                 wakeLock.acquire();
+            increaseInotifyWatches();
 
             Map<String, String> env = pb.environment();
             // Set home directory to data folder for web GUI folder picker.
@@ -222,6 +223,20 @@ public class SyncthingRunnable implements Runnable {
      */
     private boolean useWakeLock() {
         return mPreferences.getBoolean(SyncthingService.PREF_USE_WAKE_LOCK, false);
+    }
+
+    /**
+     * Root-only: Temporarily increase "fs.inotify.max_user_watches"
+     * as Android has a default limit of 8192 watches.
+     * Manually run "sysctl fs.inotify" in a root shell terminal to check current limit.
+     */
+    private void increaseInotifyWatches() {
+        if (!mUseRoot || !Shell.SU.available()) {
+            Log.i(TAG, "increaseInotifyWatches: Root is not available. Cannot increase inotify limit.");
+            return;
+        }
+        int exitCode = Util.runShellCommand("sysctl -n -w fs.inotify.max_user_watches=131072\n", true);
+        Log.i(TAG, "increaseInotifyWatches: sysctl returned " + Integer.toString(exitCode));
     }
 
     /**
