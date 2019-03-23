@@ -6,6 +6,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.MultiSelectListPreference;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.nutomic.syncthingandroid.R;
@@ -32,6 +33,8 @@ import java.util.Set;
  * surrounding double-quotes (") for UTF-8 names, or they are hex strings (if not quoted).
  */
 public class WifiSsidPreference extends MultiSelectListPreference {
+
+    private static final String TAG = "WifiSsidPreference";
 
     public WifiSsidPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -126,8 +129,26 @@ public class WifiSsidPreference extends MultiSelectListPreference {
                 return result;
             }
         }
-        // WiFi is turned off or device doesn't have WiFi
-        return null;
+
+        List<WifiConfiguration> configuredNetworks = null;
+        try {
+            configuredNetworks = wifiManager.getConfiguredNetworks();
+        } catch (SecurityException e) {
+            // See changes in Android Q, https://developer.android.com/reference/android/net/wifi/WifiManager.html#getConfiguredNetworks()
+            Log.e(TAG, "loadConfiguredNetworksSorted:", e);
+        }
+        if (configuredNetworks == null) {
+            return null;
+        }
+
+        WifiConfiguration[] result = configuredNetworks.toArray(new WifiConfiguration[configuredNetworks.size()]);
+        Arrays.sort(result, (lhs, rhs) -> {
+            // See #620: There may be null-SSIDs
+            String l = lhs.SSID != null ? lhs.SSID : "";
+            String r = rhs.SSID != null ? rhs.SSID : "";
+            return l.compareToIgnoreCase(r);
+        });
+        return result;
     }
 
 }
