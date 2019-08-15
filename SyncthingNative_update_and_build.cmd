@@ -21,7 +21,9 @@ REM
 where /q sed
 IF NOT "%ERRORLEVEL%" == "0" echo [ERROR] sed.exe not found on PATH. & goto :eos
 REM 
-IF "%CLEAN_SRC_BEFORE_BUILD%" == "1" call :cleanBeforeBuild 
+IF "%CLEAN_BEFORE_BUILD%" == "1" call :cleanBeforeBuild 
+REM 
+IF "%SKIP_CHECKOUT_SRC%" == "1" goto :afterCheckoutSrc
 REM 
 echo [INFO] Fetching submodule "Syncthing" 1/2 ...
 md "%SCRIPT_PATH%syncthing\src\github.com\syncthing\syncthing" 2> NUL:
@@ -45,6 +47,7 @@ git checkout %DESIRED_SUBMODULE_VERSION% 2>&1 | find /i "HEAD is now at"
 SET RESULT=%ERRORLEVEL%
 IF NOT "%RESULT%" == "0" echo [ERROR] git checkout FAILED. & goto :eos
 REM 
+:afterCheckoutSrc
 cd /d "%SCRIPT_PATH%"
 REM
 IF "%USE_GO_DEV%" == "1" call :applyGoDev
@@ -70,7 +73,7 @@ REM 	call :cleanBeforeBuild
 REM 
 echo [INFO] Performing cleanup ...
 rd /s /q "app\src\main\jniLibs" 2> NUL:
-rd /s /q "syncthing\src\github.com\syncthing\syncthing" 2> NUL:
+IF NOT "%SKIP_CHECKOUT_SRC%" == "1" rd /s /q "syncthing\src\github.com\syncthing\syncthing" 2> NUL:
 REM
 goto :eof
 
