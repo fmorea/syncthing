@@ -136,8 +136,9 @@ public class ShareActivity extends StateDialogActivity
         mShareTitle.setText(getResources().getQuantityString(R.plurals.file_name_title,
                 files.size() > 1 ? 2 : 1));
         mShareButton.setOnClickListener(view -> {
-            if (files.size() == 1)
+            if (files.size() == 1) {
                 files.entrySet().iterator().next().setValue(mShareName.getText().toString());
+            }
             Folder folder = (Folder) mFoldersSpinner.getSelectedItem();
             new CopyFilesTask(files, folder).execute();
         });
