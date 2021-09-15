@@ -88,8 +88,7 @@ REM Syntax:
 REM 	call :applyGoDev
 REM 
 echo [INFO] Using go-dev instead of go-stable for this build ...
-sed -e "s/GO_EXPECTED_SHASUM_WINDOWS = '2f4849b512fffb2cf2028608aa066cc1b79e730fd146c7b89015797162f08ec5'/GO_EXPECTED_SHASUM_WINDOWS = '2fff556d0adaa6fda8300b0751a91a593c359f27265bc0fc7594f9eba794f907'/g" "syncthing\build-syncthing.py" > "%TEMP%\build-syncthing.py.tmp"
-move /y "%TEMP%\build-syncthing.py.tmp" "syncthing\build-syncthing.py" 1> NUL:
+type "syncthing\build-syncthing.py" 2> NUL: | psreplace "GO_EXPECTED_SHASUM_WINDOWS = '2f4849b512fffb2cf2028608aa066cc1b79e730fd146c7b89015797162f08ec5'" "GO_EXPECTED_SHASUM_WINDOWS = '2fff556d0adaa6fda8300b0751a91a593c359f27265bc0fc7594f9eba794f907'" "syncthing\build-syncthing.py"
 REM
 goto :eof
 
