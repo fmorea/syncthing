@@ -14,6 +14,7 @@ REM
 REM Runtime Variables.
 SET PATH=%PATH%;"%ProgramFiles%\Git\cmd"
 REM
+:checkPrerequisites
 echo [INFO] Checking prerequisites ...
 REM 
 IF NOT EXIST "%ProgramFiles%\Git\cmd\git.exe" echo [ERROR] git not found. Install "Git for Windows" first. Maybe you have to update the path in the batch file. & goto :eos
