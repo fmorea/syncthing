@@ -1,5 +1,5 @@
 [main]
-host = https://www.transifex.com
+host = https://app.transifex.com
 
 [syncthing-android.stringsxml]
 file_filter = src/main/res/values-<lang>/strings.xml
