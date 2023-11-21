@@ -56,7 +56,6 @@ REM
 echo [INFO] Building submodule syncthing_%DESIRED_SUBMODULE_VERSION% ...
 call gradlew %GRADLEW_PARAMS% buildNative
 SET RESULT=%ERRORLEVEL%
-IF "%USE_GO_DEV%" == "1" call :revertGoDev
 IF NOT "%RESULT%" == "0" echo [ERROR] gradlew buildNative FAILED. & goto :eos
 REM 
 echo [INFO] Reverting "go.mod" to checkout state ...
