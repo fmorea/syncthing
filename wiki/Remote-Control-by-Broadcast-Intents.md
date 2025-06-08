@@ -30,6 +30,4 @@ Tasker example action to start Syncthing:
 
 > Description: Start Syncthing
 
-If Syncthing is configured to *Start automatically on boot* those intents are ignored and the configuration in Syncthing takes precedence over the intents – resulting in ignoring them.
-
 For the **Automate** app there is an example-flow available in the Automate-Community that demonstrates the start- and the stop-intent. Search for *Syncthing*.
