@@ -42,6 +42,9 @@ jobs:
           cache-dependency-path: syncthing/src/github.com/syncthing/syncthing/go.sum
 
       - name: Setup Android NDK
+        env:
+          COPILOT_BUILDTOOLS_DIR: '${{ runner.temp }}/copilot-build-tools'
+        shell: bash
         run: |
           ANDROID_NDK_VERSION=r28
           ANDROID_NDK_ZIP="android-ndk-${ANDROID_NDK_VERSION}-linux.zip"
