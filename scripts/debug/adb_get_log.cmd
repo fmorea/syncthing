@@ -11,7 +11,7 @@ IF NOT DEFINED PID FOR /F "delims=" %%I IN ('adb shell pidof %PACKAGE_ID_DEBUG%'
 IF NOT DEFINED PID echo [ERROR] Syncthing-Fork is NOT installed. Please install it first. Stop. & goto :eof
 ::
 echo [INFO] Found PID: %PID%
-timeout /nobreak 1 >NUL:
+timeout /nobreak 3 >NUL:
 adb logcat --pid=%PID% *:V
 ::
 goto :eof
