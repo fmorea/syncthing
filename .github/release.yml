@@ -10,13 +10,16 @@ changelog:
 
   categories:
     - title: Fixes
+      change-template: "* $title #$number @$author"
       labels:
         - bug
 
     - title: Features
+      change-template: "* $title #$number @$author"
       labels:
         - enhancement
 
     - title: Other
+      change-template: "* $title #$number @$author"
       labels:
         - '*'
