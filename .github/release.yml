@@ -1,7 +1,12 @@
 changelog:
+  change-template: "* $title #$number @$author"
   exclude:
     labels:
+      - build
       - dependencies
+      - documentation
+      - invalid
+      - java
 
   categories:
     - title: Fixes
