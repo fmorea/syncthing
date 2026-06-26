@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include layout="@layout/widget_toolbar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sync_on_wifi_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/run_on_wifi_title" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sync_on_whitelisted_wifi_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/run_on_whitelisted_wifi_title" />
+
+            <LinearLayout
+                android:id="@+id/wifiSsidContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingLeft="16dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sync_on_metered_wifi_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/run_on_metered_wifi_title" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sync_on_mobile_data_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/run_on_mobile_data_title" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sync_on_power_source_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/power_source_title" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

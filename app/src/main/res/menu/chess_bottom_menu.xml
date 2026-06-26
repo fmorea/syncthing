@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_zoom_in"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Zoom In"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_zoom_out"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Zoom Out"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_draw_tool"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Draw Tool"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_undo"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Undo"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_redo"
+        android:icon="@android:drawable/ic_media_next"
+        android:title="Redo"
+        app:showAsAction="always" />
+</menu>
