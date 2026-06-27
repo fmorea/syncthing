@@ -7,16 +7,16 @@ import javax.inject.Inject;
 
 public class SyncthingApp extends Application {
 
-    @Inject DaggerComponent mComponent;
+    private DaggerComponent mComponent;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        DaggerDaggerComponent.builder()
+        mComponent = DaggerDaggerComponent.builder()
                 .syncthingModule(new SyncthingModule(this))
-                .build()
-                .inject(this);
+                .build();
+        mComponent.inject(this);
 
         // Set VM policy to avoid crash when sending folder URI to file manager.
         StrictMode.VmPolicy vmPolicy = new StrictMode.VmPolicy.Builder()

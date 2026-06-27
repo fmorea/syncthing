@@ -207,33 +207,21 @@ public class Util {
     /**
      * Check if a TCP is listening on the local device on a specific port.
      */
+    /**
+     * Check if a TCP is listening on the local device on a specific port.
+     */
     public static Boolean isTcpPortListening(Integer port) {
-        // t: tcp, l: listening, n: numeric
-        String output = runShellCommandGetOutput("netstat -t -l -n");
-        if (TextUtils.isEmpty(output)) {
-            Log.w(TAG, "isTcpPortListening: Failed to run netstat. Returning false.");
+        int oldTag = android.net.TrafficStats.getThreadStatsTag();
+        android.net.TrafficStats.setThreadStatsTag(0xBEEF);
+        try (java.net.ServerSocket socket = new java.net.ServerSocket()) {
+            socket.setReuseAddress(true);
+            socket.bind(new java.net.InetSocketAddress(java.net.InetAddress.getByName("127.0.0.1"), port));
             return false;
+        } catch (Exception e) {
+            return true;
+        } finally {
+            android.net.TrafficStats.setThreadStatsTag(oldTag);
         }
-        String[] results  = output.split("\n");
-        for (String line : results) {
-            if (TextUtils.isEmpty(output)) {
-                continue;
-            }
-            String[] words = line.split("\\s+");
-            if (words.length > 5) {
-                String protocol = words[0];
-                String localAddress = words[3];
-                String connState = words[5];
-                if (protocol.equals("tcp") || protocol.equals("tcp6")) {
-                    if (localAddress.endsWith(":" + Integer.toString(port)) &&
-                            connState.equalsIgnoreCase("LISTEN")) {
-                        // Port is listening.
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     /**

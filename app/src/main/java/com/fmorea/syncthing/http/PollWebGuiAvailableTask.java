@@ -24,10 +24,12 @@ public class PollWebGuiAvailableTask extends ApiRequest {
      * to find out if it's online.
      */
     private static final long WEB_GUI_POLL_INTERVAL = 150;
+    private static final int MAX_POLL_ATTEMPTS = 200; // ~30 seconds total
 
-    private final Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler(android.os.Looper.getMainLooper());
 
     private OnSuccessListener mListener;
+    private OnErrorListener mErrorListener;
 
     private Integer logIncidence = 0;
 
@@ -38,15 +40,22 @@ public class PollWebGuiAvailableTask extends ApiRequest {
 
     public PollWebGuiAvailableTask(Context context, URL url, String apiKey,
                                    OnSuccessListener listener) {
+        this(context, url, apiKey, listener, null);
+    }
+
+    public PollWebGuiAvailableTask(Context context, URL url, String apiKey,
+                                   OnSuccessListener listener, OnErrorListener errorListener) {
         super(context, url, "", apiKey);
         Log.i(TAG, "Starting to poll for web gui availability");
         mListener = listener;
+        mErrorListener = errorListener;
         performRequest();
     }
 
     public void cancelRequestsAndCallback() {
         synchronized(mListenerLock) {
             mListener = null;
+            mErrorListener = null;
         }
     }
 
@@ -71,6 +80,21 @@ public class PollWebGuiAvailableTask extends ApiRequest {
                 Log.v(TAG, "Cancelled callback and outstanding requests");
                 return;
             }
+        }
+
+        // Handle 307 Temporary Redirect (likely to HTTPS)
+        if (error.networkResponse != null && error.networkResponse.statusCode == 307) {
+            Log.i(TAG, "Web GUI redirected (307). Continuing poll...");
+        }
+
+        if (logIncidence > MAX_POLL_ATTEMPTS) {
+            Log.e(TAG, "Reached maximum poll attempts for web gui");
+            synchronized (mListenerLock) {
+                if (mErrorListener != null) {
+                    mErrorListener.onError(error);
+                }
+            }
+            return;
         }
 
         mHandler.postDelayed(this::performRequest, WEB_GUI_POLL_INTERVAL);

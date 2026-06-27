@@ -19,25 +19,37 @@ public abstract class ThemedAppCompatActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
         // Opt-in to edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         // Load theme.
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Integer prefAppTheme = Integer.parseInt(sharedPreferences.getString(
-                Constants.PREF_APP_THEME, 
-                Integer.toString(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM))
-        );
+        String themeValue = sharedPreferences.getString(Constants.PREF_APP_THEME, "system");
+        int prefAppTheme;
+        switch (themeValue) {
+            case "light":
+                prefAppTheme = AppCompatDelegate.MODE_NIGHT_NO;
+                break;
+            case "dark":
+                prefAppTheme = AppCompatDelegate.MODE_NIGHT_YES;
+                break;
+            case "system":
+            default:
+                prefAppTheme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+                break;
+        }
         AppCompatDelegate.setDefaultNightMode(prefAppTheme);
         
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        boolean isDarkTheme = (prefAppTheme == AppCompatDelegate.MODE_NIGHT_YES);
-        if (prefAppTheme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            isDarkTheme = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        if (controller != null) {
+            boolean isDarkTheme = (prefAppTheme == AppCompatDelegate.MODE_NIGHT_YES);
+            if (prefAppTheme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
+                isDarkTheme = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            }
+            controller.setAppearanceLightStatusBars(!isDarkTheme);
+            controller.setAppearanceLightNavigationBars(!isDarkTheme);
         }
-        controller.setAppearanceLightStatusBars(!isDarkTheme);
-        controller.setAppearanceLightNavigationBars(!isDarkTheme);
-
-        super.onCreate(savedInstanceState);
     }
 }

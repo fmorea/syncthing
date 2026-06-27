@@ -70,6 +70,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         object ScanQrCode : UiEvent()
         object ManageFriends : UiEvent()
         object OpenWebGui : UiEvent()
+        object OpenSettings : UiEvent()
         object OpenChess : UiEvent()
         object EditProfile : UiEvent()
         data class DeviceDiscovered(val deviceId: String) : UiEvent()
@@ -89,6 +90,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     fun scanQrCode() { _uiEvents.value = UiEvent.ScanQrCode }
     fun manageFriends() { _uiEvents.value = UiEvent.ManageFriends }
     fun openWebGui() { _uiEvents.value = UiEvent.OpenWebGui }
+    fun openSettings() { _uiEvents.value = UiEvent.OpenSettings }
     fun openChess() { _uiEvents.value = UiEvent.OpenChess }
     fun editProfile() { _uiEvents.value = UiEvent.EditProfile }
 
@@ -266,10 +268,16 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         } else if (state != SyncthingService.State.ACTIVE) {
             lastApiInstance = null
         }
-        _syncStatus.value = when {
-            state != SyncthingService.State.ACTIVE -> "Offline"
-            completion < 100 && completion >= 0 -> "Sincronizzazione in corso ($completion%)"
-            else -> "Attivo"
+        _syncStatus.value = when (state) {
+            SyncthingService.State.ACTIVE -> {
+                if (completion < 100 && completion >= 0) "Sincronizzazione in corso ($completion%)"
+                else "Attivo"
+            }
+            SyncthingService.State.STARTING -> "Avvio di Syncthing..."
+            SyncthingService.State.INIT -> "Inizializzazione..."
+            SyncthingService.State.ERROR -> "Errore di sistema"
+            SyncthingService.State.DISABLED -> "Servizio Disattivato"
+            else -> "Offline"
         }
     }
 

@@ -98,7 +98,7 @@ public class MainActivity extends SyncthingActivity implements SyncthingService.
                 showUsageReportingDialog(restApi);
             }
         } else if (currentState == SyncthingService.State.ERROR) {
-            finish();
+            Toast.makeText(this, "Errore durante l'avvio di Syncthing. Controlla i log.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -179,8 +179,8 @@ public class MainActivity extends SyncthingActivity implements SyncthingService.
         super.onResume();
         if (mNfcAdapter != null) {
             android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
-                    this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 
-                    android.app.PendingIntent.FLAG_MUTABLE);
+                    this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? android.app.PendingIntent.FLAG_MUTABLE : 0);
             mNfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
         }
         if (!PermissionUtil.haveStoragePermission(this)) {
@@ -281,6 +281,8 @@ public class MainActivity extends SyncthingActivity implements SyncthingService.
                 startActivityForResult(QRScannerActivity.intent(this), QR_SCAN_REQUEST_CODE);
             } else if (event instanceof LinkThingViewModel.UiEvent.OpenWebGui) {
                 startActivity(new Intent(this, WebGuiActivity.class));
+            } else if (event instanceof LinkThingViewModel.UiEvent.OpenSettings) {
+                startActivity(new Intent(this, com.fmorea.syncthing.settings.SettingsActivity.class));
             } else if (event instanceof LinkThingViewModel.UiEvent.ManageFriends) {
                 startActivity(new Intent(this, com.fmorea.syncthing.syncthing.NetworkManagementActivity.class));
             } else if (event instanceof LinkThingViewModel.UiEvent.OpenChess) {

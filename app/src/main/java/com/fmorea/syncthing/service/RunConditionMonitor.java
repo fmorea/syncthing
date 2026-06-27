@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.text.TextUtils;
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.os.SystemClock;
@@ -170,7 +171,7 @@ public class RunConditionMonitor {
                 new IntentFilter(ACTION_UPDATE_SHOULDRUN_DECISION));
 
         if (!Constants.isRunningOnEmulator()) {
-            triggeredSyncSleepIntervalS = Integer.parseInt(mPreferences.getString(Constants.PREF_SLEEP_INTERVAL_MINUTES,"60")) * 60;
+            triggeredSyncSleepIntervalS = safeParseInt(mPreferences.getString(Constants.PREF_SLEEP_INTERVAL_MINUTES,"60"), 60) * 60;
         }
         long lastSyncTimeSinceBootMillisecs = mPreferences.getLong(Constants.PREF_LAST_RUN_TIME, 0);
         long elapsedRealtime = SystemClock.elapsedRealtime();
@@ -197,18 +198,17 @@ public class RunConditionMonitor {
                 ", lastSyncTimeSinceBootMillisecs=" + lastSyncTimeSinceBootMillisecs +
                 ", elapsedSecondsSinceLastSync=" + elapsedSecondsSinceLastSync
         );
-        JobUtils.scheduleSyncTriggerServiceJob(
-                context,
-                mTimeConditionMatch ?
-                    triggeredSyncDurationS :
-                       /**
-                        * if triggeredSyncSleepIntervalS - elapsedSecondsSinceLastSync is < 0,
-                        * mTimeConditionMatch is set to true during updateShouldRunDecision().
-                        * Thus the false case cannot be triggered if the delay for scheduleSyncTriggerServiceJob would be negative
-                        */
-                        triggeredSyncSleepIntervalS - elapsedSecondsSinceLastSync,
-                !mTimeConditionMatch
-        );
+        
+        final int delay = mTimeConditionMatch ? triggeredSyncDurationS : Math.max(1, triggeredSyncSleepIntervalS - elapsedSecondsSinceLastSync);
+        final boolean start = !mTimeConditionMatch;
+        
+        new Thread(() -> {
+            try {
+                JobUtils.scheduleSyncTriggerServiceJob(context, delay, start);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to schedule initial sync trigger job", e);
+            }
+        }).start();
     }
 
     public void shutdown() {
@@ -361,14 +361,23 @@ public class RunConditionMonitor {
         }
     }
 
+    private int safeParseInt(String value, int defaultValue) {
+        if (TextUtils.isEmpty(value)) return defaultValue;
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     /**
      * Event handler that is fired after preconditions changed.
      * We then need to decide if syncthing should run.
      */
     public void updateShouldRunDecision() {
         if (!Constants.isRunningOnEmulator()) {
-            triggeredSyncDurationS = Integer.parseInt(mPreferences.getString(Constants.PREF_SYNC_DURATION_MINUTES, "5")) * 60;
-            triggeredSyncSleepIntervalS = Integer.parseInt(mPreferences.getString(Constants.PREF_SLEEP_INTERVAL_MINUTES, "60")) * 60;
+            triggeredSyncDurationS = safeParseInt(mPreferences.getString(Constants.PREF_SYNC_DURATION_MINUTES, "5"), 5) * 60;
+            triggeredSyncSleepIntervalS = safeParseInt(mPreferences.getString(Constants.PREF_SLEEP_INTERVAL_MINUTES, "60"), 60) * 60;
         }
 
         boolean newShouldRun = decideShouldRun();
@@ -757,9 +766,8 @@ public class RunConditionMonitor {
     }
 
     private boolean isFlightMode() {
-        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        return ni == null;
+        return android.provider.Settings.Global.getInt(mContext.getContentResolver(),
+                android.provider.Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
 
     private boolean isMeteredNetworkConnection() {

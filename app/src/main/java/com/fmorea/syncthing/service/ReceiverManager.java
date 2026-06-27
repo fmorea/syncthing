@@ -22,7 +22,7 @@ public class ReceiverManager {
     public static synchronized void registerReceiver(Context context, BroadcastReceiver receiver, IntentFilter intentFilter) {
         mReceivers.add(receiver);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, intentFilter, Context.RECEIVER_EXPORTED);
+            context.registerReceiver(receiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             context.registerReceiver(receiver, intentFilter);
         }

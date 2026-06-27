@@ -389,9 +389,9 @@ class OnboardingActivity : ThemedAppCompatActivity() {
     }
 
     private fun haveLocationPermission(): Boolean {
-        val coarseLocationGranted = ContextCompat.checkSelfPermission(
+        val fineLocationGranted = ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
         val backgroundLocationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -401,7 +401,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         } else { true }
 
-        return coarseLocationGranted && backgroundLocationGranted
+        return fineLocationGranted && backgroundLocationGranted
     }
 
 

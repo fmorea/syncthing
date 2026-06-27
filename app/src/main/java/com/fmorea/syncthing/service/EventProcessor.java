@@ -303,7 +303,8 @@ public class EventProcessor implements  Runnable, RestApi.OnReceiveEventListener
         
         Device device = new Device();
         device.deviceID = deviceId;
-        device.name = TextUtils.isEmpty(deviceName) ? "Amico (" + deviceId.substring(0, 7) + ")" : deviceName;
+        String shortId = deviceId.length() >= 7 ? deviceId.substring(0, 7) : deviceId;
+        device.name = TextUtils.isEmpty(deviceName) ? "Amico (" + shortId + ")" : deviceName;
         device.addresses = java.util.Collections.singletonList("dynamic");
         device.autoAcceptFolders = true;
         

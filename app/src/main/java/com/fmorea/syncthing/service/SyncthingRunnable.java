@@ -135,9 +135,11 @@ public class SyncthingRunnable implements Runnable {
         try {
             // Android 11 blocks local discovery if we did not acquire MulticastLock.
             WifiManager wifi = (WifiManager) mContext.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            multicastLock = wifi.createMulticastLock("multicastLock");
-            multicastLock.setReferenceCounted(true);
-            multicastLock.acquire();
+            if (wifi != null) {
+                multicastLock = wifi.createMulticastLock("multicastLock");
+                multicastLock.setReferenceCounted(true);
+                multicastLock.acquire();
+            }
 
             /**
              * Setup and run a new syncthing instance
@@ -253,8 +255,10 @@ public class SyncthingRunnable implements Runnable {
 
         for (String e : customEnvironment.split(" ")) {
             String[] e2 = e.split("=", 2);
-            LogV("Setting env var: [" + e2[0] + "]=[" + e2[1] + "]");
-            environment.put(e2[0], e2[1]);
+            if (e2.length == 2) {
+                LogV("Setting env var: [" + e2[0] + "]=[" + e2[1] + "]");
+                environment.put(e2[0], e2[1]);
+            }
         }
     }
 
@@ -279,11 +283,14 @@ public class SyncthingRunnable implements Runnable {
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             if (line.contains(Constants.FILENAME_SYNCTHING_BINARY)) {
-                String syncthingPID = line.trim().split("\\s+")[1];
-                if (enableLog) {
-                    Log.v(TAG, "getSyncthingPIDs: Found process PID [" + syncthingPID + "]");
+                String[] parts = line.trim().split("\\s+");
+                if (parts.length >= 2) {
+                    String syncthingPID = parts[1];
+                    if (enableLog) {
+                        Log.v(TAG, "getSyncthingPIDs: Found process PID [" + syncthingPID + "]");
+                    }
+                    syncthingPIDs.add(syncthingPID);
                 }
-                syncthingPIDs.add(syncthingPID);
             }
         }
         return syncthingPIDs;
@@ -313,7 +320,15 @@ public class SyncthingRunnable implements Runnable {
          * Wait for the syncthing instance to end.
          */
         LogV("Waiting for all syncthing instances to end ...");
+        long startTime = System.currentTimeMillis();
         while (!getSyncthingPIDs(false).isEmpty()) {
+            if (System.currentTimeMillis() - startTime > 3000) {
+                Log.w(TAG, "killSyncthing: Timeout waiting for processes to end. Force killing...");
+                for (String syncthingPID : syncthingPIDs) {
+                    Util.runShellCommand("kill -9 " + syncthingPID + "\n");
+                }
+                break;
+            }
             SystemClock.sleep(50);
         }
         Log.d(TAG, "killSyncthing: Complete.");
@@ -392,7 +407,7 @@ public class SyncthingRunnable implements Runnable {
             // LOG_FILE_BUFFER_SIZE is a multiple of the filesystem block size.
             byte[] buf = new byte[LOG_FILE_BUFFER_SIZE];
             long length = input.length();
-            long chunks = Math.ceilDiv(length, buf.length);
+            long chunks = (length + buf.length - 1) / buf.length;
             int newlinesRemaining = LOG_FILE_MAX_LINES + 1;
             long truncationOffset = -1;
 

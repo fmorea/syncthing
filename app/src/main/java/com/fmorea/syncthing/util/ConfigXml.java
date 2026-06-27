@@ -239,10 +239,12 @@ public class ConfigXml {
     public String getWebGuiUrl() {
         NodeList nodeGui = mConfig.getDocumentElement().getElementsByTagName("gui");
         if (nodeGui.getLength() > 0) {
-            NodeList nodeAddress = ((Element) nodeGui.item(0)).getElementsByTagName("address");
+            Element guiElement = (Element) nodeGui.item(0);
+            NodeList nodeAddress = guiElement.getElementsByTagName("address");
             if (nodeAddress.getLength() > 0) {
                 String address = nodeAddress.item(0).getTextContent();
-                String protocol = (address.startsWith("https://")) ? "https://" : "http://";
+                boolean useTls = Boolean.parseBoolean(guiElement.getAttribute("tls"));
+                String protocol = useTls ? "https://" : "http://";
                 address = address.replace("https://", "");
                 address = address.replace("http://", "");
                 return protocol + address;

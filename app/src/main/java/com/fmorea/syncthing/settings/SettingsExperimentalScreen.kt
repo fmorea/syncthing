@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.EntryProviderScope
 import com.fmorea.syncthing.R
 import com.fmorea.syncthing.service.Constants
+import com.fmorea.syncthing.util.LocalActivity
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import me.zhanghai.compose.preference.rememberPreferenceState
@@ -29,7 +30,7 @@ fun EntryProviderScope<SettingsRoute>.settingsExperimentalEntry() {
 @Composable
 fun SettingsExperimentalScreen() {
     val context = LocalContext.current
-    val activity = androidx.activity.compose.LocalActivity.current
+    val activity = LocalActivity.current
 
     val useTor = rememberPreferenceState(Constants.PREF_USE_TOR, false)
     val socksProxy = rememberPreferenceState(Constants.PREF_SOCKS_PROXY_ADDRESS, "")

@@ -17,30 +17,39 @@ public class JobUtils {
     private static final String TAG = "JobUtils";
 
     public static void scheduleSyncTriggerServiceJob(Context context, int delayInSeconds, boolean startRun) {
-        if (delayInSeconds < 0) {
-            delayInSeconds = 0;
-        }
-
-        ComponentName serviceComponent = new ComponentName(context, SyncTriggerJobService.class);
-        JobInfo.Builder builder = new JobInfo.Builder(0, serviceComponent);
-
-        // Wait at least "delayInSeconds".
-        builder.setMinimumLatency(delayInSeconds * 1000);
-
-        // Syncthing should start after the delay if startRun is true, and otherwise stop
-        // The PersistableBundle is used to forward this information to the SyncTriggerJobService
-        if (startRun) {
-            PersistableBundle extraBundle = new PersistableBundle();
-            extraBundle.putInt(EXTRA_BEGIN_ACTIVE_TIME_WINDOW, 1); // must be int, because boolean needs API 22
-            builder.setExtras(extraBundle);
-        }
+        final int finalDelay = Math.max(0, delayInSeconds);
+        final Context appContext = context.getApplicationContext();
 
         // Schedule the start of "SyncTriggerJobService" in "X" seconds.
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.schedule(builder.build());
-        Log.i(TAG, "Scheduled SyncTriggerJobService to run in " +
-                Integer.toString(delayInSeconds) +
-                " seconds.");
+        new Thread(() -> {
+            try {
+                // Use explicit package and class name strings to avoid component resolution errors
+                ComponentName serviceComponent = new ComponentName(
+                        appContext.getPackageName(), 
+                        "com.fmorea.syncthing.service.SyncTriggerJobService"
+                );
+                JobInfo.Builder builder = new JobInfo.Builder(1001, serviceComponent);
+
+                // Wait at least "delayInSeconds".
+                builder.setMinimumLatency(finalDelay * 1000L);
+
+                // Syncthing should start after the delay if startRun is true, and otherwise stop
+                // The PersistableBundle is used to forward this information to the SyncTriggerJobService
+                if (startRun) {
+                    PersistableBundle extraBundle = new PersistableBundle();
+                    extraBundle.putInt(EXTRA_BEGIN_ACTIVE_TIME_WINDOW, 1); // must be int, because boolean needs API 22
+                    builder.setExtras(extraBundle);
+                }
+
+                JobScheduler jobScheduler = (JobScheduler) appContext.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                if (jobScheduler != null) {
+                    jobScheduler.schedule(builder.build());
+                    Log.i(TAG, "Scheduled SyncTriggerJobService to run in " + finalDelay + " seconds.");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to schedule SyncTriggerJobService safely", e);
+            }
+        }).start();
     }
 
     public static void cancelAllScheduledJobs(Context context) {

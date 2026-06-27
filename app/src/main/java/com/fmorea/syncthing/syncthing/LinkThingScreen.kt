@@ -330,7 +330,11 @@ fun LinkThingScreen(
                             Text(
                                 syncStatus,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (syncStatus == "Attivo") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                                color = when {
+                                    syncStatus == "Attivo" -> MaterialTheme.colorScheme.primary
+                                    syncStatus.startsWith("Errore") -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.secondary
+                                }
                             )
                         }
                     },
@@ -355,12 +359,20 @@ fun LinkThingScreen(
                                 leadingIcon = { Icon(Icons.Default.QrCode, null) }
                             )
                             DropdownMenuItem(
-                                text = { Text("Web GUI (Syncthing)") },
+                                text = { Text("Impostazioni App") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.openSettings()
+                                },
+                                leadingIcon = { Icon(Icons.Default.Settings, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Console Avanzata (Web)") },
                                 onClick = {
                                     showMenu = false
                                     viewModel.openWebGui()
                                 },
-                                leadingIcon = { Icon(Icons.Default.Settings, null) }
+                                leadingIcon = { Icon(Icons.Default.Public, null) }
                             )
                             DropdownMenuItem(
                                 text = { Text("Gioca a Scacchi") },

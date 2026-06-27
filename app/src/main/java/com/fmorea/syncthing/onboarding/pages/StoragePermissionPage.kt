@@ -1,6 +1,6 @@
 package com.fmorea.syncthing.onboarding.pages
 
-import androidx.activity.compose.LocalActivity
+import com.fmorea.syncthing.util.LocalActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.runtime.Composable

@@ -258,6 +258,8 @@ public class SyncthingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+        mNotificationHandler.updatePersistentNotification(this);
+
         if (!mStoragePermissionGranted) {
             Log.e(TAG, "User revoked storage permission. Stopping service.");
             if (mNotificationHandler != null) {
@@ -280,7 +282,6 @@ public class SyncthingService extends Service {
                 this::applyCustomRunConditions
             );
         }
-        mNotificationHandler.updatePersistentNotification(this);
 
         if (intent == null) {
             return START_STICKY;
@@ -381,14 +382,11 @@ public class SyncthingService extends Service {
             // Read and parse the config from disk.
             ConfigXml configXml = new ConfigXml(this);
             try {
-                configXml.loadConfig();
-            } catch (ConfigXml.OpenConfigException e) {
-                mNotificationHandler.showCrashedNotification(R.string.config_read_failed, "afterFreshServiceInstanceStart:OpenConfigException");
-                synchronized (mStateLock) {
-                    onServiceStateChange(State.ERROR);
+                if (Constants.getConfigFile(this).exists()) {
+                    configXml.loadConfig();
                 }
-                stopSelf();
-                return;
+            } catch (ConfigXml.OpenConfigException e) {
+                Log.w(TAG, "afterFreshServiceInstanceStart: Failed to load config, but not stopping service yet.");
             }
         }
     }
@@ -525,87 +523,96 @@ public class SyncthingService extends Service {
                 Log.e(TAG, "launchStartupTask: Wrong state " + mCurrentState + " detected. Cancelling.");
                 return;
             }
+            onServiceStateChange(State.STARTING);
         }
 
-        mConfig = new ConfigXml(this);
-        try {
-            mConfig.loadConfig();
-        } catch (ConfigXml.OpenConfigException e) {
-            mNotificationHandler.showCrashedNotification(R.string.config_read_failed, "launchStartupTask:OpenConfigException");
-            synchronized (mStateLock) {
-                onServiceStateChange(State.ERROR);
-            }
-            stopSelf();
-            return;
-        }
-
-        // Check if the SyncthingNative's configured webgui port is allocated by another app or process.
-        Integer webGuiTcpPort = mConfig.getWebGuiBindPort();
-        Boolean isWebUIPortListening = Util.isTcpPortListening(webGuiTcpPort);
-        if (isWebUIPortListening) {
-            // We shouldn't start SyncthingNative as we would wait forever for life signs on the configured port. (ANR)
-            Log.e(TAG, "launchStartupTask: WebUI tcp port " + Integer.toString(webGuiTcpPort) + " unavailable. Second instance?");
-            mNotificationHandler.showCrashedNotification(R.string.webui_tcp_port_unavailable, Integer.toString(webGuiTcpPort));
-            return;
-        }
-
-        onServiceStateChange(State.STARTING);
-
-        if (mRestApi == null) {
+        new Thread(() -> {
+            mConfig = new ConfigXml(this);
             try {
-                mRestApi = new RestApi(this, new java.net.URL(mConfig.getWebGuiUrl()), mConfig.getApiKey(),
-                        this::onApiAvailable, () -> onServiceStateChange(mCurrentState));
-            } catch (java.net.MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-            Log.i(TAG, "Web GUI will be available at " + mConfig.getWebGuiUrl());
-        }
-
-        // Check mSyncthingRunnable lifecycle and create singleton.
-        if (mSyncthingRunnable != null || mSyncthingRunnableThread != null) {
-            Log.e(TAG, "onStartupTaskCompleteListener: Syncthing binary lifecycle violated");
-            return;
-        }
-        mSyncthingRunnable = new SyncthingRunnable(this, srCommand);
-
-        /**
-         * Check if an old syncthing instance is still running.
-         * This happens after an in-place app upgrade. If so, end it.
-         */
-        mSyncthingRunnable.killSyncthing();
-
-        // Start the syncthing binary in a separate thread.
-        Thread.UncaughtExceptionHandler syncthingRunnableThreadExceptionHandler = new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread syncthingRunnableThread, Throwable ex) {
-                    Log.e(TAG, "mSyncthingRunnableThread: Uncaught exception [ExecutableNotFoundException]");
-                    mNotificationHandler.showCrashedNotification(R.string.executable_not_found, Constants.FILENAME_SYNCTHING_BINARY);
+                mConfig.loadConfig();
+            } catch (ConfigXml.OpenConfigException e) {
+                mNotificationHandler.showCrashedNotification(R.string.config_read_failed, "launchStartupTask:OpenConfigException");
+                synchronized (mStateLock) {
+                    onServiceStateChange(State.ERROR);
                 }
-        };
-        mSyncthingRunnableThread = new Thread(mSyncthingRunnable);
-        mSyncthingRunnableThread.setUncaughtExceptionHandler(syncthingRunnableThreadExceptionHandler);
-        mSyncthingRunnableThread.start();
+                stopSelf();
+                return;
+            }
 
-        /**
-         * Wait for the web-gui of the native syncthing binary to come online.
-         *
-         * In case the binary is to be stopped, also be aware that another thread could request
-         * to stop the binary in the time while waiting for the GUI to become active. See the comment
-         * for {@link SyncthingService#onDestroy} for details.
-         */
-        if (mPollWebGuiAvailableTask == null) {
-            try {
-                mPollWebGuiAvailableTask = new PollWebGuiAvailableTask(
-                        this, new java.net.URL(mConfig.getWebGuiUrl()), mConfig.getApiKey(), result -> {
-                    Log.i(TAG, "Web GUI has come online at " + mConfig.getWebGuiUrl());
-                    if (mRestApi != null) {
-                        mRestApi.readConfigFromRestApi();
+            // Check if the SyncthingNative's configured webgui port is allocated by another app or process.
+            Integer webGuiTcpPort = mConfig.getWebGuiBindPort();
+            Boolean isWebUIPortListening = Util.isTcpPortListening(webGuiTcpPort);
+            if (isWebUIPortListening) {
+                // We shouldn't start SyncthingNative as we would wait forever for life signs on the configured port. (ANR)
+                Log.e(TAG, "launchStartupTask: WebUI tcp port " + Integer.toString(webGuiTcpPort) + " unavailable. Second instance?");
+                mNotificationHandler.showCrashedNotification(R.string.webui_tcp_port_unavailable, Integer.toString(webGuiTcpPort));
+                synchronized (mStateLock) {
+                    onServiceStateChange(State.ERROR);
+                }
+                return;
+            }
+
+            if (mRestApi == null) {
+                try {
+                    mRestApi = new RestApi(this, new java.net.URL(mConfig.getWebGuiUrl()), mConfig.getApiKey(),
+                            this::onApiAvailable, () -> onServiceStateChange(mCurrentState));
+                } catch (java.net.MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+                Log.i(TAG, "Web GUI will be available at " + mConfig.getWebGuiUrl());
+            }
+
+            // Check mSyncthingRunnable lifecycle and create singleton.
+            if (mSyncthingRunnable != null || mSyncthingRunnableThread != null) {
+                Log.e(TAG, "onStartupTaskCompleteListener: Syncthing binary lifecycle violated");
+                return;
+            }
+            mSyncthingRunnable = new SyncthingRunnable(this, srCommand);
+
+            /**
+             * Check if an old syncthing instance is still running.
+             * This happens after an in-place app upgrade. If so, end it.
+             */
+            mSyncthingRunnable.killSyncthing();
+
+            // Start the syncthing binary in a separate thread.
+            Thread.UncaughtExceptionHandler syncthingRunnableThreadExceptionHandler = new Thread.UncaughtExceptionHandler() {
+                    public void uncaughtException(Thread syncthingRunnableThread, Throwable ex) {
+                        Log.e(TAG, "mSyncthingRunnableThread: Uncaught exception [ExecutableNotFoundException]");
+                        mNotificationHandler.showCrashedNotification(R.string.executable_not_found, Constants.FILENAME_SYNCTHING_BINARY);
                     }
+            };
+            mSyncthingRunnableThread = new Thread(mSyncthingRunnable);
+            mSyncthingRunnableThread.setUncaughtExceptionHandler(syncthingRunnableThreadExceptionHandler);
+            mSyncthingRunnableThread.start();
+
+            /**
+             * Wait for the web-gui of the native syncthing binary to come online.
+             *
+             * In case the binary is to be stopped, also be aware that another thread could request
+             * to stop the binary in the time while waiting for the GUI to become active. See the comment
+             * for {@link SyncthingService#onDestroy} for details.
+             */
+            if (mPollWebGuiAvailableTask == null) {
+                try {
+                    mPollWebGuiAvailableTask = new PollWebGuiAvailableTask(
+                            this, new java.net.URL(mConfig.getWebGuiUrl()), mConfig.getApiKey(), result -> {
+                        Log.i(TAG, "Web GUI has come online at " + mConfig.getWebGuiUrl());
+                        if (mRestApi != null) {
+                            mRestApi.readConfigFromRestApi();
+                        }
+                    }, error -> {
+                        Log.e(TAG, "Web GUI poll timed out");
+                        synchronized (mStateLock) {
+                            onServiceStateChange(State.ERROR);
+                        }
+                    }
+                    );
+                } catch (java.net.MalformedURLException e) {
+                    throw new RuntimeException(e);
                 }
-                );
-            } catch (java.net.MalformedURLException e) {
-                throw new RuntimeException(e);
             }
-        }
+        }).start();
     }
 
     /**
@@ -669,14 +676,17 @@ public class SyncthingService extends Service {
      * Sets {@link #mCurrentState} to newState.
      * Performs a synchronous shutdown of the native binary.
      */
+    private int shutdownRetryCount = 0;
     private void shutdown(State newState) {
-        if (mCurrentState == State.STARTING) {
-            Log.w(TAG, "Deferring shutdown until State.STARTING was left");
+        if (mCurrentState == State.STARTING && shutdownRetryCount < 10) {
+            Log.w(TAG, "Deferring shutdown until State.STARTING was left (attempt " + shutdownRetryCount + ")");
+            shutdownRetryCount++;
             mHandler.postDelayed(() -> {
                 shutdown(newState);
             }, 1000);
             return;
         }
+        shutdownRetryCount = 0;
 
         synchronized (mStateLock) {
             onServiceStateChange(newState);

@@ -213,9 +213,14 @@ public class RestApi {
             asyncQuerySystemStatusComplete = false;
         }
         new GetRequest(mContext, mUrl, GetRequest.URI_VERSION, mApiKey, null, result -> {
-            JsonObject json = new JsonParser().parse(result).getAsJsonObject();
-            mVersion = json.get("version").getAsString();
-            updateDebugFacilitiesCache();
+            if (TextUtils.isEmpty(result)) return;
+            try {
+                JsonObject json = new JsonParser().parse(result).getAsJsonObject();
+                mVersion = json.get("version").getAsString();
+                updateDebugFacilitiesCache();
+            } catch (Exception e) {
+                Log.w(TAG, "readConfigFromRestApi: Failed to parse version");
+            }
             synchronized (mAsyncQueryCompleteLock) {
                 asyncQueryVersionComplete = true;
                 checkReadConfigFromRestApiCompleted();
@@ -229,8 +234,10 @@ public class RestApi {
             }
         }, error -> {});
         getSystemStatus(info -> {
-            mLocalDeviceId = info.myID;
-            mUrVersionMax = info.urVersionMax;
+            if (info != null) {
+                mLocalDeviceId = info.myID;
+                mUrVersionMax = info.urVersionMax;
+            }
             synchronized (mAsyncQueryCompleteLock) {
                 asyncQuerySystemStatusComplete = true;
                 checkReadConfigFromRestApiCompleted();
@@ -283,13 +290,24 @@ public class RestApi {
     }
 
     private void onReloadConfigComplete(String configResult) {
-        Boolean configParseSuccess;
-        synchronized(mConfigLock) {
-            mConfig = mGson.fromJson(configResult, Config.class);
-            configParseSuccess = mConfig != null;
+        if (TextUtils.isEmpty(configResult)) {
+            Log.e(TAG, "onReloadConfigComplete: empty config result");
+            return;
         }
-        if (!configParseSuccess) {
-            throw new RuntimeException("config is null: " + configResult);
+        Config newConfig = null;
+        try {
+            newConfig = mGson.fromJson(configResult, Config.class);
+        } catch (Exception e) {
+            Log.e(TAG, "onReloadConfigComplete: failed to parse config", e);
+        }
+
+        if (newConfig == null) {
+            Log.e(TAG, "onReloadConfigComplete: parsed config is null");
+            return;
+        }
+
+        synchronized(mConfigLock) {
+            mConfig = newConfig;
         }
         Log.d(TAG, "onReloadConfigComplete: Successfully parsed configuration.");
 
@@ -313,15 +331,22 @@ public class RestApi {
                 Log.e(TAG, "ORCC: URI_PENDING_DEVICES, mNotificationHandler == null");
                 return;
             }
-            if (result == null) {
-                Log.e(TAG, "ORCC: URI_PENDING_DEVICES, result == null");
+            if (TextUtils.isEmpty(result)) {
+                Log.e(TAG, "ORCC: URI_PENDING_DEVICES, result is empty");
                 return;
             }
-            JsonObject jsonObject = new JsonParser().parse(result).getAsJsonObject();
-            if (jsonObject == null) {
+            JsonElement json;
+            try {
+                json = new JsonParser().parse(result);
+            } catch (Exception e) {
+                Log.w(TAG, "ORCC: Failed to parse URI_PENDING_DEVICES");
+                return;
+            }
+            if (json == null || !json.isJsonObject()) {
                 Log.e(TAG, "ORCC: URI_PENDING_DEVICES, jsonObject == null");
                 return;
             }
+            JsonObject jsonObject = json.getAsJsonObject();
             Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
             for (Map.Entry<String, JsonElement> deviceEntry: entries) {
                 final String resultDeviceId = deviceEntry.getKey();
@@ -345,15 +370,22 @@ public class RestApi {
                 Log.e(TAG, "ORCC: URI_PENDING_FOLDERS, mNotificationHandler == null");
                 return;
             }
-            if (result == null) {
-                Log.e(TAG, "ORCC: URI_PENDING_FOLDERS, result == null");
+            if (TextUtils.isEmpty(result)) {
+                Log.e(TAG, "ORCC: URI_PENDING_FOLDERS, result is empty");
                 return;
             }
-            JsonObject jsonObject = new JsonParser().parse(result).getAsJsonObject();
-            if (jsonObject == null) {
+            JsonElement json;
+            try {
+                json = new JsonParser().parse(result);
+            } catch (Exception e) {
+                Log.w(TAG, "ORCC: Failed to parse URI_PENDING_FOLDERS");
+                return;
+            }
+            if (json == null || !json.isJsonObject()) {
                 Log.e(TAG, "ORCC: URI_PENDING_FOLDERS, jsonObject == null");
                 return;
             }
+            JsonObject jsonObject = json.getAsJsonObject();
             Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
             for (Map.Entry<String, JsonElement> folderEntry: entries) {
                 final String resultFolderId = folderEntry.getKey();
@@ -369,15 +401,18 @@ public class RestApi {
                     }
                     final PendingFolder pendingFolder = mGson.fromJson(offeredByEntry.getValue(), PendingFolder.class);
                     Log.d(TAG, "ORCC: resultFolderId = " + resultFolderId + "('" + pendingFolder.label + "')");
-                    Device matchingDevice = Stream.of(getDevices(false))
+                    com.annimon.stream.Optional<Device> matchingDevice = Stream.of(getDevices(false))
                             .filter(d -> d.deviceID.equals(offeredByDeviceId))
-                            .findFirst()
-                            .get();
+                            .findFirst();
+                    String deviceDisplayName = matchingDevice.isPresent()
+                            ? matchingDevice.get().getDisplayName()
+                            : offeredByDeviceId.substring(0, 7);
+
                     Boolean isNewFolder = Stream.of(getFolders())
                             .noneMatch(f -> f.id.equals(resultFolderId));
                     mNotificationHandler.showFolderShareNotification(
                         offeredByDeviceId,
-                        matchingDevice.getDisplayName(),
+                        deviceDisplayName,
                         resultFolderId,
                         pendingFolder.label,
                         pendingFolder.receiveEncrypted,
@@ -633,7 +668,7 @@ public class RestApi {
             folders = deepCopy(mConfig.folders, new TypeToken<List<Folder>>(){}.getType());
         }
         for (Folder folder : folders) {
-            if (folder.path.startsWith("~/")) {
+            if (folder.path != null && folder.path.startsWith("~/")) {
                 folder.path = folder.path.replaceFirst("^~", FileUtils.getSyncthingTildeAbsolutePath());
             }
         }
@@ -825,14 +860,20 @@ public class RestApi {
      */
     public void getSystemStatus(OnResultListener1<SystemStatus> listener) {
         new GetRequest(mContext, mUrl, GetRequest.URI_SYSTEM_STATUS, mApiKey, null, result -> {
-            SystemStatus systemStatus;
+            if (TextUtils.isEmpty(result)) {
+                listener.onResult(null);
+                return;
+            }
+            SystemStatus systemStatus = null;
             try {
                 systemStatus = mGson.fromJson(result, SystemStatus.class);
-                listener.onResult(systemStatus);
             } catch (Exception e) {
                 Log.e(TAG, "getSystemStatus: Parsing REST API result failed. result=" + result);
             }
-        }, error -> {});
+            listener.onResult(systemStatus);
+        }, error -> {
+            listener.onResult(null);
+        });
     }
 
     public boolean isConfigLoaded() {
@@ -847,14 +888,20 @@ public class RestApi {
     public void getDiscoveredDevices(OnResultListener1<Map<String, DiscoveredDevice>> listener) {
         new GetRequest(mContext, mUrl, GetRequest.URI_SYSTEM_DISCOVERY, mApiKey,
                 null, result -> {
-            Map<String, DiscoveredDevice> discoveredDevices = mGson.fromJson(result, new TypeToken<Map<String, DiscoveredDevice>>(){}.getType());
-            if (ENABLE_TEST_DATA) {
-                DiscoveredDevice fakeDiscoveredDevice = new DiscoveredDevice();
-                fakeDiscoveredDevice.addresses = new String[]{"tcp4://192.168.178.10:40004"};
-                discoveredDevices.put(TestData.DEVICE_A_ID, fakeDiscoveredDevice);
-                discoveredDevices.put(TestData.DEVICE_B_ID, fakeDiscoveredDevice);
+            if (TextUtils.isEmpty(result)) return;
+            try {
+                Map<String, DiscoveredDevice> discoveredDevices = mGson.fromJson(result, new TypeToken<Map<String, DiscoveredDevice>>(){}.getType());
+                if (discoveredDevices == null) return;
+                if (ENABLE_TEST_DATA) {
+                    DiscoveredDevice fakeDiscoveredDevice = new DiscoveredDevice();
+                    fakeDiscoveredDevice.addresses = new String[]{"tcp4://192.168.178.10:40004"};
+                    discoveredDevices.put(TestData.DEVICE_A_ID, fakeDiscoveredDevice);
+                    discoveredDevices.put(TestData.DEVICE_B_ID, fakeDiscoveredDevice);
+                }
+                listener.onResult(discoveredDevices);
+            } catch (Exception e) {
+                Log.w(TAG, "getDiscoveredDevices: Failed to parse result");
             }
-            listener.onResult(discoveredDevices);
         }, error -> {});
     }
 
@@ -909,13 +956,17 @@ public class RestApi {
                      * We got connection status information for ALL devices instead of one.
                      * It does not hurt storing all of them.
                      */
+                    if (TextUtils.isEmpty(result)) return;
                     Connections connections = mGson.fromJson(result, Connections.class);
+                    if (connections == null) return;
                     calculateConnectionStats(connections);
-                    for (Map.Entry<String, Connection> e : connections.connections.entrySet()) {
-                        mRemoteCompletion.setDeviceStatus(
-                                e.getKey(),             // deviceId
-                                e.getValue()            // connection
-                        );
+                    if (connections.connections != null) {
+                        for (Map.Entry<String, Connection> e : connections.connections.entrySet()) {
+                            mRemoteCompletion.setDeviceStatus(
+                                    e.getKey(),             // deviceId
+                                    e.getValue()            // connection
+                            );
+                        }
                     }
             }, error -> {});
             new GetRequest(mContext, mUrl, GetRequest.URI_STATS_DEVICE, mApiKey, null, result -> {
@@ -923,15 +974,19 @@ public class RestApi {
                      * We got the last seen timestamp for ALL devices - including the local device - instead of one.
                      * It does not hurt storing all of them.
                      */
-                    if (result == null) {
-                        Log.e(TAG, "getRemoteDeviceStatus: URI_STATS_DEVICE, result == null");
+                    if (TextUtils.isEmpty(result)) return;
+                    JsonElement json;
+                    try {
+                        json = new JsonParser().parse(result);
+                    } catch (Exception e) {
+                        Log.w(TAG, "getRemoteDeviceStatus: Failed to parse URI_STATS_DEVICE");
                         return;
                     }
-                    JsonObject jsonObject = new JsonParser().parse(result).getAsJsonObject();
-                    if (jsonObject == null) {
+                    if (json == null || !json.isJsonObject()) {
                         Log.e(TAG, "getRemoteDeviceStatus: URI_STATS_DEVICE, jsonObject == null");
                         return;
                     }
+                    JsonObject jsonObject = json.getAsJsonObject();
                     Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
                     for (Map.Entry<String, JsonElement> entry: entries) {
                         final String resultDeviceId = entry.getKey();
@@ -966,24 +1021,27 @@ public class RestApi {
      * Calculate transfer rates for each remote device connection and the "total device" stats.
      */
     private void calculateConnectionStats(Connections connections) {
+        if (connections == null || connections.connections == null) return;
         Long now = System.currentTimeMillis();
         Long msElapsed = now - mPreviousConnectionTime;
-        if (msElapsed < Constants.REST_UPDATE_INTERVAL) {
-            connections = deepCopy(mPreviousConnections.get(), Connections.class);
+        if (msElapsed < Constants.REST_UPDATE_INTERVAL && mPreviousConnections.isPresent()) {
             return;
         }
 
         mPreviousConnectionTime = now;
         for (Map.Entry<String, Connection> e : connections.connections.entrySet()) {
-            Connection prev =
-                    (mPreviousConnections.isPresent() && mPreviousConnections.get().connections.containsKey(e.getKey()))
+            Connection prev = (mPreviousConnections.isPresent() &&
+                    mPreviousConnections.get().connections != null &&
+                    mPreviousConnections.get().connections.containsKey(e.getKey()))
                             ? mPreviousConnections.get().connections.get(e.getKey())
                             : new Connection();
             e.getValue().setTransferRate(prev, msElapsed);
         }
-        Connection prev =
+        Connection prevTotal =
                 mPreviousConnections.transform(c -> c.total).or(new Connection());
-        connections.total.setTransferRate(prev, msElapsed);
+        if (connections.total != null) {
+            connections.total.setTransferRate(prevTotal, msElapsed);
+        }
         mPreviousConnections = Optional.of(connections);
     }
 
@@ -1283,7 +1341,7 @@ public class RestApi {
         Boolean folderRunScriptEnabled = sharedPreferences.getBoolean(
             Constants.DYN_PREF_OBJECT_FOLDER_RUN_SCRIPT(folder.id), false
         );
-        if (folderRunScriptEnabled) {
+        if (folderRunScriptEnabled && folder.path != null) {
             Util.runScriptSet(
                     folder.path + "/" + Constants.FILENAME_STFOLDER, 
                     new String[]{
@@ -1481,13 +1539,16 @@ public class RestApi {
 
     private void setVersioningCleanupIntervalS (Integer cleanupIntervalS) {
         synchronized (mConfigLock) {
-            for (Folder folder : mConfig.folders) {
-                folder.versioning.cleanupIntervalS = cleanupIntervalS;
+            if (mConfig != null && mConfig.folders != null) {
+                for (Folder folder : mConfig.folders) {
+                    if (folder.versioning != null) {
+                        folder.versioning.cleanupIntervalS = cleanupIntervalS;
+                    }
+                }
+                LogV("Set VersioningCleanupIntervalS to " + cleanupIntervalS);
+                sendConfig();
             }
-            LogV("Set VersioningCleanupIntervalS to " + cleanupIntervalS);
-            sendConfig();
         }
-        return;
     }
 
     private void onTotalSyncCompletionChange() {
