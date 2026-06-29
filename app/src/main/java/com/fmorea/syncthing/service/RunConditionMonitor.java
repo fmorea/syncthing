@@ -90,7 +90,6 @@ public class RunConditionMonitor {
     }
 
     private final Context mContext;
-    private ReceiverManager mReceiverManager;
     private @Nullable SyncTriggerReceiver mSyncTriggerReceiver = null;
     private @Nullable UpdateShouldRunDecisionReceiver mUpdateShouldRunDecisionReceiver = null;
     private Resources res;
@@ -183,7 +182,7 @@ public class RunConditionMonitor {
          */
         if (lastSyncTimeSinceBootMillisecs > elapsedRealtime) {
             SharedPreferences.Editor editor = mPreferences.edit();
-            editor.putLong(Constants.PREF_LAST_RUN_TIME, -triggeredSyncSleepIntervalS * 1000);
+            editor.putLong(Constants.PREF_LAST_RUN_TIME, -triggeredSyncSleepIntervalS * 1000L);
             editor.apply();
             lastSyncTimeSinceBootMillisecs = 0;
         }
@@ -232,7 +231,7 @@ public class RunConditionMonitor {
             localBroadcastManager.unregisterReceiver(mUpdateShouldRunDecisionReceiver);
             mUpdateShouldRunDecisionReceiver = null;
         }
-        mReceiverManager.unregisterAllReceivers(mContext);
+        ReceiverManager.unregisterAllReceivers(mContext);
     }
 
     private class BatteryReceiver extends BroadcastReceiver {
@@ -313,9 +312,9 @@ public class RunConditionMonitor {
                  * corrected immediately
                  */
                 long lastRunTimeMillis = mPreferences.getLong(Constants.PREF_LAST_RUN_TIME, 0);
-                if (lastDeterminedShouldRun && SystemClock.elapsedRealtime() - lastRunTimeMillis > triggeredSyncSleepIntervalS * 1000) {
+                if (lastDeterminedShouldRun && SystemClock.elapsedRealtime() - lastRunTimeMillis > triggeredSyncSleepIntervalS * 1000L) {
                     SharedPreferences.Editor editor = mPreferences.edit();
-                    editor.putLong(Constants.PREF_LAST_RUN_TIME, SystemClock.elapsedRealtime() - triggeredSyncSleepIntervalS * 1000 + 60*1000);
+                    editor.putLong(Constants.PREF_LAST_RUN_TIME, SystemClock.elapsedRealtime() - triggeredSyncSleepIntervalS * 1000L + 60*1000L);
                     editor.apply();
                 }
             }
@@ -582,7 +581,7 @@ public class RunConditionMonitor {
 
         // PREF_RUN_ON_TIME_SCHEDULE
         // set mTimeConditionMatch to true if the last run was more than triggeredSyncSleepIntervalS ago
-        if (SystemClock.elapsedRealtime() - mPreferences.getLong(Constants.PREF_LAST_RUN_TIME,0) > Integer.parseInt(mPreferences.getString(Constants.PREF_SLEEP_INTERVAL_MINUTES,"60")) * 60 * 1000)
+        if (SystemClock.elapsedRealtime() - mPreferences.getLong(Constants.PREF_LAST_RUN_TIME, 0) > triggeredSyncSleepIntervalS * 1000L)
             mTimeConditionMatch = true;
         if (prefRunOnTimeSchedule && !mTimeConditionMatch) {
             // Currently, we aren't within a "SyncthingNative should run" time frame.

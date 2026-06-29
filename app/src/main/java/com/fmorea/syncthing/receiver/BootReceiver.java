@@ -45,11 +45,14 @@ public class BootReceiver extends BroadcastReceiver {
      */
     public static void startServiceCompat(Context context) {
         Intent intent = new Intent(context, SyncthingService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        }
-        else {
-            context.startService(intent);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start service from background", e);
         }
     }
 

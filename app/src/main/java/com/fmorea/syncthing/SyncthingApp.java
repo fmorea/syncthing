@@ -1,7 +1,12 @@
 package com.fmorea.syncthing;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 import android.os.StrictMode;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.preference.PreferenceManager;
+import com.fmorea.syncthing.service.Constants;
+import com.fmorea.syncthing.util.PreferenceMigration;
 
 import javax.inject.Inject;
 
@@ -12,6 +17,18 @@ public class SyncthingApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        PreferenceMigration.migrate(sharedPreferences);
+        
+        // Apply theme early to avoid recreation
+        String themeValue = sharedPreferences.getString(Constants.PREF_APP_THEME, "system");
+        int prefAppTheme = switch (themeValue) {
+            case "light" -> AppCompatDelegate.MODE_NIGHT_NO;
+            case "dark" -> AppCompatDelegate.MODE_NIGHT_YES;
+            default -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        };
+        AppCompatDelegate.setDefaultNightMode(prefAppTheme);
 
         mComponent = DaggerDaggerComponent.builder()
                 .syncthingModule(new SyncthingModule(this))

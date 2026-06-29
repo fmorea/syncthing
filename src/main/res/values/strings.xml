@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Syncthing</string>
+    <string name="app_name">LinkThing</string>
 
     <string name="app_description">An open, trustworthy and decentralized file synchronization application.</string>
 
@@ -9,10 +9,10 @@
 
 
     <!-- Title for dialog displayed on first start -->
-    <string name="welcome_title">Welcome to Syncthing for Android</string>
+    <string name="welcome_title">Welcome to Syncthing Network for Android</string>
 
     <!-- Text for dialog displayed on first start -->
-    <string name="welcome_text">Syncthing is an open-source file synchronization application.\n\
+    <string name="welcome_text">Syncthing Network is an open-source file synchronization application.\n\
 To share data with other devices, you need to add their unique device IDs to the device list. Afterwards you can select which folders to share with which devices.\n\
 Please report any problems you encounter via Github.</string>
 
@@ -53,7 +53,7 @@ Please report any problems you encounter via Github.</string>
     <string name="dialog_disable_battery_optimization_message">Android may stop synchronization after some time. To prevent this, turn off battery optimization.\n\nSome devices have additional task-killing apps preinstalled. You should add Syncthing to their whitelist, as well.</string>
     <string name="dialog_disable_battery_optimization_later">Later</string>
     <string name="dialog_disable_battery_optimization_dont_show_again">Don\'t show again</string>
-    <string name="dialog_disable_battery_optimization_turn_off">Turn off for Syncthing</string>
+    <string name="dialog_disable_battery_optimization_turn_off">Turn off for Syncthing Network</string>
     <string name="dialog_disable_battery_optimizations_not_supported">Your device does not support disabling battery optimizations</string>
 
     <!-- StateDialogActivity -->
@@ -65,7 +65,7 @@ Please report any problems you encounter via Github.</string>
     <!-- Shown instead of web_gui_loading if the key does not exist and has to be created -->
     <string name="web_gui_creating_key">Generating secure keys. This may take a few minutes.</string>
 
-    <string name="syncthing_loading_slow_message">Syncthing is taking very long to load. Use the logs to check for any errors.</string>
+    <string name="syncthing_loading_slow_message">Syncthing Network is taking very long to load. Use the logs to check for any errors.</string>
 
     <!-- FoldersFragment -->
 
@@ -124,7 +124,7 @@ Please report any problems you encounter via Github.</string>
 
     <string name="restart">Restart</string>
 
-    <string name="dialog_confirm_restart">Do you want to restart Syncthing?</string>
+    <string name="dialog_confirm_restart">Do you want to restart Syncthing Network?</string>
 
     <!-- FolderSettingsFragment -->
 
@@ -246,16 +246,16 @@ Please report any problems you encounter via Github.</string>
     <!-- Activity title -->
     <string name="settings_title">Settings</string>
 
-    <string name="category_syncthing_android">Syncthing-Android</string>
+    <string name="category_syncthing_android">Syncthing Network-Android</string>
 
     <!-- Preference title -->
     <string name="always_run_in_background">Always run in background</string>
 
     <!-- Preference summary in case it is enabled -->
-    <string name="always_run_in_background_enabled">Syncthing always runs in the background, according to preferences below.</string>
+    <string name="always_run_in_background_enabled">Syncthing Network always runs in the background, according to preferences below.</string>
 
     <!-- Preference summary in case it is disabled -->
-    <string name="always_run_in_background_disabled">Syncthing only runs when explicitly started, and can be stopped by menu button.</string>
+    <string name="always_run_in_background_disabled">Syncthing Network only runs when explicitly started, and can be stopped by menu button.</string>
 
     <string name="sync_only_charging">Run only when charging</string>
 
@@ -270,15 +270,15 @@ Please report any problems you encounter via Github.</string>
     <string name="sync_only_wifi_ssids_wifi_turn_on_wifi">Please turn on Wi-Fi to select networks.</string>
 
     <string name="respect_battery_saving_title">Respect Android battery saving setting</string>
-    <string name="respect_battery_saving_summary">Disable Syncthing if battery saving is active</string>
+    <string name="respect_battery_saving_summary">Disable Syncthing Network if battery saving is active</string>
 
     <string name="advanced_folder_picker">Use advanced Folder Picker</string>
 
     <string name="advanced_folder_picker_summary">Select any folder on the device for syncing</string>
 
-    <string name="use_root_title">Run Syncthing as Superuser</string>
+    <string name="use_root_title">Run Syncthing Network as Superuser</string>
 
-    <string name="use_root_summary">This is an unstable feature that may cause problems with Syncthing and with your device. If you encounter problems, you may have to reinstall Syncthing.</string>
+    <string name="use_root_summary">This is an unstable feature that may cause problems with Syncthing Network and with your device. If you encounter problems, you may have to reinstall Syncthing Network.</string>
 
     <string name="notification_type_title">Notification</string>
 
@@ -290,9 +290,9 @@ Please report any problems you encounter via Github.</string>
         <item>None</item>
     </string-array>
 
-    <string name="category_syncthing">Syncthing</string>
+    <string name="category_syncthing">Syncthing Network</string>
 
-    <string name="syncthing_options">Syncthing Options</string>
+    <string name="syncthing_options">Syncthing Network Options</string>
 
     <string name="device_name">Device Name</string>
 
@@ -314,7 +314,7 @@ Please report any problems you encounter via Github.</string>
 
     <string name="usage_reporting">Anonymous Usage Reporting</string>
 
-    <string name="syncthing_gui">Syncthing GUI</string>
+    <string name="syncthing_gui">Syncthing Network GUI</string>
 
     <string name="gui_address">GUI Listen Addresses</string>
 
@@ -326,13 +326,13 @@ Please report any problems you encounter via Github.</string>
 
     <string name="experimental_settings">Experimental</string>
 
-    <string name="keep_wakelock_while_binary_running">Keep the CPU awake while Syncthing is running</string>
+    <string name="keep_wakelock_while_binary_running">Keep the CPU awake while Syncthing Network is running</string>
 
     <string name="keep_wakelock_while_binary_running_summary">Use this setting if you experience unexpected disconnects while operating on battery. This will result in increased battery consumption.</string>
 
     <string name="run_as_foreground_service">Run service with foreground priority</string>
 
-    <string name="run_as_foreground_service_summary">If enabled, Syncthing will run with foreground priority and is less likely to be stopped by Android. This might cause other services to be stopped if available memory is low. A low-priority notification needs to be shown due to Android requirements, regardless of the \"Notification\" setting.</string>
+    <string name="run_as_foreground_service_summary">If enabled, Syncthing Network will run with foreground priority and is less likely to be stopped by Android. This might cause other services to be stopped if available memory is low. A low-priority notification needs to be shown due to Android requirements, regardless of the \"Notification\" setting.</string>
 
     <string name="use_tor_title">Use Tor</string>
 
@@ -368,11 +368,11 @@ Please report any problems you encounter via Github.</string>
 
     <!-- Syncthing was reset -->
     <string name="streset_question">This action should only be performed based on a recommendation from our support team.
-        \nAre you sure you want to clear Syncthing\'s index database?
+        \nAre you sure you want to clear Syncthing Network\'s index database?
     </string>
 
     <!-- Syncthing was reset -->
-    <string name="streset_done">Successfully reset Syncthing\'s database</string>
+    <string name="streset_done">Successfully reset Syncthing Network\'s database</string>
 
     <string name="category_about">About</string>
 
@@ -380,9 +380,9 @@ Please report any problems you encounter via Github.</string>
     <string name="open_log">Open Log</string>
 
     <!-- Summary for the log activity -->
-    <string name="open_log_summary">Open the Syncthing and Android log window</string>
+    <string name="open_log_summary">Open the Syncthing Network and Android log window</string>
 
-    <string name="notify_crashes_title">Notify about Syncthing crashes</string>
+    <string name="notify_crashes_title">Notify about Syncthing Network crashes</string>
 
     <string name="notify_crashes_summary">Show a notification whenever a Syncthing crash is detected</string>
 

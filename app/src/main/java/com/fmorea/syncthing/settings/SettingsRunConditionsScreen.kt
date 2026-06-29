@@ -218,9 +218,10 @@ fun SettingsRunConditionsScreen() {
             )
         }
         item {
+            val powerSourceIndex = powerSourceValues.indexOf(powerSource).coerceAtLeast(0)
             ListPreference(
                 title = { Text(stringResource(R.string.power_source_title)) },
-                summary = { Text(powerSourceNames[powerSourceValues.indexOf(powerSource)]) },
+                summary = { Text(powerSourceNames[powerSourceIndex]) },
                 value = powerSource,
                 onValueChange = {
                     powerSource = it
@@ -228,7 +229,8 @@ fun SettingsRunConditionsScreen() {
                 },
                 values = powerSourceValues.toList(),
                 valueToText = { value ->
-                    AnnotatedString(powerSourceNames[powerSourceValues.indexOf(value)])
+                    val index = powerSourceValues.indexOf(value).coerceAtLeast(0)
+                    AnnotatedString(powerSourceNames[index])
                 }
             )
         }
@@ -307,7 +309,7 @@ fun SettingsRunConditionsScreen() {
             val sleepIntervalError = stringResource(R.string.invalid_integer_value, 1, 30240/* 3w */)
             TextFieldPreference(
                 title = { Text(stringResource(R.string.sleep_interval_minutes_title)) },
-                summary = { Text(stringResource(R.string.sync_duration_minutes_summary, sleepInterval)) },
+                summary = { Text(stringResource(R.string.sleep_interval_minutes_summary, sleepInterval)) },
                 value = sleepInterval,
                 onValueChange = {
                     sleepInterval = it

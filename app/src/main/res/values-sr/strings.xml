@@ -108,7 +108,7 @@
     <string name="external_versioning_description">Први параметар командне линије је путања фасцикле, а други параметар је релативна путања у фасцикли.</string>
     <string name="webui_debugging_title">Отклањање грешака веб интерфејса</string>
     <string name="clean_out_after">Очисти после</string>
-    <string name="app_name">Syncthing-Fork</string>
+    <string name="app_name">LinkThing</string>
     <string name="introduction">Увод</string>
     <string name="back">Назад</string>
     <string name="refresh">Освежи</string>

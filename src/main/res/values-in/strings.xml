@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">Syncthing</string>
+  <string name="app_name">LinkThing</string>
   <string name="app_description">Terbuka, dapat dipercaya dan terdesentralisasi aplikasi sinkronisasi berkas</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->

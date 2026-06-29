@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.lifecycleScope
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.fmorea.syncthing.SyncthingApp
 import com.fmorea.syncthing.activities.SyncthingActivity
 import com.fmorea.syncthing.service.NotificationHandler
@@ -75,8 +77,10 @@ class SettingsActivity : SyncthingActivity() {
                 }
             }
 
+            val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
             ApplicationTheme {
                 CompositionLocalProvider(
+                    LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
                     LocalActivityScope provides activityScope,
                     LocalSettingsNavigator provides navigator,
                     LocalSyncthingService provides syncthingServiceState,

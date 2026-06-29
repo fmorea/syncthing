@@ -5,7 +5,6 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceManager;
@@ -24,29 +23,18 @@ public abstract class ThemedAppCompatActivity extends AppCompatActivity {
         // Opt-in to edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        // Load theme.
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String themeValue = sharedPreferences.getString(Constants.PREF_APP_THEME, "system");
-        int prefAppTheme;
-        switch (themeValue) {
-            case "light":
-                prefAppTheme = AppCompatDelegate.MODE_NIGHT_NO;
-                break;
-            case "dark":
-                prefAppTheme = AppCompatDelegate.MODE_NIGHT_YES;
-                break;
-            case "system":
-            default:
-                prefAppTheme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-                break;
-        }
-        AppCompatDelegate.setDefaultNightMode(prefAppTheme);
+        // Theme is applied in SyncthingApp.onCreate
         
+        // Setup status bar and navigation bar appearance
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (controller != null) {
-            boolean isDarkTheme = (prefAppTheme == AppCompatDelegate.MODE_NIGHT_YES);
-            if (prefAppTheme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String themeValue = sharedPreferences.getString(Constants.PREF_APP_THEME, "system");
+            boolean isDarkTheme;
+            if ("system".equals(themeValue)) {
                 isDarkTheme = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            } else {
+                isDarkTheme = "dark".equals(themeValue);
             }
             controller.setAppearanceLightStatusBars(!isDarkTheme);
             controller.setAppearanceLightNavigationBars(!isDarkTheme);

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">Syncthing</string>
+  <string name="app_name">LinkThing</string>
   <string name="app_description">Een open, betrouwbare en gedecentraliseerde applicatie voor bestandssynchronisatie.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -121,29 +121,29 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Bezig met aanmaken van veilige sleutels. Dit kan enkele minuten duren.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Welkom bij Syncthing voor Android</string>
+  <string name="welcome_title">Welkom bij Syncthing Network voor Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing is een open-source applicatie voor bestandssynchronisatie.\n\n
+  <string name="welcome_text">Syncthing Network is een open-source applicatie voor bestandssynchronisatie.\n\n
 Om gegevens te delen met anderen apparaten moet je hun unieke apparaat-ID toevoegen aan de lijst met apparaten. Nadien kun je kiezen welke mappen je wilt delen met welke apparaten.\n\n
 Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Instellingen</string>
-  <string name="category_syncthing_android">Syncthing-Android</string>
+  <string name="category_syncthing_android">Syncthing Network-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Altijd draaien in achtergrond</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing draait altijd in de achtergrond, volgens de hieronder weergegeven voorkeuren.</string>
+  <string name="always_run_in_background_enabled">Syncthing Network draait altijd in de achtergrond, volgens de hieronder weergegeven voorkeuren.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing draait enkel wanneer expliciet gestart, en kan gestopt worden door de menu-knop.</string>
+  <string name="always_run_in_background_disabled">Syncthing Network draait enkel wanneer expliciet gestart, en kan gestopt worden door de menu-knop.</string>
   <string name="sync_only_charging">Synchroniseer alleen tijdens opladen</string>
   <string name="sync_only_wifi">Synchroniseer alleen via Wi-Fi</string>
   <string name="advanced_folder_picker">Gebruik geavanceerd map-kiezer</string>
   <string name="advanced_folder_picker_summary">Selecteer een map op het toestel om te synchroniseren</string>
-  <string name="use_root_title">Synchroniseren als root</string>
-  <string name="use_root_summary">Syncthing uitvoeren als superuser</string>
-  <string name="category_syncthing">Syncthing</string>
-  <string name="syncthing_options">Syncthing-opties</string>
+  <string name="use_root_title">Synchroniseren als root met Syncthing Network</string>
+  <string name="use_root_summary">Syncthing Network uitvoeren als superuser</string>
+  <string name="category_syncthing">Syncthing Network</string>
+  <string name="syncthing_options">Syncthing Network-opties</string>
   <string name="device_name">Apparaatnaam</string>
   <string name="listen_address">Synchronisatieprotocol luister-adressen</string>
   <string name="max_recv_kbps">Inkomende snelheidslimiet (KiB/s)</string>
@@ -153,7 +153,7 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <string name="upnp_enabled">UPnP aanzetten</string>
   <string name="global_announce_server">Globale ontdekkingsserver</string>
   <string name="usage_reporting">Anoniem gebruiksrapportage</string>
-  <string name="syncthing_gui">Syncthing-GUI</string>
+  <string name="syncthing_gui">Syncthing Network-GUI</string>
   <string name="gui_address">GUI luister-adressen</string>
   <string name="gui_user">GUI-authenticatie gebruiker</string>
   <string name="gui_password">GUI-authenticatie wachtwoord</string>
@@ -182,23 +182,23 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <string name="streset_title">Database opnieuw instellen</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Deze actie moet je enkel uitvoeren wanneer ons ondersteuningsteam je dit aanraadt.
-\nZeker dat je de indexdatabase van Syncthing wilt wissen?</string>
+\nZeker dat je de indexdatabase van Syncthing Network wilt wissen?</string>
   <!--Syncthing was reset-->
-  <string name="streset_done">Opnieuw instellen van Syncthing-database geslaagd</string>
+  <string name="streset_done">Opnieuw instellen van Syncthing Network-database geslaagd</string>
   <string name="category_about">Over</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Log openen</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Open het Syncthing- en Android-logvenster</string>
+  <string name="open_log_summary">Open het Syncthing Network- en Android-logvenster</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Probleem rapporteren</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">De Syncthing-Android probleemtracker openen</string>
+  <string name="report_issue_summary">De Syncthing Network-Android probleemtracker openen</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Synthing-versie</string>
+  <string name="syncthing_version_title">Syncthing Network-versie</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Syncthing-Android versie</string>
+  <string name="app_version_title">Syncthing Network-Android versie</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Mapkiezer</string>
@@ -217,12 +217,12 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Bekijk Android-log</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Bekijk Syncthing-log</string>
+  <string name="log_syncthing_title">Bekijk Syncthing Network-log</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Delen</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing is uitgezet</string>
+  <string name="syncthing_disabled_title">Syncthing Network is uitgezet</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Wil je voorkeuren wijzigen?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -230,12 +230,12 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Afsluiten</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing draait</string>
+  <string name="syncthing_active">Syncthing Network draait</string>
   <string name="syncthing_active_foreground">Dienst wordt uitgevoerd met voorgrondprioriteit.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Directorystructuur te diep. Controleer op cyclische symlinks</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Aanmaken van een Syncthing-config mislukt. Controleer de logs.</string>
+  <string name="config_create_failed">Aanmaken van een Syncthing Network-config mislukt. Controleer de logs.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <!--RestApi-->
   <!--Title of the notification shown when a restart is needed-->
@@ -245,7 +245,7 @@ Gelieve alle problemen die je tegenkomt via GitHub te melden.</string>
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Later</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Klik hier om Syncthing nu te herstarten</string>
+  <string name="restart_notification_text">Klik hier om Syncthing Network nu te herstarten</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">Apparaat-ID gekopieerd naar klembord</string>
   <!--Strings representing units for file sizes, from smallest to largest-->

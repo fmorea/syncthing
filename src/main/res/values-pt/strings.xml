@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">Syncthing</string>
+  <string name="app_name">LinkThing</string>
   <string name="app_description">Uma aplicação de sincronização de ficheiros aberta, fiável e descentralizada.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -125,27 +125,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Gerando chaves seguras. Isto pode demorar uns minutos.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Bem vindo(a) ao Syncthing para Android</string>
+  <string name="welcome_title">Bem vindo(a) ao Syncthing Network para Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing é uma aplicação em código aberto de sincronização de ficheiros.\n\n\
+  <string name="welcome_text">Syncthing Network é uma aplicação em código aberto de sincronização de ficheiros.\n\n\
 Para partilhar dados com outros dispositivos, tem que adicionar o ID único de cada dispositivo à lista de dispositivos. Depois pode seleccionar que pastas pretende partilhar com que dispositivos.\n\n
 Relate quaisquer problemas que encontre via Github, por favor.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Configurações</string>
-  <string name="category_syncthing_android">Syncthing-Android</string>
+  <string name="category_syncthing_android">Syncthing Network-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Correr sempre em segundo plano</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing corre sempre em segundo plano, de acordo com as preferências abaixo.</string>
+  <string name="always_run_in_background_enabled">Syncthing Network corre sempre em segundo plano, de acordo com as preferências abaixo.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing apenas corre quando iniciado explicitamente e pode ser parado com o botão do menu.</string>
+  <string name="always_run_in_background_disabled">Syncthing Network apenas corre quando iniciado explicitamente e pode ser parado com o botão do menu.</string>
   <string name="sync_only_charging">Sincronizar apenas quando está a carregar</string>
   <string name="sync_only_wifi">Sincronizar apenas quando está em wifi</string>
   <string name="advanced_folder_picker">Usar selector de pasta avançado</string>
   <string name="advanced_folder_picker_summary">Seleccione qualquer pasta no dispositivo para sincronizar</string>
-  <string name="use_root_title">Sincronizar como root</string>
-  <string name="use_root_summary">Correr o Syncthing como superutilizador</string>
+  <string name="use_root_title">Sincronizar com Syncthing Network como root</string>
+  <string name="use_root_summary">Correr o Syncthing Network como superutilizador</string>
   <string name="notification_type_title">Notificação</string>
   <string name="notification_type_summary">Escolha o tipo de notificação</string>
   <string-array name="notification_type_entries">
@@ -153,8 +153,8 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
     <item>Baixa prioridade</item>
     <item>Nenhuma</item>
   </string-array>
-  <string name="category_syncthing">Syncthing</string>
-  <string name="syncthing_options">Opções do Syncthing</string>
+  <string name="category_syncthing">Syncthing Network</string>
+  <string name="syncthing_options">Opções do Syncthing Network</string>
   <string name="device_name">Nome do dispositivo</string>
   <string name="listen_address">Endereços de escuta do protocolo de sincronização</string>
   <string name="max_recv_kbps">Limite de velocidade de recepção (KiB/s)</string>
@@ -164,7 +164,7 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
   <string name="upnp_enabled">Activar UPnP</string>
   <string name="global_announce_server">Servidor da busca global</string>
   <string name="usage_reporting">Enviar relatórios anónimos de utilização</string>
-  <string name="syncthing_gui">Interface gráfica do Syncthing</string>
+  <string name="syncthing_gui">Interface gráfica do Syncthing Network</string>
   <string name="gui_address">Endereço de escuta da interface gráfica</string>
   <string name="gui_user">Utilizador da autenticação na interface gráfica</string>
   <string name="gui_password">Senha da autenticação na interface gráfica</string>
@@ -188,24 +188,24 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
   <string name="streset_title">Reiniciar a base de dados</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Esta acção só deve ser executada com base numa recomendação da nossa equipa de suporte.
-\nTem a certeza que quer limpar o índice da base de dados do Syncthing?
+\nTem a certeza que quer limpar o índice da base de dados do Syncthing Network?
     </string>
   <!--Syncthing was reset-->
-  <string name="streset_done">Base de dados do Syncthing reiniciada com sucesso.</string>
+  <string name="streset_done">Base de dados do Syncthing Network reiniciada com sucesso.</string>
   <string name="category_about">Sobre</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Abrir registo</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Abrir a janela de registo do Syncthing e do Android</string>
+  <string name="open_log_summary">Abrir a finestra de registo do Syncthing Network e do Android</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Reportar incidente</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Abrir o gestor de incidentes do Syncthing-Android</string>
+  <string name="report_issue_summary">Abrir o gestor de incidentes do Syncthing Network-Android</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Versão do </string>
+  <string name="syncthing_version_title">Versão do Syncthing Network</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Versão do Syncthing-Android</string>
+  <string name="app_version_title">Versão do Syncthing Network-Android</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Selector de pasta</string>
@@ -224,12 +224,12 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Ver registo do Android</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Ver o registo do Syncthing</string>
+  <string name="log_syncthing_title">Ver o registo do Syncthing Network</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Partilhar</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">O Syncthing está desactivado</string>
+  <string name="syncthing_disabled_title">O Syncthing Network está desactivado</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Quer alterar as suas preferências?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -237,11 +237,11 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Sair</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">O Syncthing está a correr</string>
+  <string name="syncthing_active">O Syncthing Network está a correr</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Árvore de pastas demasiado profunda. Verifique se existem ligações simbólicas cíclicas</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Falhou a criação duma configuração para o Syncthing. Verifique os registos, por favor.</string>
+  <string name="config_create_failed">Falhou a criação duma configuração para o Syncthing Network. Verifique os registos, por favor.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">fotos-de-%1$s</string>
   <!--RestApi-->
@@ -252,7 +252,7 @@ Relate quaisquer problemas que encontre via Github, por favor.</string>
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Mais tarde</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Clique aqui para reiniciar o syncthing agora</string>
+  <string name="restart_notification_text">Clique aqui para reiniciar o Syncthing Network agora</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">O ID do dispositivo foi copiado para a área de transferência</string>
   <!--Strings representing units for file sizes, from smallest to largest-->

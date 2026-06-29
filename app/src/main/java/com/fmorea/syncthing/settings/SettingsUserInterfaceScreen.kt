@@ -42,7 +42,7 @@ fun SettingsUserInterfaceScreen() {
     val themeNames = stringArrayResource(R.array.app_theme_names)
     val themeValues = stringArrayResource(R.array.app_theme_values)
 
-    var theme by rememberPreferenceState(Constants.PREF_APP_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM.toString())
+    var theme by rememberPreferenceState(Constants.PREF_APP_THEME, "system")
     val expertMode = rememberPreferenceState(Constants.PREF_EXPERT_MODE, false)
     val startInWebGui = rememberPreferenceState(Constants.PREF_START_INTO_WEB_GUI, false)
 
@@ -50,15 +50,20 @@ fun SettingsUserInterfaceScreen() {
         title = stringResource(R.string.category_user_interface),
     ) {
         item {
+            val themeIndex = themeValues.indexOf(theme).coerceAtLeast(0)
             ListPreference(
                 title = { Text(stringResource(R.string.preference_app_theme_title)) },
-                summary = { Text(themeNames[themeValues.indexOf(theme)]) },
+                summary = { Text(themeNames[themeIndex]) },
                 value = theme,
                 onValueChange = { newTheme ->
-                    val newThemeInt = newTheme.toIntOrNull()
-                    if (newTheme != theme && newThemeInt != null) {
+                    if (newTheme != theme) {
                         theme = newTheme
-                        AppCompatDelegate.setDefaultNightMode(newThemeInt)
+                        val mode = when (newTheme) {
+                            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+                            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+                            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                        }
+                        AppCompatDelegate.setDefaultNightMode(mode)
                         
                         // Force a small delay to allow SharedPreferences to persist before service reload if needed
                         scope.launch(Dispatchers.IO) {
@@ -68,11 +73,7 @@ fun SettingsUserInterfaceScreen() {
                                     if (restApi != null && restApi.isConfigLoaded) {
                                         val config = ConfigRouter(context)
                                         val gui = config.getGui(restApi)
-                                        gui.theme = when (newTheme) {
-                                            AppCompatDelegate.MODE_NIGHT_YES.toString() -> "dark"
-                                            AppCompatDelegate.MODE_NIGHT_NO.toString() -> "light"
-                                            else -> "default"
-                                        }
+                                        gui.theme = if (newTheme == "system") "default" else newTheme
                                         config.updateGui(restApi, gui)
                                         restApi.sendConfig()
                                     }
@@ -84,7 +85,10 @@ fun SettingsUserInterfaceScreen() {
                     }
                 },
                 values = themeValues.toList(),
-                valueToText = { value -> AnnotatedString(themeNames[themeValues.indexOf(value)]) }
+                valueToText = { value -> 
+                    val index = themeValues.indexOf(value).coerceAtLeast(0)
+                    AnnotatedString(themeNames[index]) 
+                }
             )
         }
         item {

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">Syncthing</string>
+  <string name="app_name">LinkThing</string>
   <string name="app_description">Отворено и заслужаващо доверие приложение за децентрализирано синхронизиране на файлове.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -127,27 +127,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Генериране на ключове за сигурност. Може да отнеме няколко минути.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Добре дошли в Syncthing за Android</string>
+  <string name="welcome_title">Добре дошли в Syncthing Network за Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing приложение с отворен код, за синхронизиране на файлове.\n\n\
+  <string name="welcome_text">Syncthing Network приложение с отворен код, за синхронизиране на файлове.\n\n\
 За да споделите информация с друго устройство е необходимо да добавите уникалния идентификатор, на даденото устройство, към списъка с устройства. Тогава можете да определите кои папки с кои устройства да се споделят.\n\n
 Ако срещнете проблеми моля докладвайте за тях чрез Github.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Настройки</string>
-  <string name="category_syncthing_android">Syncthing-Android</string>
+  <string name="category_syncthing_android">Syncthing Network-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Постоянна работа на заден фон</string>
   <!--Preference summary in case it is enabled-->
   <string name="always_run_in_background_enabled">Постоянно синхронизиране, според следващите опции.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Синхронизиране само след стартиране на Syncthing. Може бъде спряно от меню бутона \"Изход\".</string>
+  <string name="always_run_in_background_disabled">Синхронизиране само след стартиране на Syncthing Network. Може бъде спряно от меню бутона \"Изход\".</string>
   <string name="sync_only_charging">Синхронизиране само по време на зареждане</string>
   <string name="sync_only_wifi">Синхронизиране само чрез WiFi</string>
   <string name="advanced_folder_picker">Избор на папка за напреднали</string>
   <string name="advanced_folder_picker_summary">Изберете папка, от устройството, за синхронизиране</string>
-  <string name="use_root_title">Синхронизиране като Root</string>
-  <string name="use_root_summary">Стартира Syncthing с права на Superuser</string>
+  <string name="use_root_title">Синхронизиране с Syncthing Network като Root</string>
+  <string name="use_root_summary">Стартира Syncthing Network с права на Superuser</string>
   <string name="notification_type_title">Известия</string>
   <string name="notification_type_summary">Изберете тип известия</string>
   <string-array name="notification_type_entries">
@@ -155,8 +155,8 @@
     <item>С нисък приоритет</item>
     <item>Без известия</item>
   </string-array>
-  <string name="category_syncthing">Syncthing</string>
-  <string name="syncthing_options">Настройки на Syncthing</string>
+  <string name="category_syncthing">Syncthing Network</string>
+  <string name="syncthing_options">Настройки на Syncthing Network</string>
   <string name="device_name">Име на устройството</string>
   <string name="listen_address">Адрес за слушане на синхронизиращия протокол</string>
   <string name="max_recv_kbps">Входящ лимит на скоростта (KiB/s)</string>
@@ -166,7 +166,7 @@
   <string name="upnp_enabled">Включи UPnP</string>
   <string name="global_announce_server">Сървър за глобално откриване</string>
   <string name="usage_reporting"> Анонимен доклад за ползване на програмата</string>
-  <string name="syncthing_gui">Потребителски интерфейс на Syncthing</string>
+  <string name="syncthing_gui">Потребителски интерфейс на Syncthing Network</string>
   <string name="gui_address">Адрес за свързване с потребителския интерфейс</string>
   <string name="gui_user">Потребител за потребителския интерфейс</string>
   <string name="gui_password">Парола за потребителския интерфейс</string>
@@ -190,24 +190,24 @@
   <string name="streset_title">Нулиране на базата данни</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Действието трябва да се изпълнява след препоръка от поддържащия екип.
-\nНаистина ли желаете базата данни на Syncthing\'s да бъде нулирана?
+\nНаистина ли желаете базата данни на Syncthing Network да бъде нулирана?
     </string>
   <!--Syncthing was reset-->
-  <string name="streset_done">Базата данни на Syncthing е нулирана успешно</string>
+  <string name="streset_done">Базата данни на Syncthing Network е нулирана успешно</string>
   <string name="category_about">За програмата</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Отвори журнала</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Отваря журнала на Syncthing и Android</string>
+  <string name="open_log_summary">Отваря журнала на Syncthing Network и Android</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Съобщете за проблем</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Отваря уеб страницата за проблеми на Syncthing-Android</string>
+  <string name="report_issue_summary">Отваря уеб страницата за проблеми на Syncthing Network-Android</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Версия на Syncthing</string>
+  <string name="syncthing_version_title">Версия на Syncthing Network</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Версия на Syncthing-Android</string>
+  <string name="app_version_title">Версия на Syncthing Network-Android</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Избор на папка</string>
@@ -226,13 +226,13 @@
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Към журнала на Android</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Към журнала на Syncthing</string>
+  <string name="log_syncthing_title">Към журнала на Syncthing Network</string>
   <string name="retrieving_logs">Извличане на журналите...</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Сподели</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing не работи</string>
+  <string name="syncthing_disabled_title">Syncthing Network не работи</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Наистина ли желаете да промените настройките?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -240,11 +240,11 @@
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Изход</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing работи</string>
+  <string name="syncthing_active">Syncthing Network работи</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Твърде много папки. Проверяване за cyclic symlinks</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Създаването на конфигурационните файлове на Syncthing се провали. Проверете журнала.</string>
+  <string name="config_create_failed">Създаването на конфигурационните файлове на Syncthing Network се провали. Проверете журнала.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">%1$s-снимки</string>
   <!--RestApi-->
@@ -255,7 +255,7 @@
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">По-късно</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Натиснете за рестартиране на Syncthing</string>
+  <string name="restart_notification_text">Натиснете за рестартиране на Syncthing Network</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">Идентификаторът на устройството е копиран в клипборда</string>
   <!--Strings representing units for file sizes, from smallest to largest-->

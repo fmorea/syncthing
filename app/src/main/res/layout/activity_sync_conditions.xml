@@ -48,11 +48,18 @@
                 android:layout_height="wrap_content"
                 android:text="@string/run_on_mobile_data_title" />
 
-            <androidx.appcompat.widget.SwitchCompat
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:text="@string/power_source_title"
+                android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/sync_on_power_source_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/power_source_title" />
+                android:entries="@array/power_source_entries" />
 
         </LinearLayout>
     </ScrollView>
