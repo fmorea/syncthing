@@ -127,8 +127,8 @@ public class Constants {
      */
     public static final String syncthingCameraFolderId          = "syncthingAndroidCamera-52x89-60es4";
 
-    public static final String LINKTHING_FOLDER_ID = "linkthing-default-folder";
-    public static final String LINKTHING_DIR_NAME = "LinkThing";
+    public static final String LINKTHING_FOLDER_ID = "ethermesh-default-folder";
+    public static final String LINKTHING_DIR_NAME = "EtherMesh";
     public static final String LINKTHING_OUTBOX_NAME = "outbox";
     public static final String LINKTHING_MSG_EXT = ".msg";
 

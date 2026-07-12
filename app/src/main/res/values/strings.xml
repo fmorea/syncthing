@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LinkThing</string>
-    <string name="app_description">Syncthing Network is an open, trustworthy and decentralized file synchronization application.</string>
-    <string name="welcome_title">Welcome to Syncthing Network for Android</string>
-    <string name="welcome_text">Syncthing Network is an open-source file synchronization application.</string>
+    <string name="app_name">EtherMesh</string>
+    <string name="app_description">EtherMesh is an open, trustworthy and decentralized file synchronization application.</string>
+    <string name="welcome_title">Welcome to EtherMesh for Android</string>
+    <string name="welcome_text">EtherMesh is an open-source file synchronization application.</string>
     <string name="cont">Continue</string>
     <string name="main_menu">Main Menu</string>
     <string name="add_folder">Add Folder</string>
@@ -22,11 +22,11 @@
     <string name="dialog_disable_battery_optimization_message">Android may stop synchronization after some time. To prevent this, turn off battery optimization.</string>
     <string name="dialog_disable_battery_optimization_later">Later</string>
     <string name="dialog_disable_battery_optimization_dont_show_again">Don\'t show again</string>
-    <string name="dialog_disable_battery_optimization_turn_off">Turn off for Syncthing Network</string>
+    <string name="dialog_disable_battery_optimization_turn_off">Turn off for EtherMesh</string>
     <string name="dialog_disable_battery_optimizations_not_supported">Your device does not support disabling battery optimizations</string>
     <string name="api_loading">Loading&#8230;</string>
     <string name="web_gui_creating_key">Generating secure keys. This may take a few minutes.</string>
-    <string name="syncthing_loading_slow_message">Syncthing Network is taking very long to load.</string>
+    <string name="syncthing_loading_slow_message">EtherMesh is taking very long to load.</string>
     <string name="folders_fragment_title">Folders</string>
     <string name="folder_progress_format">%1$s (%2$d%%)</string>
     <string name="folder_list_empty">No folders found</string>
@@ -44,7 +44,7 @@
     <string name="ram_usage">RAM Usage</string>
     <string name="announce_server">Announce Server</string>
     <string name="restart">Restart</string>
-    <string name="dialog_confirm_restart">Do you want to restart Syncthing Network?</string>
+    <string name="dialog_confirm_restart">Do you want to restart EtherMesh?</string>
     <string name="folder_id">Folder ID</string>
     <string name="folder_label">Folder Label</string>
     <string name="directory">Directory</string>
@@ -91,10 +91,10 @@
     <string name="web_gui_title">Web GUI</string>
     <string name="web_gui_loading">Waiting for GUI</string>
     <string name="settings_title">Settings</string>
-    <string name="category_syncthing_android">Syncthing Network-Android</string>
+    <string name="category_syncthing_android">EtherMesh-Android</string>
     <string name="always_run_in_background">Always run in background</string>
-    <string name="always_run_in_background_enabled">Syncthing Network always runs in the background.</string>
-    <string name="always_run_in_background_disabled">Syncthing Network only runs when explicitly started.</string>
+    <string name="always_run_in_background_enabled">EtherMesh always runs in the background.</string>
+    <string name="always_run_in_background_disabled">EtherMesh only runs when explicitly started.</string>
     <string name="sync_only_charging">Run only when charging</string>
     <string name="sync_only_wifi">Run only on wifi</string>
     <string name="sync_only_wifi_ssids">Restrict to certain wifi networks</string>
@@ -102,10 +102,10 @@
     <string name="sync_only_wifi_ssids_values">Sync only while connected to: %1$s</string>
     <string name="sync_only_wifi_ssids_wifi_turn_on_wifi">Please turn on Wi-Fi to select networks.</string>
     <string name="respect_battery_saving_title">Respect Android battery saving setting</string>
-    <string name="respect_battery_saving_summary">Disable Syncthing Network if battery saving is active</string>
+    <string name="respect_battery_saving_summary">Disable EtherMesh if battery saving is active</string>
     <string name="advanced_folder_picker">Use advanced Folder Picker</string>
     <string name="advanced_folder_picker_summary">Select any folder on the device for syncing</string>
-    <string name="use_root_title">Run Syncthing Network as Superuser</string>
+    <string name="use_root_title">Run EtherMesh as Superuser</string>
     <string name="use_root_summary">This is an unstable feature.</string>
     <string name="notification_type_title">Notification</string>
     <string name="notification_type_summary">Choose the notification type</string>
@@ -119,8 +119,8 @@
         <item>low_priority</item>
         <item>none</item>
     </string-array>
-    <string name="category_syncthing">Syncthing Network</string>
-    <string name="syncthing_options">Syncthing Network Options</string>
+    <string name="category_syncthing">EtherMesh</string>
+    <string name="syncthing_options">EtherMesh Options</string>
     <string name="device_name">Device Name</string>
     <string name="listen_address">Sync Protocol Listen Addresses</string>
     <string name="max_recv_kbps">Incoming Rate Limit (KiB/s)</string>
@@ -131,7 +131,7 @@
     <string name="global_announce_server">Global Discovery Server</string>
     <string name="enable_relaying">Enable Relaying</string>
     <string name="usage_reporting">Anonymous Usage Reporting</string>
-    <string name="syncthing_gui">Syncthing Network GUI</string>
+    <string name="syncthing_gui">EtherMesh GUI</string>
     <string name="gui_address">GUI Listen Addresses</string>
     <string name="gui_user">GUI Authentication User</string>
     <string name="gui_password">GUI Authentication Password</string>
@@ -153,24 +153,24 @@
     <string name="toast_invalid_username">Invalid username</string>
     <string name="toast_invalid_password">Invalid password</string>
     <string name="streset_title">Reset Database</string>
-    <string name="streset_question">Are you sure you want to clear Syncthing Network\'s index database?</string>
+    <string name="streset_question">Are you sure you want to clear EtherMesh\'s index database?</string>
     <string name="streset_done">Successfully reset database</string>
     <string name="category_about">About</string>
     <string name="open_log">Open Log</string>
     <string name="open_log_summary">Open log window</string>
     <string name="notify_crashes_title">Notify about crashes</string>
     <string name="notify_crashes_summary">Show notification on crash</string>
-    <string name="syncthing_forum_title">Syncthing Network Forum</string>
+    <string name="syncthing_forum_title">EtherMesh Forum</string>
     <string name="syncthing_forum_summary">Go to forum</string>
     <string name="syncthing_forum_url" translatable="false">https://forum.syncthing.net/</string>
     <string name="report_issue_title">Report Issue</string>
     <string name="report_issue_summary">Open issue tracker</string>
-    <string name="issue_tracker_url" translatable="false">https://github.com/syncthing/syncthing-android/issues</string>
+    <string name="issue_tracker_url" translatable="false">https://github.com/syncthing/EtherMesh/issues</string>
     <string name="donate_title">Donate</string>
     <string name="donate_summary">Help us</string>
     <string name="donate_url" translatable="false">https://syncthing.net/#donate</string>
-    <string name="syncthing_version_title">Syncthing Network Version</string>
-    <string name="app_version_title">Syncthing Network-Android Version</string>
+    <string name="syncthing_version_title">EtherMesh Version</string>
+    <string name="app_version_title">EtherMesh-Android Version</string>
     <string name="folder_picker_title">Folder Picker</string>
     <string name="kitkat_external_storage_warning">External storage warning</string>
     <string name="directory_empty">Directory is Empty</string>
@@ -179,10 +179,10 @@
     <string name="create_folder_failed">Failed to create folder</string>
     <string name="log_title">Log</string>
     <string name="log_android_title">View Android Log</string>
-    <string name="log_syncthing_title">View Syncthing Network Log</string>
+    <string name="log_syncthing_title">View EtherMesh Log</string>
     <string name="android_log_title">View Android Log</string>
     <string name="share_title">Share</string>
-    <string name="share_activity_title">Save to Syncthing Network</string>
+    <string name="share_activity_title">Save to EtherMesh</string>
     <string name="save_title">Save</string>
     <string name="cancel_title">Cancel</string>
     <string name="folder_title">Folder</string>
@@ -205,8 +205,8 @@
         <item quantity="other">%1$d devices online</item>
     </plurals>
     <plurals name="syncthing_active_syncing_device_online">
-        <item quantity="one">Syncthing Network: Syncing (%1$d%%), %2$d device online</item>
-        <item quantity="other">Syncthing Network: Syncing (%1$d%%), %2$d devices online</item>
+        <item quantity="one">EtherMesh: Syncing (%1$d%%), %2$d device online</item>
+        <item quantity="other">EtherMesh: Syncing (%1$d%%), %2$d devices online</item>
     </plurals>
     <plurals name="copy_success_partially">
         <item quantity="one">%1$d file copied</item>
@@ -222,18 +222,18 @@
         <item quantity="one">File Name</item>
         <item quantity="other">Files List</item>
     </plurals>
-    <string name="syncthing_disabled_title">Syncthing Network is disabled</string>
+    <string name="syncthing_disabled_title">EtherMesh is disabled</string>
     <string name="syncthing_disabled_message">Change preferences?</string>
     <string name="syncthing_disabled_change_settings">Change Settings</string>
     <string name="exit">Exit</string>
-    <string name="syncthing_active">Syncthing Network is running</string>
+    <string name="syncthing_active">EtherMesh is running</string>
     <string name="syncthing_active_foreground">Foreground priority service.</string>
     <string name="toast_folder_observer_stack_overflow">Directory tree too deep.</string>
     <string name="config_create_failed">Failed to create config.</string>
     <string name="config_file_missing">Config file missing</string>
     <string name="default_folder_label">Camera</string>
     <string name="default_folder_id">%1$s-photos</string>
-    <string name="notification_crash_title">Syncthing Network has crashed</string>
+    <string name="notification_crash_title">EtherMesh has crashed</string>
     <string name="notification_crash_text">Click to view logs</string>
     <string name="restart_title">Restart Needed</string>
     <string name="restart_now">Restart Now</string>
@@ -245,21 +245,21 @@
     <string name="share_device_id_chooser">Share Device ID via</string>
     <string name="copy">Copy</string>
     <string name="key_generation_title">Key Generation</string>
-    <string name="location_permission_desc">Syncthing Network can be configured to run only on selected Wi-Fi networks. Android requires the location permission to read the active Wi-Fi name. You can select the networks later in the run conditions settings.</string>
+    <string name="location_permission_desc">EtherMesh can be configured to run only on selected Wi-Fi networks. Android requires the location permission to read the active Wi-Fi name. You can select the networks later in the run conditions settings.</string>
     <string name="location_permission_desc_api_29">Android 10+ Hint: Select \"Allow all the time\"</string>
     <string name="location_permission_title">Location Permission</string>
     <string name="notification_permission_title">Notification Permission</string>
     <string name="notification_permission_desc">Required to show status and alerts.</string>
     <string name="storage_permission_title">Storage Permission</string>
-    <string name="storage_permission_desc">Syncthing Network needs access to your files to synchronize them.</string>
-    <string name="syncthing_database_size">Syncthing Network Database Size</string>
+    <string name="storage_permission_desc">EtherMesh needs access to your files to synchronize them.</string>
+    <string name="syncthing_database_size">EtherMesh Database Size</string>
     <string name="os_open_file_limit">OS Open File Limit</string>
     <string name="privacy_title">Privacy</string>
     <string name="privacy_summary">Privacy policy and settings</string>
     <string name="open_source_licenses_summary">View open source licenses</string>
     <string name="category_behaviour">Behavior</string>
     <string name="behaviour_autostart_title">Autostart</string>
-    <string name="behaviour_autostart_summary">Start Syncthing Network when the device boots.</string>
+    <string name="behaviour_autostart_summary">Start EtherMesh when the device boots.</string>
     <string name="broadcast_service_control_title">Broadcast Service Control</string>
     <string name="broadcast_service_control_summary">Allow third-party apps to control the service via broadcasts.</string>
     <string name="dialog_settings_restart_app_title">Restart Required</string>
@@ -286,11 +286,11 @@
     <string name="config_export_failed">Config export failed</string>
     <string name="config_import_failed_no_path">Config import failed</string>
     <string name="category_user_interface">User Interface</string>
-    <string name="category_syncthing_options">Syncthing Network Options</string>
-    <string name="category_syncthing_options_summary">Available when Syncthing Network is running</string>
+    <string name="category_syncthing_options">EtherMesh Options</string>
+    <string name="category_syncthing_options_summary">Available when EtherMesh is running</string>
     <string name="category_debug">Troubleshooting</string>
     <string name="category_general">General</string>
-    <string name="syncthing_api_key">Syncthing Network API Key</string>
+    <string name="syncthing_api_key">EtherMesh API Key</string>
     <string name="api_key_copied_to_clipboard">API Key copied to clipboard</string>
     <string name="category_connections">Connections</string>
     <string name="enable_nat_traversal">NAT Traversal</string>
@@ -317,7 +317,7 @@
     <string name="verbose_log_title">Verbose Logging</string>
     <string name="verbose_log_summary">Enable more detailed logs</string>
     <string name="st_reset_database_title">Reset Database</string>
-    <string name="st_reset_database_question">Reset the Syncthing Network index database? This should only be done on support advice.</string>
+    <string name="st_reset_database_question">Reset the EtherMesh index database? This should only be done on support advice.</string>
     <string name="st_reset_database_done">Database reset successful</string>
     <string name="st_reset_deltas_title">Reset Delta Indexes</string>
     <string name="st_reset_deltas_question">Reset delta indexes? This should only be done on support advice.</string>
@@ -405,7 +405,7 @@
     <string name="ignore_doze_permission_desc">Run in background.</string>
     <string name="open_source_licenses_title">Open Source Licenses</string>
     <string name="run_conditions_title">Run Conditions</string>
-    <string name="run_conditions_summary">When Syncthing Network runs.</string>
+    <string name="run_conditions_summary">When EtherMesh runs.</string>
     <string name="run_on_wifi_title">Run on Wi-Fi</string>
     <string name="run_on_wifi_summary">Only on Wi-Fi.</string>
     <string name="run_on_metered_wifi_title">Run on Metered Wi-Fi</string>
@@ -442,39 +442,39 @@
     <string name="local_discovery_disabled">Local discovery is disabled in settings.</string>
     <string name="webui_tcp_port_unavailable">Web UI TCP port %s is already in use.</string>
     <string name="reason_run_condition_monitor_not_instantiated">RunConditionMonitor was not instantiated.</string>
-    <string name="notifications_persistent_channel">Syncthing Network is active</string>
+    <string name="notifications_persistent_channel">EtherMesh is active</string>
     <string name="notification_persistent_waiting_channel">Monitoring run conditions</string>
     <string name="notifications_other_channel">Other notifications</string>
-    <string name="syncthing_terminated">Syncthing Network terminated</string>
-    <string name="syncthing_disabled">Syncthing Network disabled</string>
-    <string name="syncthing_starting">Syncthing Network is starting</string>
-    <string name="syncthing_active_details">Syncthing Network Active: %1$s</string>
+    <string name="syncthing_terminated">EtherMesh terminated</string>
+    <string name="syncthing_disabled">EtherMesh disabled</string>
+    <string name="syncthing_starting">EtherMesh is starting</string>
+    <string name="syncthing_active_details">EtherMesh Active: %1$s</string>
     <string name="no_remote_devices_connected">No remote devices connected</string>
     <string name="folder_rejected">Device %1$s wants to share folder %2$s</string>
-    <string name="reason_wifi_disallowed">Syncthing Network is not allowed to run on WiFi.</string>
-    <string name="reason_on_wifi">Syncthing Network is allowed to run on WiFi and a WiFi connection is active.</string>
-    <string name="reason_not_on_wifi">Syncthing Network is allowed to run on WiFi but WiFi is not connected.</string>
+    <string name="reason_wifi_disallowed">EtherMesh is not allowed to run on WiFi.</string>
+    <string name="reason_on_wifi">EtherMesh is allowed to run on WiFi and a WiFi connection is active.</string>
+    <string name="reason_not_on_wifi">EtherMesh is allowed to run on WiFi but WiFi is not connected.</string>
     <string name="reason_not_charging">The device is not charging.</string>
     <string name="reason_not_on_battery_power">The device is not running on battery power.</string>
-    <string name="reason_on_whitelisted_wifi">Syncthing Network is allowed to run on the current WiFi network.</string>
-    <string name="reason_not_on_whitelisted_wifi">Syncthing Network is not allowed to run on the current WiFi network.</string>
-    <string name="reason_location_unavailable">Location services are disabled. Syncthing Network cannot determine the WiFi network name.</string>
-    <string name="reason_on_metered_nonmetered_wifi">Syncthing Network is allowed to run on both metered and non-metered WiFi.</string>
+    <string name="reason_on_whitelisted_wifi">EtherMesh is allowed to run on the current WiFi network.</string>
+    <string name="reason_not_on_whitelisted_wifi">EtherMesh is not allowed to run on the current WiFi network.</string>
+    <string name="reason_location_unavailable">Location services are disabled. EtherMesh cannot determine the WiFi network name.</string>
+    <string name="reason_on_metered_nonmetered_wifi">EtherMesh is allowed to run on both metered and non-metered WiFi.</string>
     <string name="reason_on_nonmetered_wifi">The current WiFi connection is not metered.</string>
-    <string name="reason_not_nonmetered_wifi">Syncthing Network is not allowed to run on metered WiFi.</string>
-    <string name="reason_mobile_data_disallowed">Syncthing Network is not allowed to run on mobile data.</string>
-    <string name="reason_on_mobile_data">Syncthing Network is allowed to run on mobile data.</string>
-    <string name="reason_not_on_mobile_data">Syncthing Network is allowed to run on mobile data but it is not connected.</string>
-    <string name="reason_on_roaming_nonroaming_mobile_data">Syncthing Network is allowed to run on roaming and non-roaming mobile data.</string>
-    <string name="reason_on_nonroaming_mobile_data">Syncthing Network is allowed to run on non-roaming mobile data.</string>
-    <string name="reason_not_nonroaming_mobile_data">Syncthing Network is not allowed to run on roaming mobile data.</string>
-    <string name="reason_force_start">Syncthing Network is running because you forced it to start.</string>
-    <string name="reason_force_stop">Syncthing Network is not running because you forced it to stop.</string>
+    <string name="reason_not_nonmetered_wifi">EtherMesh is not allowed to run on metered WiFi.</string>
+    <string name="reason_mobile_data_disallowed">EtherMesh is not allowed to run on mobile data.</string>
+    <string name="reason_on_mobile_data">EtherMesh is allowed to run on mobile data.</string>
+    <string name="reason_not_on_mobile_data">EtherMesh is allowed to run on mobile data but it is not connected.</string>
+    <string name="reason_on_roaming_nonroaming_mobile_data">EtherMesh is allowed to run on roaming and non-roaming mobile data.</string>
+    <string name="reason_on_nonroaming_mobile_data">EtherMesh is allowed to run on non-roaming mobile data.</string>
+    <string name="reason_not_nonroaming_mobile_data">EtherMesh is not allowed to run on roaming mobile data.</string>
+    <string name="reason_force_start">EtherMesh is running because you forced it to start.</string>
+    <string name="reason_force_stop">EtherMesh is not running because you forced it to stop.</string>
     <string name="reason_not_within_time_frame_0_min">less than a minute</string>
     <string name="reason_not_within_time_frame_2">Last sync was %s ago.</string>
-    <string name="reason_not_while_power_saving">Syncthing Network is not running because power saving is active.</string>
-    <string name="reason_not_while_auto_sync_data_disabled">Syncthing Network is not running because auto-sync is disabled.</string>
-    <string name="reason_on_flight_mode">Syncthing Network is running in flight mode.</string>
+    <string name="reason_not_while_power_saving">EtherMesh is not running because power saving is active.</string>
+    <string name="reason_not_while_auto_sync_data_disabled">EtherMesh is not running because auto-sync is disabled.</string>
+    <string name="reason_on_flight_mode">EtherMesh is running in flight mode.</string>
     <string name="notification_out_of_disk_space">Out of disk space. File: %1$s</string>
     <string name="open_file_with">Open file with</string>
     <string name="open_file_no_compatible_app">No app found to open file.</string>
@@ -525,17 +525,17 @@
     <string name="share_log_file_missing">Log file to share is missing.</string>
     <string name="share_log_file">Share log file</string>
     <string name="retrieving_logs">Retrieving logs…</string>
-    <string name="syncthing_log_title">Syncthing Network Log</string>
-    <string name="view_syncthing_log">View Syncthing Network Log</string>
+    <string name="syncthing_log_title">EtherMesh Log</string>
+    <string name="view_syncthing_log">View EtherMesh Log</string>
     <string name="view_android_log">View Android Log</string>
     <string name="complete_welcome_wizard_first">Please complete the welcome wizard first.</string>
     <string name="security_notice">Security Notice</string>
     <string name="ssl_cert_invalid_text">The website at %1$s seems to have an invalid certificate. Continue?</string>
     <string name="web_page_loading">Loading web page: \n%1$s …</string>
     <string name="no_devices_configured">No devices configured. Tap to add a new device.</string>
-    <string name="syncthing_running">Syncthing Network is running</string>
-    <string name="syncthing_not_running">Syncthing Network is not running</string>
-    <string name="syncthing_has_crashed">Syncthing Network has crashed</string>
+    <string name="syncthing_running">EtherMesh is running</string>
+    <string name="syncthing_not_running">EtherMesh is not running</string>
+    <string name="syncthing_has_crashed">EtherMesh has crashed</string>
     <string name="reason">Reason:</string>
     <string name="button_follow_run_conditions">Follow run conditions</string>
     <string name="button_force_start">Force start</string>
@@ -557,9 +557,9 @@
     <string name="photo_shoot_intro_no_camera">Sorry, this device has no camera.</string>
     <string name="photo_shoot_intro_missing_permissions">We require storage and camera permissions to continue.</string>
     <string name="photo_shoot_take_picture_failure">Taking picture failed or you cancelled.</string>
-    <string name="photo_shoot_take_picture_success">Picture successfully saved to Syncthing Network Camera folder.</string>
+    <string name="photo_shoot_take_picture_success">Picture successfully saved to EtherMesh Camera folder.</string>
     <string name="photo_shoot_launcher_title">Camera Sync</string>
-    <string name="photo_shoot_intro_permission_desc">Syncthing Network Camera needs your permission to take photos and store them. Grant permissions and tap Continue.</string>
+    <string name="photo_shoot_intro_permission_desc">EtherMesh Camera needs your permission to take photos and store them. Grant permissions and tap Continue.</string>
     <string name="grant_storage_permission">Grant Storage Permission</string>
     <string name="grant_camera_permission">Grant Camera Permission</string>
     <string name="browse">Browse</string>
@@ -592,3 +592,5 @@
     <string name="staggered_versioning_description">Staggered versioning keeps versions for a certain period.</string>
     <string name="trashcan_versioning_description">Files are moved to the .stversions folder.</string>
 </resources>
+
+

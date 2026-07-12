@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Açık, güvenilir ve merkezi olmayan bir dosya eşitleme uygulamasıdır.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -117,27 +117,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Gücenli anahtarlar üretiliyor. Birkaç dakika zaman alabilir.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Android için Syncthing Network\'e Hoşgeldiniz</string>
+  <string name="welcome_title">Android için EtherMesh\'e Hoşgeldiniz</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing Network, açık kaynaklı dosya eşitleme uygulamasıdır.\n\n\
+  <string name="welcome_text">EtherMesh, açık kaynaklı dosya eşitleme uygulamasıdır.\n\n\
 Diğer cihazlar ile veri paylaşmak için cihaz listenize onların benzersiz cihaz ID eklemeniz gerekir. Devamında hangi klasörleri, hangi cihazlar ile paylaşacağınızı  seçebilirsiniz.\n\n
 Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildirin.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Ayarlar</string>
-  <string name="category_syncthing_android">Syncthing Network-Android</string>
+  <string name="category_syncthing_android">EtherMesh-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Arkaplanda herzaman çalış</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing Network, her zaman aşağıdaki tercihlere göre arka planda çalışır.</string>
+  <string name="always_run_in_background_enabled">EtherMesh, her zaman aşağıdaki tercihlere göre arka planda çalışır.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing Network, sadece doğrudan başlatıldığında çalışır ve menü tuşu tarafından durdurulur.</string>
+  <string name="always_run_in_background_disabled">EtherMesh, sadece doğrudan başlatıldığında çalışır ve menü tuşu tarafından durdurulur.</string>
   <string name="sync_only_charging">Sadece şarj ederken eşitle</string>
   <string name="sync_only_wifi">Sadece wifi bağlıyken eşitle</string>
   <string name="advanced_folder_picker">Gelişmiş Klasör Seçici Kullan</string>
   <string name="advanced_folder_picker_summary">Eşitleme için cihazdan herhangi bir klasör seçin</string>
-  <string name="category_syncthing">Syncthing Network</string>
-  <string name="syncthing_options">Syncthing Network Seçenekler</string>
+  <string name="category_syncthing">EtherMesh</string>
+  <string name="syncthing_options">EtherMesh Seçenekler</string>
   <string name="device_name">Cihaz Adı</string>
   <string name="listen_address">Eşitleme Protokolü Dinleme Adresleri</string>
   <string name="max_recv_kbps">Gelen Hız Sınırı (KiB/s)</string>
@@ -147,7 +147,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <string name="upnp_enabled">UPnP Etkinleştir</string>
   <string name="global_announce_server">Küresel Bulunabilirlik Sunucusu</string>
   <string name="usage_reporting">Anonim olarak Kullanım Raporlama</string>
-  <string name="syncthing_gui">Syncthing Network Arayüzü</string>
+  <string name="syncthing_gui">EtherMesh Arayüzü</string>
   <string name="gui_address">Arayüz Dinleme Adresleri</string>
   <string name="gui_user">Arayüz Kullanıcı Doğrulaması için Kullanıcı Adı</string>
   <string name="gui_password">Arayüz Kullanıcı Doğrulaması için Kullanıcı Parolası</string>
@@ -174,16 +174,16 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Settings item that opens the log activity-->
   <string name="open_log">Günlüğü Aç</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Syncthing Network ve Android günlük penceresi aç</string>
+  <string name="open_log_summary">EtherMesh ve Android günlük penceresi aç</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Hata Bildir</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Syncthing Network-Android hata takip izleyisini aç</string>
+  <string name="report_issue_summary">EtherMesh-Android hata takip izleyisini aç</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Syncthing Network Sürümü</string>
+  <string name="syncthing_version_title">EtherMesh Sürümü</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Syncthing Network-Android Sürümü</string>
+  <string name="app_version_title">EtherMesh-Android Sürümü</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Klasör Seçici</string>
@@ -202,12 +202,12 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Android Günlüğünü Göster</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Syncthing Network Günlüğünü Göster</string>
+  <string name="log_syncthing_title">EtherMesh Günlüğünü Göster</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Paylaş</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing Network devre dışı</string>
+  <string name="syncthing_disabled_title">EtherMesh devre dışı</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Tercihlerinizi değiştirmek istiyor musunuz?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -215,7 +215,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Çık</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing Network çalışıyor</string>
+  <string name="syncthing_active">EtherMesh çalışıyor</string>
   <string name="syncthing_active_foreground">Hizmet ön plan önceliğiyle çalışıyor.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <!--Toast shown if syncthing failed to create a config-->
@@ -226,7 +226,7 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <!--Text for positive button in restart dialog-->
   <!--Text for the dismiss button of the restart Activity-->
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Şimdi Syncthing Network yeniden başlatmak için tıkla</string>
+  <string name="restart_notification_text">Şimdi EtherMesh yeniden başlatmak için tıkla</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">Aygıt ID panoya kopyalandı</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -245,3 +245,4 @@ Lütfen, herhangi bir sorunla karşılaştığınızda Github üzerinden bildiri
   <string name="state_syncing">Eşitleniyor</string>
   <string name="state_unknown">Bilinmiyor</string>
 </resources>
+

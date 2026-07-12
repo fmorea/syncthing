@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
   <string name="add_folder">Προσθήκη φακέλου</string>
@@ -134,3 +134,4 @@
   <!--Strings representing units for transfer rates, from smallest to largest-->
   <!--Possible folder states-->
 </resources>
+

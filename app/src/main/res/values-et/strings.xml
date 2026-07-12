@@ -73,7 +73,7 @@
         <item quantity="one">%1$d fail on kopeeritud „%2$s“ kausta</item>
         <item quantity="other">%1$d faili on kopeeritud „%2$s“ kausta</item>
     </plurals>
-    <string name="app_name">LinkThing</string>
+    <string name="app_name">EtherMesh</string>
     <string name="add_folder">Lisa kaust</string>
     <string name="important_news_action_open">Ava veebibrauseris</string>
     <string name="important_news_action_remind">Tuleta mulle hiljem meelde</string>
@@ -83,3 +83,5 @@
     <string name="introduction">Sissejuhatus</string>
     <string name="welcome_text">Syncthing on avatud lähtekoodiga failide sünkroonimisrakendus. Jagamaks andmeid muude seadmetega pead lisama nende unikaalsed tunnused oma seadmete loendisse. Hiljem saad valida mis kaustu missuguste seadmetega soovid jagada.\n\nKui töö käigus märkad vigu, siis palju teavita neid GitHubis.</string>
 </resources>
+
+

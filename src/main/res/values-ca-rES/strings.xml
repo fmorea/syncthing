@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Una aplicació de sincronització de fitxers oberta, confiable i descentralitzada.</string>
   <!--FirstStartActivity-->
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Benvinguts al Syncthing Network per Android</string>
+  <string name="welcome_title">Benvinguts al EtherMesh per Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">El Syncthing Network és una aplicació de sincronització de fitxers de codi obert.\n\
+  <string name="welcome_text">El EtherMesh és una aplicació de sincronització de fitxers de codi obert.\n\
 Per compartir dades amb altres dispositius, cal que afegiu els seus identificadors únics a la llista de dispositius. Un cop fet això podreu triar quines carpetes voleu compartir i amb quins dispositius.\n\
 Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <string name="cont">Continua</string>
@@ -35,7 +35,7 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <string name="dialog_disable_battery_optimization_message">Passat algun temps, l\'Android podria aturar la sincronització. Per evitar-ho, apagueu l\'optimitzador de bateria.\n\nAlguns dispositius porten pre-instal·lades aplicacions que finalitzen les tasques automàticament, en aquest cas hauríeu d\'afegir el Syncthing a la seva llista d\'aplicacions autoritzades.</string>
   <string name="dialog_disable_battery_optimization_later">Més tard</string>
   <string name="dialog_disable_battery_optimization_dont_show_again">No ho tornis a mostrar</string>
-  <string name="dialog_disable_battery_optimization_turn_off">Desactiva per al Syncthing Network</string>
+  <string name="dialog_disable_battery_optimization_turn_off">Desactiva per al EtherMesh</string>
   <string name="dialog_disable_battery_optimizations_not_supported">El teu dispositiu no permet desactivar les optimitzacions de bateria</string>
   <!--FoldersFragment-->
   <string name="folders_fragment_title">Carpetes</string>
@@ -73,7 +73,7 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <!--Title for announce server status-->
   <string name="announce_server">Servidor d\'Anunci</string>
   <string name="restart">Reinicia</string>
-  <string name="dialog_confirm_restart">Voleu reiniciar el Syncthing Network?</string>
+  <string name="dialog_confirm_restart">Voleu reiniciar el EtherMesh?</string>
   <!--FolderActivity-->
   <!--Setting title-->
   <string name="folder_id">ID de la carpeta</string>
@@ -143,15 +143,15 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <string name="settings_title">Configuració</string>
   <string name="category_run_conditions">Condicions d\'execució</string>
   <string name="category_behaviour">Comportament</string>
-  <string name="category_syncthing_options">Opcions del Syncthing Network</string>
+  <string name="category_syncthing_options">Opcions del EtherMesh</string>
   <string name="category_backup">Còpia de seguretat</string>
   <string name="category_debug">Depuració</string>
   <string name="category_experimental">Experimental</string>
   <string name="always_run_in_background">Executa sempre en segon pla</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">El Syncthing Network s\'executa contínuament en segon pla i seguint les preferències indicades a sota.</string>
+  <string name="always_run_in_background_enabled">El EtherMesh s\'executa contínuament en segon pla i seguint les preferències indicades a sota.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">El Syncthing Network només s\'executa quan l\'inicieu manualment, i es pot aturar amb el botó del menú.</string>
+  <string name="always_run_in_background_disabled">El EtherMesh només s\'executa quan l\'inicieu manualment, i es pot aturar amb el botó del menú.</string>
   <string name="sync_only_charging">Sincronitza només durant la càrrega</string>
   <string name="sync_only_wifi">Sincronitza només amb wifi</string>
   <string name="sync_only_wifi_ssids">Restringeix a xarxes wifi concretes</string>
@@ -160,8 +160,8 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <string name="respect_battery_saving_summary">Desactiva el Syncthing quan s\'activi l\'estalvi de bateria</string>
   <string name="advanced_folder_picker">Utilitza el selector de carpetes avançat</string>
   <string name="advanced_folder_picker_summary">Seleccioneu qualsevol carpeta del dispositiu per sincronitzar-la</string>
-  <string name="use_root_title">Executa el Syncthing Network com a Superusuari</string>
-  <string name="use_root_summary">Aquesta característica és inestable i podria causar problemes amb el Syncthing Network i amb el vostre dispositiu. Si us trobeu amb problemes, potser haureu de reinstal·lar el Syncthing Network.</string>
+  <string name="use_root_title">Executa el EtherMesh com a Superusuari</string>
+  <string name="use_root_summary">Aquesta característica és inestable i podria causar problemes amb el EtherMesh i amb el vostre dispositiu. Si us trobeu amb problemes, potser haureu de reinstal·lar el EtherMesh.</string>
   <string name="notification_type_title">Notificació</string>
   <string name="notification_type_summary">Seleccioneu el tipus de notificació</string>
   <string-array name="notification_type_entries">
@@ -220,31 +220,31 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <string name="streset_title">Reinicia la base de dades</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Només hauríeu de fer això si us ho recomana el nostre equip de suport.
-        \nSegur que voleu esborrar la base de dades d\'índexs del Syncthing Network?
+        \nSegur que voleu esborrar la base de dades d\'índexs del EtherMesh?
     </string>
   <!--Syncthing was reset-->
-  <string name="streset_done">La base de dades del Syncthing Network s\'ha reiniciat amb èxit</string>
+  <string name="streset_done">La base de dades del EtherMesh s\'ha reiniciat amb èxit</string>
   <string name="category_about">Quant a</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Obre el registre</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Obre la finestra de registre del Syncthing Network i de l\'Android</string>
+  <string name="open_log_summary">Obre la finestra de registre del EtherMesh i de l\'Android</string>
   <string name="notify_crashes_title">Notifica els bloquejos del Syncthing</string>
   <string name="notify_crashes_summary">Mostra una notificació si es detecta que el Syncthing s\'ha bloquejat</string>
-  <string name="syncthing_forum_title">Fòrum del Syncthing Network</string>
+  <string name="syncthing_forum_title">Fòrum del EtherMesh</string>
   <string name="syncthing_forum_summary">Ves al fòrum del Syncthing</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Informeu d\'un problema</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Obre el seguiment d\'incidències del Syncthing Network-Android</string>
+  <string name="report_issue_summary">Obre el seguiment d\'incidències del EtherMesh-Android</string>
   <!--URL of the issue tracker-->
   <!--Menu item to donate-->
   <string name="donate_title">Feu una donació</string>
   <string name="donate_summary">Ajudeu-nos a pagar les despeses de dominis i allotjament</string>
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Versió del Syncthing Network</string>
+  <string name="syncthing_version_title">Versió del EtherMesh</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Versió del Syncthing Network-Android</string>
+  <string name="app_version_title">Versió del EtherMesh-Android</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Selector de carpetes</string>
@@ -263,13 +263,13 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Mostra el registre de l\'Android</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Mostra el registre del Syncthing Network</string>
+  <string name="log_syncthing_title">Mostra el registre del EtherMesh</string>
   <string name="retrieving_logs">Obtenint registres...</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Comparteix</string>
   <!--ShareActivity-->
   <!--Title of the "share" activity-->
-  <string name="share_activity_title">Desa al Syncthing Network</string>
+  <string name="share_activity_title">Desa al EtherMesh</string>
   <!--Title of the "save" button-->
   <string name="save_title">Desa</string>
   <!--Title of the "cancel" button-->
@@ -300,7 +300,7 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   </plurals>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">El Syncthing Network està desactivat</string>
+  <string name="syncthing_disabled_title">El EtherMesh està desactivat</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Voleu canviar les vostres preferències?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -308,12 +308,12 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Surt</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">El Syncthing Network s\'està executant</string>
+  <string name="syncthing_active">El EtherMesh s\'està executant</string>
   <string name="syncthing_active_foreground">El servei s\'està executant amb prioritat de primer pla.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">L\'arbre de directoris és massa profund. Comproveu que no hi hagi enllaços simbòlics cíclics</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">No s\'ha pogut crear la configuració del Syncthing Network. Comproveu els registres.</string>
+  <string name="config_create_failed">No s\'ha pogut crear la configuració del EtherMesh. Comproveu els registres.</string>
   <!--Label of the default folder created of first start (camera folder).-->
   <string name="default_folder_label">Càmera</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
@@ -328,7 +328,7 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Més tard</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Feu clic aquí per reiniciar el Syncthing Network ara</string>
+  <string name="restart_notification_text">Feu clic aquí per reiniciar el EtherMesh ara</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">S\'ha copiat la ID del dispositiu al porta-retalls</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -390,3 +390,4 @@ Ens podeu informar dels problemes que trobeu a través de Github.</string>
   <!--error message if the deviceID/QRCode dialog for some reason cannot be displayed.-->
   <string name="could_not_access_deviceid">No s\'ha pogut tenir accés a la ID del dispositiu.</string>
 </resources>
+

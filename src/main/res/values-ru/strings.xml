@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Открытое, надёжное и децентрализованное приложение для синхронизации файлов.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -122,9 +122,9 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Генерируем ключи. Это может занять несколько минут.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Добро пожаловать в Syncthing Network для Android</string>
+  <string name="welcome_title">Добро пожаловать в EtherMesh для Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing Network это открытое приложение для синхронизации файлов.\n\n\
+  <string name="welcome_text">EtherMesh это открытое приложение для синхронизации файлов.\n\n\
 Для того, чтобы синхронизировать данные с другими устройствами, вам необходимо добавить их уникальные идентификаторы в список устройств. Затем вы сможете выбрать папки для синхронизации с другими устройствами.\n\n
 По поводу всех возникших проблем пишите на Github.</string>
   <!--SettingsFragment-->
@@ -136,13 +136,13 @@
   <!--Preference summary in case it is enabled-->
   <string name="always_run_in_background_enabled">Автозапуск при перезагрузке устройства и работа в фоне</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing Network работает только когда запущен специально и может быть остановлен кнопкой в меню.</string>
+  <string name="always_run_in_background_disabled">EtherMesh работает только когда запущен специально и может быть остановлен кнопкой в меню.</string>
   <string name="sync_only_charging">Синхронизация только во время зарядки</string>
   <string name="sync_only_wifi">Синхронизация только по WIFI</string>
   <string name="advanced_folder_picker">Использовать продвинутый выбор папок</string>
   <string name="advanced_folder_picker_summary">Выберите любую папку на устройстве для синхронизации</string>
-  <string name="use_root_title">Sync с Syncthing Network как Root</string>
-  <string name="use_root_summary">Запуск Syncthing Network как Superuser</string>
+  <string name="use_root_title">Sync с EtherMesh как Root</string>
+  <string name="use_root_summary">Запуск EtherMesh как Superuser</string>
   <string name="notification_type_title">Уведомление</string>
   <string name="notification_type_summary">Выбор метода уведомления</string>
   <string-array name="notification_type_entries">
@@ -150,7 +150,7 @@
     <item>Низкий</item>
     <item>Никогда</item>
   </string-array>
-  <string name="category_syncthing">Общие настройки Syncthing Network</string>
+  <string name="category_syncthing">Общие настройки EtherMesh</string>
   <string name="syncthing_options">Настройки устройства</string>
   <string name="device_name">Имя устройства</string>
   <string name="listen_address">Адрес Ожидания Протокола Синхронизации</string>
@@ -161,7 +161,7 @@
   <string name="upnp_enabled">Включить UPnP</string>
   <string name="global_announce_server">Сервер Глобального Обнаружения</string>
   <string name="usage_reporting">Анонимные Отчёты Использования</string>
-  <string name="syncthing_gui">Syncthing Network GUI</string>
+  <string name="syncthing_gui">EtherMesh GUI</string>
   <string name="gui_address">Адрес Ожидания GUI</string>
   <string name="gui_user">Пользователь Идентификации GUI</string>
   <string name="gui_password">Пароль Идентификации GUI</string>
@@ -185,26 +185,26 @@
   <string name="streset_title">Сбросить базу данных</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Это действие должно выполняться только по рекомендации нашей поддержки.
-        \nВы уверены что хотите очистить индекс базы Syncthing Network?
+        \nВы уверены что хотите очистить индекс базы EtherMesh?
     </string>
   <!--Syncthing was reset-->
-  <string name="streset_done">БД Syncthing Network успешно сброшена</string>
+  <string name="streset_done">БД EtherMesh успешно сброшена</string>
   <string name="category_about">Информация</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Открыть лог</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Открывает логи Syncthing Network и Android</string>
-  <string name="syncthing_forum_title">Форум Syncthing Network</string>
+  <string name="open_log_summary">Открывает логи EtherMesh и Android</string>
+  <string name="syncthing_forum_title">Форум EtherMesh</string>
   <string name="syncthing_forum_summary">Перейти на форум Syncthing</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Сообщить о проблеме</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Открыть трекер проблем Syncthing-Android </string>
+  <string name="report_issue_summary">Открыть трекер проблем EtherMesh </string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Версия ядра Syncthing Network</string>
+  <string name="syncthing_version_title">Версия ядра EtherMesh</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Версия приложения Syncthing Network</string>
+  <string name="app_version_title">Версия приложения EtherMesh</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Выбор Папки</string>
@@ -223,13 +223,13 @@
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Логи Android</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Логи Syncthing Network</string>
+  <string name="log_syncthing_title">Логи EtherMesh</string>
   <string name="retrieving_logs">Получение логов...</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Поделиться</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing Network выключен</string>
+  <string name="syncthing_disabled_title">EtherMesh выключен</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">Вы хотите изменить ваши настройки?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -237,12 +237,12 @@
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Выход</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing Network запущен</string>
+  <string name="syncthing_active">EtherMesh запущен</string>
   <string name="syncthing_active_foreground">Сервис выполняется с высоким приоритетом.</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Слишком глубокая папка. Проверьте на цикличные симлинки</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Не смог создать конфигурацию Syncthing Network. Посмотрите журнал.</string>
+  <string name="config_create_failed">Не смог создать конфигурацию EtherMesh. Посмотрите журнал.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">%1$s фото</string>
   <string name="notification_crash_title">Syncthing завершился из-за сбоя</string>
@@ -255,7 +255,7 @@
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Позже</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Нажмите здесь чтобы перезапустить Syncthing Network</string>
+  <string name="restart_notification_text">Нажмите здесь чтобы перезапустить EtherMesh</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">ID устройства копирован в буфер обмена</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -282,3 +282,4 @@
   <string name="state_error">Ошибка</string>
   <string name="state_unknown">Неизвестно</string>
 </resources>
+

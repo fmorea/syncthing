@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Una aplicación de sincronización de ficheros abierta, de confianza y descentralizada.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -125,27 +125,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">Generando llaves seguras. Esto puede tomar un tiempo.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Bienvenido a Syncthing Network para Android</string>
+  <string name="welcome_title">Bienvenido a EtherMesh para Android</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing Network es una aplicación de sincronización de ficheros de código abierto.\n\n
+  <string name="welcome_text">EtherMesh es una aplicación de sincronización de ficheros de código abierto.\n\n
 Para compartir datos con otros dispositivos necesitas añadir el ID único del dispositivo a la lista de dispositivos. Después podrá seleccionar las carpetas a compartir con los dispositivos.\n\n
 Por favor informe de qualquier problema que encuentres via Github.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Ajustes</string>
-  <string name="category_syncthing_android">Syncthing Network-Android</string>
+  <string name="category_syncthing_android">EtherMesh-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Ejecutar siempre en segundo plano</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing Network se ejecutará siempre en segundo plano, de acuerdo a la configuración.</string>
+  <string name="always_run_in_background_enabled">EtherMesh se ejecutará siempre en segundo plano, de acuerdo a la configuración.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing Network sólo se ejecutará cuando se inicie explitamente, puede ser detenido a través del botón del menú.</string>
+  <string name="always_run_in_background_disabled">EtherMesh sólo se ejecutará cuando se inicie explitamente, puede ser detenido a través del botón del menú.</string>
   <string name="sync_only_charging">Sincronizar solo cuando esté cargando</string>
   <string name="sync_only_wifi">Sincronizar sólo en wifi</string>
   <string name="advanced_folder_picker">Usar Selección Avanzada de carpeta</string>
   <string name="advanced_folder_picker_summary">Escoja una carpeta del dispositivo para sincronizar</string>
-  <string name="use_root_title">Sincronizar con Syncthing Network como Root</string>
-  <string name="use_root_summary">Ejecutar Syncthing Network como Superusuario</string>
+  <string name="use_root_title">Sincronizar con EtherMesh como Root</string>
+  <string name="use_root_summary">Ejecutar EtherMesh como Superusuario</string>
   <string name="notification_type_title">Notificación</string>
   <string name="notification_type_summary">Elige el tipo de notificación</string>
   <string-array name="notification_type_entries">
@@ -153,8 +153,8 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
     <item>Baja Prioridad</item>
     <item>Ninguno</item>
   </string-array>
-  <string name="category_syncthing">Syncthing Network</string>
-  <string name="syncthing_options">Opciones de Syncthing Network</string>
+  <string name="category_syncthing">EtherMesh</string>
+  <string name="syncthing_options">Opciones de EtherMesh</string>
   <string name="device_name">Nombre del Dispositivo</string>
   <string name="listen_address">Direcciones de escucha del protocolo de sincronización</string>
   <string name="max_recv_kbps">Limitar la Tasa de Tráfico Entrante (KiB/s)</string>
@@ -164,7 +164,7 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <string name="upnp_enabled">Activar UPnP</string>
   <string name="global_announce_server">Servidor de Descubrimiento Global</string>
   <string name="usage_reporting">Reportar Uso Anónimo</string>
-  <string name="syncthing_gui">Syncthing Network GUI</string>
+  <string name="syncthing_gui">EtherMesh GUI</string>
   <string name="gui_address">Direcciones de escucha GUI</string>
   <string name="gui_user">Usuario de Autenticación GUI</string>
   <string name="gui_password">Contraseña de Autenticación GUI</string>
@@ -188,23 +188,23 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <string name="streset_title">Restablecer base de datos</string>
   <!--Syncthing was reset-->
   <string name="streset_question">Esta acción sólo se debería realizar basandose en las recomendaciones de nuestro equipo de soporte.
-\n¿Estás seguro que quieres borrar el índice de la base de datos de Syncthing Network?</string>
+\n¿Estás seguro que quieres borrar el índice de la base de datos de EtherMesh?</string>
   <!--Syncthing was reset-->
-  <string name="streset_done">Base de datos de Syncthing Network restablecida con éxito</string>
+  <string name="streset_done">Base de datos de EtherMesh restablecida con éxito</string>
   <string name="category_about">Acerca de</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">Abrir registro</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Abrir ventana de registro de Syncthing Network y Android</string>
+  <string name="open_log_summary">Abrir ventana de registro de EtherMesh y Android</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Reportar Problema</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Abrir el seguimiento de incidencias Syncthing Network-Android</string>
+  <string name="report_issue_summary">Abrir el seguimiento de incidencias EtherMesh-Android</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Versión Syncthing Network</string>
+  <string name="syncthing_version_title">Versión EtherMesh</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Versión Syncthing Network-Android</string>
+  <string name="app_version_title">Versión EtherMesh-Android</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Seleccionador de Carpeta</string>
@@ -223,12 +223,12 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Mostrar registro de Android</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Mostrar registro de Syncthing Network</string>
+  <string name="log_syncthing_title">Mostrar registro de EtherMesh</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">Compartir</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing Network está deshabilitado</string>
+  <string name="syncthing_disabled_title">EtherMesh está deshabilitado</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">¿Quiere cambiar sus preferencias?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -236,11 +236,11 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">Salir</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing Network se está ejecutando</string>
+  <string name="syncthing_active">EtherMesh se está ejecutando</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">Arbol de directorio demasiado profundo. Comprobar enlaces simbólicos cíclicos</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Error al crear la configuración de Syncthing Network. Por favor, comprueba el registro.</string>
+  <string name="config_create_failed">Error al crear la configuración de EtherMesh. Por favor, comprueba el registro.</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">%1$s-photos</string>
   <!--RestApi-->
@@ -251,7 +251,7 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">Después</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Haga clic aquí para reiniciar Syncthing Network ahora</string>
+  <string name="restart_notification_text">Haga clic aquí para reiniciar EtherMesh ahora</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">El ID de Dispositivo se copió al portapapéles</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -278,3 +278,4 @@ Por favor informe de qualquier problema que encuentres via Github.</string>
   <string name="state_error">Error</string>
   <string name="state_unknown">Desconocido</string>
 </resources>
+

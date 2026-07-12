@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Otvorená, dôveryhodná a decentralizovaná aplikácia pre synchronizáciu súborov.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -134,7 +134,7 @@ Aby ste mohli zdielať dáta s ostatnými zariadeniami, musíte najprv pridať i
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Nastavenia</string>
-  <string name="category_syncthing_android">Syncthing-Android</string>
+  <string name="category_syncthing_android">EtherMesh</string>
   <!--Preference title-->
   <string name="always_run_in_background">Vždy bežať na pozadí</string>
   <!--Preference summary in case it is enabled-->
@@ -200,12 +200,12 @@ Naozaj chcete resetovať databázu s indexom súborov?</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">Nahlásiť problém</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Otvoriť stránku pre hlásenie chýb v Syncthing-Android</string>
+  <string name="report_issue_summary">Otvoriť stránku pre hlásenie chýb v EtherMesh</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
   <string name="syncthing_version_title">Verzia Syncthing</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Verzia Syncthing-Android</string>
+  <string name="app_version_title">Verzia EtherMesh</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">Výver Adresára</string>
@@ -279,3 +279,4 @@ Naozaj chcete resetovať databázu s indexom súborov?</string>
   <string name="state_error">Chyba</string>
   <string name="state_unknown">Neznámy</string>
 </resources>
+

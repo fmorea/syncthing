@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">Egy nyílt, megbízható és decentralizált fájl szinkronizáló alkalmazás.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -111,25 +111,25 @@
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">Beállítások</string>
-  <string name="category_syncthing_android">Syncthing Network-Android</string>
+  <string name="category_syncthing_android">EtherMesh-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">Mindig fusson a háttérben</string>
   <!--Preference summary in case it is enabled-->
   <!--Preference summary in case it is disabled-->
   <string name="sync_only_charging">Csak töltés közbeni szinkronizálás</string>
   <string name="sync_only_wifi">Szinkronizálás csak WiFi-n keresztül</string>
-  <string name="use_root_title">Szinkronizálás Root-ként Syncthing Network</string>
-  <string name="use_root_summary">Syncthing Network futtatása Superuser-ként</string>
+  <string name="use_root_title">Szinkronizálás Root-ként EtherMesh</string>
+  <string name="use_root_summary">EtherMesh futtatása Superuser-ként</string>
   <string name="notification_type_title">Értesítés</string>
   <string name="notification_type_summary">Értesítés típusának kiválasztása</string>
-  <string name="category_syncthing">Syncthing Network</string>
-  <string name="syncthing_options">Syncthing Network beállításai</string>
+  <string name="category_syncthing">EtherMesh</string>
+  <string name="syncthing_options">EtherMesh beállításai</string>
   <string name="device_name">Eszköz név</string>
   <string name="global_announce_enabled">Globális felfedezés</string>
   <string name="local_announce_enabled">Helyi felfedezés</string>
   <string name="upnp_enabled">UPnP engedélyezése</string>
   <string name="global_announce_server">Globális felfedező szerver</string>
-  <string name="syncthing_gui">Syncthing Network GUI</string>
+  <string name="syncthing_gui">EtherMesh GUI</string>
   <!--Toast shown after config was successfully exported-->
   <!--Toast shown after config was successfully imported-->
   <!--Toast shown after config was successfully imported-->
@@ -146,9 +146,9 @@
   <!--Summary for the issue tracker settings item-->
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Syncthing Network verzió</string>
+  <string name="syncthing_version_title">EtherMesh verzió</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Syncthing Network-Android verzió</string>
+  <string name="app_version_title">EtherMesh-Android verzió</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <!--Toast shown on devices with kitkat or higher-->
@@ -191,3 +191,4 @@
   <string name="state_error">Hiba</string>
   <string name="state_unknown">Ismeretlen</string>
 </resources>
+

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">공개되어 믿을 수 있는, 분산 파일 동기화 응용 프로그램.</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -111,27 +111,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">보안 키 생성 중. 몇 분 정도 소요될 수 있습니다.</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Android용 Syncthing Network에 어서오세요</string>
+  <string name="welcome_title">Android용 EtherMesh에 어서오세요</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing Network은 오픈 소스 파일 동기화 응용 프로그램입니다.\n\n\
+  <string name="welcome_text">EtherMesh은 오픈 소스 파일 동기화 응용 프로그램입니다.\n\n\
 다른 기기와 데이터를 공유하려면, 기기 목록에 해당 기기의 고유한 기기 ID를 추가해야 합니다. 이후, 해당 기기와 공유할 폴더를 선택할 수 있습니다.\n\n\
 문제가 발생하는 경우 Github를 통해 문의해 주세요.</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">설정</string>
-  <string name="category_syncthing_android">Syncthing Network-Android</string>
+  <string name="category_syncthing_android">EtherMesh-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">백그라운드에서 항상 실행</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing Network이 항상 백그라운드에서 실행되도록, 다음의 설정을 변경할 수 있습니다.</string>
+  <string name="always_run_in_background_enabled">EtherMesh이 항상 백그라운드에서 실행되도록, 다음의 설정을 변경할 수 있습니다.</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing Network은 제대로 시작된 경우에만 작동하며, 메뉴 버튼을 눌러 정지할 수 있습니다.</string>
+  <string name="always_run_in_background_disabled">EtherMesh은 제대로 시작된 경우에만 작동하며, 메뉴 버튼을 눌러 정지할 수 있습니다.</string>
   <string name="sync_only_charging">충전 중일 때만 동기화</string>
   <string name="sync_only_wifi">Wi-Fi에서만 동기화</string>
   <string name="advanced_folder_picker">고급 폴더 선택기 사용</string>
   <string name="advanced_folder_picker_summary">기기에서 동기화에 사용할 폴더를 골라 주세요</string>
-  <string name="category_syncthing">Syncthing Network</string>
-  <string name="syncthing_options">Syncthing Network 옵션 </string>
+  <string name="category_syncthing">EtherMesh</string>
+  <string name="syncthing_options">EtherMesh 옵션 </string>
   <string name="device_name">기기명</string>
   <string name="listen_address">동기화 프로토콜 수신 주소</string>
   <string name="max_recv_kbps">다운로드 속도 제한 (KiB/s)</string>
@@ -141,7 +141,7 @@
   <string name="upnp_enabled">UPnP 활성화 </string>
   <string name="global_announce_server">글로벌 탐색 서버</string>
   <string name="usage_reporting">익명 사용 기록 </string>
-  <string name="syncthing_gui">Syncthing Network GUI</string>
+  <string name="syncthing_gui">EtherMesh GUI</string>
   <string name="gui_address">접속 대기 주소</string>
   <string name="gui_user">GUI 인증 사용자</string>
   <string name="gui_password">GUI 인증 비밀번호</string>
@@ -168,16 +168,16 @@
   <!--Settings item that opens the log activity-->
   <string name="open_log">로그 열기</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Syncthing Network 및 Android 로그 윈도우 열기</string>
+  <string name="open_log_summary">EtherMesh 및 Android 로그 윈도우 열기</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">문제 보고</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Syncthing Network-Android 이슈 트래커 열기</string>
+  <string name="report_issue_summary">EtherMesh-Android 이슈 트래커 열기</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Syncthing Network 버전</string>
+  <string name="syncthing_version_title">EtherMesh 버전</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Syncthing Network-Android 버전</string>
+  <string name="app_version_title">EtherMesh-Android 버전</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">폴더 선택기</string>
@@ -196,12 +196,12 @@
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Android 로그 보기</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Syncthing Network 로그 보기</string>
+  <string name="log_syncthing_title">EtherMesh 로그 보기</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">공유</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing Network이 비활성화되었습니다</string>
+  <string name="syncthing_disabled_title">EtherMesh이 비활성화되었습니다</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">정말로 설정을 변경하시겠습니까?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -209,7 +209,7 @@
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">나가기</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing Network이 작동 중입니다</string>
+  <string name="syncthing_active">EtherMesh이 작동 중입니다</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <!--Toast shown if syncthing failed to create a config-->
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
@@ -219,7 +219,7 @@
   <!--Text for positive button in restart dialog-->
   <!--Text for the dismiss button of the restart Activity-->
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">Syncthing Network을 재시작하려면 이곳을 클릭하세요</string>
+  <string name="restart_notification_text">EtherMesh을 재시작하려면 이곳을 클릭하세요</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">기기 ID가 클립보드에 복사되었습니다</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -238,3 +238,4 @@
   <string name="state_syncing">동기화 중</string>
   <string name="state_unknown">알 수 없음</string>
 </resources>
+

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">LinkThing</string>
+  <string name="app_name">EtherMesh</string>
   <string name="app_description">オープンで、信頼できる、分散されたファイル同期アプリケーション。</string>
   <!--MainActivity-->
   <!--Title of the "add folder" menu action-->
@@ -121,27 +121,27 @@
   <!--Shown instead of web_gui_loading if the key does not exist and has to be created-->
   <string name="web_gui_creating_key">セキュア鍵を生成しています。しばらくお待ちください。</string>
   <!--Title for dialog displayed on first start-->
-  <string name="welcome_title">Syncthing Network for Android にようこそ</string>
+  <string name="welcome_title">EtherMesh for Android にようこそ</string>
   <!--Text for dialog displayed on first start-->
-  <string name="welcome_text">Syncthing Network は、オープンソースのファイル同期アプリケーションです。\n\n
+  <string name="welcome_text">EtherMesh は、オープンソースのファイル同期アプリケーションです。\n\n
 他のデバイスとデータを共有するには、デバイスリストにその一意のデバイスIDを追加する必要があります。その後で、そのデバイスと共有するフォルダーを選択することができます。\n\n
 発生した問題はすべて GitHub で報告してください。</string>
   <!--SettingsFragment-->
   <!--Activity title-->
   <string name="settings_title">設定</string>
-  <string name="category_syncthing_android">Syncthing Network-Android</string>
+  <string name="category_syncthing_android">EtherMesh-Android</string>
   <!--Preference title-->
   <string name="always_run_in_background">常にバックグラウンドで実行</string>
   <!--Preference summary in case it is enabled-->
-  <string name="always_run_in_background_enabled">Syncthing Network は以下のプリファレンスに応じて、常にバックグラウンドで実行されます。</string>
+  <string name="always_run_in_background_enabled">EtherMesh は以下のプリファレンスに応じて、常にバックグラウンドで実行されます。</string>
   <!--Preference summary in case it is disabled-->
-  <string name="always_run_in_background_disabled">Syncthing Network は明示的に開始したときのみ同期を実行し、メニューボタンで停止することができます。</string>
+  <string name="always_run_in_background_disabled">EtherMesh は明示的に開始したときのみ同期を実行し、メニューボタンで停止することができます。</string>
   <string name="sync_only_charging">充電中のみ同期</string>
   <string name="sync_only_wifi">Wifi 時のみ同期</string>
   <string name="advanced_folder_picker">高度なフォルダー選択を使用する</string>
   <string name="advanced_folder_picker_summary">同期するデバイスのフォルダーを選択してください</string>
-  <string name="use_root_title">スーパーユーザーとして Syncthing Network を実行します</string>
-  <string name="use_root_summary">これは Syncthing Network とお使いのデバイスで様々な問題が発生する可能性があります。ご自分のリスクでご利用ください。</string>
+  <string name="use_root_title">スーパーユーザーとして EtherMesh を実行します</string>
+  <string name="use_root_summary">これは EtherMesh とお使いのデバイスで様々な問題が発生する可能性があります。ご自分のリスクでご利用ください。</string>
   <string name="notification_type_title">通知</string>
   <string name="notification_type_summary">通知の種類を選択します</string>
   <string-array name="notification_type_entries">
@@ -149,8 +149,8 @@
     <item>優先度低</item>
     <item>なし</item>
   </string-array>
-  <string name="category_syncthing">Syncthing Network</string>
-  <string name="syncthing_options">Syncthing Network オプション</string>
+  <string name="category_syncthing">EtherMesh</string>
+  <string name="syncthing_options">EtherMesh オプション</string>
   <string name="device_name">デバイス名</string>
   <string name="listen_address">同期プロトコル リスンアドレス</string>
   <string name="max_recv_kbps">着信レート制限 (KiB/秒)</string>
@@ -160,7 +160,7 @@
   <string name="upnp_enabled">UPnP を有効にする</string>
   <string name="global_announce_server">グローバル探索サーバー</string>
   <string name="usage_reporting">匿名使用状況レポート</string>
-  <string name="syncthing_gui">Syncthing Network GUI</string>
+  <string name="syncthing_gui">EtherMesh GUI</string>
   <string name="gui_address">GUI リスンアドレス</string>
   <string name="gui_user">GUI 認証ユーザー</string>
   <string name="gui_password">GUI 認証パスワード</string>
@@ -189,23 +189,23 @@
   <string name="streset_title">データベースをリセット</string>
   <!--Syncthing was reset-->
   <string name="streset_question">この操作は、私たちサポートチームが推奨した場合にのみ行ってください。
-\n本当に Syncthing Network のインデックスデータベースをクリアしてもよろしいですか?</string>
+\n本当に EtherMesh のインデックスデータベースをクリアしてもよろしいですか?</string>
   <!--Syncthing was reset-->
-  <string name="streset_done">正常に Syncthing Network のデータベースをリセットしました</string>
+  <string name="streset_done">正常に EtherMesh のデータベースをリセットしました</string>
   <string name="category_about">アプリについて</string>
   <!--Settings item that opens the log activity-->
   <string name="open_log">ログを開く</string>
   <!--Summary for the log activity-->
-  <string name="open_log_summary">Syncthing Network と Android のログ ウインドウを開く</string>
+  <string name="open_log_summary">EtherMesh と Android のログ ウインドウを開く</string>
   <!--Settings item that opens issue tracker-->
   <string name="report_issue_title">問題を報告</string>
   <!--Summary for the issue tracker settings item-->
-  <string name="report_issue_summary">Syncthing Network-Android 問題トラッカーを開く</string>
+  <string name="report_issue_summary">EtherMesh-Android 問題トラッカーを開く</string>
   <!--URL of the issue tracker-->
   <!--Title of the preference showing upstream version name-->
-  <string name="syncthing_version_title">Syncthing Network バージョン</string>
+  <string name="syncthing_version_title">EtherMesh バージョン</string>
   <!--Title of the preference showing this app's version name-->
-  <string name="app_version_title">Syncthing Network-Android バージョン</string>
+  <string name="app_version_title">EtherMesh-Android バージョン</string>
   <!--FolderPickerAcitivity-->
   <!--Activity title-->
   <string name="folder_picker_title">フォルダー選択</string>
@@ -224,12 +224,12 @@
   <!--Title of the "log android" menu button-->
   <string name="log_android_title">Android ログを表示</string>
   <!--Title of the "log Syncthing" menu button-->
-  <string name="log_syncthing_title">Syncthing Network ログを表示</string>
+  <string name="log_syncthing_title">EtherMesh ログを表示</string>
   <!--Title of the "share log" menu button-->
   <string name="share_title">共有</string>
   <!--SyncthingService-->
   <!--Title of the "syncthing disabled" dialog-->
-  <string name="syncthing_disabled_title">Syncthing Network は無効になりました</string>
+  <string name="syncthing_disabled_title">EtherMesh は無効になりました</string>
   <!--Message of the "syncthing disabled" dialog-->
   <string name="syncthing_disabled_message">プリファレンスを変更しますか?</string>
   <!--Button text on the "syncthing disabled" dialog-->
@@ -237,12 +237,12 @@
   <!--Button text on the "syncthing disabled" dialog, used as menu item to stop syncthing service if "always_run_in_background" is true-->
   <string name="exit">終了</string>
   <!--Title of the notification shown while syncthing is running and enabled-->
-  <string name="syncthing_active">Syncthing Network は実行中です</string>
+  <string name="syncthing_active">EtherMesh は実行中です</string>
   <string name="syncthing_active_foreground">フォアグラウンドの優先度でサービスを実行しています</string>
   <!--Toast shown if folder observer fails to traverse a folder-->
   <string name="toast_folder_observer_stack_overflow">ディレクトリーの階層が深すぎます。シンボリックリンクの巡回を確認してください</string>
   <!--Toast shown if syncthing failed to create a config-->
-  <string name="config_create_failed">Syncthing Network 設定の作成に失敗しました。ログを確認してください。</string>
+  <string name="config_create_failed">EtherMesh 設定の作成に失敗しました。ログを確認してください。</string>
   <!--ID of the default folder created on first start (camera folder). Must only contain 'a-z0-9_-'. Parameter is the device name-->
   <string name="default_folder_id">%1$s-写真</string>
   <!--RestApi-->
@@ -253,7 +253,7 @@
   <!--Text for the dismiss button of the restart Activity-->
   <string name="restart_later">後で</string>
   <!--Text of the notification shown when a restart is needed-->
-  <string name="restart_notification_text">ここをクリックして、今すぐ Syncthing Network を再起動してください</string>
+  <string name="restart_notification_text">ここをクリックして、今すぐ EtherMesh を再起動してください</string>
   <!--Shown when a device ID is copied to the clipboard-->
   <string name="device_id_copied_to_clipboard">デバイス ID をクリップボードにコピーしました</string>
   <!--Strings representing units for file sizes, from smallest to largest-->
@@ -280,3 +280,4 @@
   <string name="state_error">エラー</string>
   <string name="state_unknown">不明</string>
 </resources>
+

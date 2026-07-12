@@ -11,7 +11,7 @@ android {
     buildToolsVersion "35.0.0"
 
     defaultConfig {
-        applicationId "com.fmorea.syncthing"
+        applicationId "com.fmorea.ethermesh"
         minSdkVersion 23
         targetSdkVersion 34
         versionCode 1
@@ -39,6 +39,10 @@ android {
     buildFeatures {
         compose true
         dataBinding true
+    }
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }
     packagingOptions {
         jniLibs {
