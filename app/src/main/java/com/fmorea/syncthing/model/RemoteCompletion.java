@@ -298,9 +298,10 @@ public class RemoteCompletion {
             }
 
             // Update device status information.
+            Map.Entry<Connection, HashMap<String, RemoteCompletionInfo>> entry = mDeviceFolderMap.get(deviceId);
             Map.Entry<Connection, HashMap<String, RemoteCompletionInfo>> updatedEntry = new SimpleEntry<>(
                     deepCopy(connection, Connection.class),
-                    deepCopy(mDeviceFolderMap.get(deviceId).getValue(), HashMap.class)
+                    entry.getValue()
             );
             mDeviceFolderMap.put(deviceId, updatedEntry);
         }

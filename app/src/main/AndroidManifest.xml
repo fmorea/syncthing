@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.fmorea.syncthing">
 
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
@@ -23,6 +24,7 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.NFC" />
@@ -56,6 +58,10 @@
         <activity android:name=".settings.SettingsActivity" />
         <activity android:name=".webgui.WebGuiActivity" />
         <activity android:name=".onboarding.OnboardingActivity" />
+        <activity android:name=".activities.QRScannerActivity"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            android:windowSoftInputMode="stateAlwaysHidden" />
 
         <service
             android:name=".service.SyncthingService"
