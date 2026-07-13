@@ -84,6 +84,14 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 refreshFriends()
             }
         }
+
+        // Periodic refresh for discovery and connection status
+        viewModelScope.launch {
+            while (isActive) {
+                refreshFriends()
+                delay(15000) 
+            }
+        }
     }
 
     fun showMyId() { _uiEvents.value = UiEvent.ShowMyId }
@@ -113,7 +121,10 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             val api = restApi ?: return@launch
             if (api.isConfigLoaded) {
-                api.getRemoteDeviceStatus("")
+                // Prime the cache with a single call for all devices
+                api.getRemoteDeviceStatus("") 
+                delay(500) // Small delay to let async Rest calls settle if they were needed
+
                 val allDevices = api.getDevices(true)
                 val others = allDevices.filter { it.deviceID != prefsLocalDeviceId }
                 others.forEach { device ->
@@ -152,6 +163,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 _allProfiles.value = allIdentities
 
+                repository.updateBeacons(others.map { it.deviceID }) // Announce our friends to the mesh
                 repository.refreshBeacons() // Update topology and beacon data
                 
                 var configChanged = false
@@ -284,7 +296,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     private fun ensureFolderExists(api: RestApi) {
         val folder = api.getFolderByID(Constants.LINKTHING_FOLDER_ID)
         val currentFriends = getFriends()
-        val rootDir = File(android.os.Environment.getExternalStorageDirectory(), Constants.LINKTHING_DIR_NAME)
+        val rootDir = File(getApplication<Application>().filesDir, Constants.LINKTHING_DIR_NAME)
         if (!rootDir.exists()) rootDir.mkdirs()
         val marker = File(rootDir, ".stfolder")
         if (!marker.exists()) try { marker.mkdirs() } catch (e: Exception) {}
@@ -301,6 +313,10 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
             configRouter.addFolder(api, newFolder)
         } else {
             var changed = false
+            if (folder.path != rootDir.absolutePath) {
+                folder.path = rootDir.absolutePath
+                changed = true
+            }
             currentFriends.forEach { friend ->
                 if (folder.getDevice(friend.deviceID) == null) {
                     folder.addDevice(friend)

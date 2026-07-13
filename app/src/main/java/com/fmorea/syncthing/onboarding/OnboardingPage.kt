@@ -7,7 +7,6 @@ import com.fmorea.syncthing.onboarding.pages.CameraPermissionPage
 import com.fmorea.syncthing.onboarding.pages.KeyGenerationPage
 import com.fmorea.syncthing.onboarding.pages.LocationPermissionPage
 import com.fmorea.syncthing.onboarding.pages.NotificationPermissionPage
-import com.fmorea.syncthing.onboarding.pages.StoragePermissionPage
 import com.fmorea.syncthing.onboarding.pages.WelcomePage
 
 /**
@@ -16,7 +15,6 @@ import com.fmorea.syncthing.onboarding.pages.WelcomePage
 enum class OnboardingPage {
     WELCOME,
     INTRODUCTION,
-    STORAGE_PERMISSION,
     BATTERY_OPTIMIZATION,
     LOCATION_PERMISSION,
     NOTIFICATION_PERMISSION,
@@ -49,13 +47,6 @@ fun OnboardingPage(
             onContinue = onContinue,
         )
         OnboardingPage.INTRODUCTION -> IntroductionPage(
-            uiState = uiState,
-            pageIndex = pageIndex,
-            requestTvFocus = requestTvFocus,
-            onBack = onBack,
-            onContinue = onContinue,
-        )
-        OnboardingPage.STORAGE_PERMISSION -> StoragePermissionPage(
             uiState = uiState,
             pageIndex = pageIndex,
             requestTvFocus = requestTvFocus,

@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
@@ -25,12 +26,8 @@ public class PermissionUtil {
     private static final String TAG = "PermissionUtil";
 
     public static boolean haveStoragePermission(@NonNull Context context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            int permissionState = ContextCompat.checkSelfPermission(context,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            return permissionState == PackageManager.PERMISSION_GRANTED;
-        }
-        return Environment.isExternalStorageManager();
+        // App now uses internal private storage (/data/data/com...) which doesn't require runtime permissions.
+        return true;
     }
 
     public static void requestStoragePermission(@NonNull Activity activity, final int requestCode) {
@@ -60,8 +57,52 @@ public class PermissionUtil {
     }
 
     public static boolean haveLocationPermission(@NonNull Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED;
+        boolean fineLocationGranted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED;
+
+        boolean backgroundLocationGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            backgroundLocationGranted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        return fineLocationGranted && backgroundLocationGranted;
+    }
+
+    public static boolean haveNotificationPermission(@NonNull Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+        return ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static boolean haveCameraPermission(@NonNull Context context) {
+        return ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static boolean haveIgnoreDozePermission(@NonNull Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        return pm != null && pm.isIgnoringBatteryOptimizations(context.getPackageName());
+    }
+
+    public static boolean haveAllOnboardingPermissions(@NonNull Context context) {
+        return haveNotificationPermission(context) &&
+                haveCameraPermission(context) &&
+                haveLocationPermission(context) &&
+                haveIgnoreDozePermission(context);
     }
 
 }

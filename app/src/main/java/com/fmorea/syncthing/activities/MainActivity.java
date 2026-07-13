@@ -183,7 +183,7 @@ public class MainActivity extends SyncthingActivity implements SyncthingService.
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? android.app.PendingIntent.FLAG_MUTABLE : 0);
             mNfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
         }
-        if (!PermissionUtil.haveStoragePermission(this)) {
+        if (!PermissionUtil.haveAllOnboardingPermissions(this) || !Constants.getConfigFile(this).exists()) {
             startActivity(new Intent(this, com.fmorea.syncthing.onboarding.OnboardingActivity.class));
             finish();
             return;

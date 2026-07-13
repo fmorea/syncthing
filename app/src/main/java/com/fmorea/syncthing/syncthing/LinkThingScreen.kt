@@ -838,7 +838,7 @@ fun Avatar(deviceId: String, profile: UserProfile? = null, onClick: () -> Unit =
         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
     ) {
         Box(contentAlignment = Alignment.Center) {
-            val rootDir = File(android.os.Environment.getExternalStorageDirectory(), com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
+            val rootDir = File(LocalContext.current.filesDir, com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
             // Use discloserId if available to find the correct photo
             val photo = UserProfile.findPhoto(deviceId, profile?.discloserId ?: "", rootDir)
             if (photo != null) {

@@ -516,7 +516,7 @@ fun DeviceItem(
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     shadowElevation = 2.dp
                 ) {
-                    val rootDir = File(android.os.Environment.getExternalStorageDirectory(), com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
+                    val rootDir = File(LocalContext.current.filesDir, com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
                     val photo = UserProfile.findPhoto(device.deviceID, profile?.discloserId ?: "", rootDir)
                     if (photo != null) {
                         AsyncImageAvatarInternal(file = photo)

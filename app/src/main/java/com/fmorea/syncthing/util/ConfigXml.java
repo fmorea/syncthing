@@ -679,14 +679,23 @@ public class ConfigXml {
      */
     private boolean ensureLinkThingFolder() {
         NodeList nodeFolders = mConfig.getDocumentElement().getElementsByTagName("folder");
+        File linkThingDir = new File(mContext.getFilesDir(), Constants.LINKTHING_DIR_NAME);
+        String expectedPath = linkThingDir.getAbsolutePath();
+
         for (int i = 0; i < nodeFolders.getLength(); i++) {
             Element r = (Element) nodeFolders.item(i);
             if (Constants.LINKTHING_FOLDER_ID.equals(getAttributeOrDefault(r, "id", ""))) {
+                // Migrate path if necessary
+                if (!expectedPath.equals(getAttributeOrDefault(r, "path", ""))) {
+                    Log.i(TAG, "Migrating LinkThing folder path to: " + expectedPath);
+                    r.setAttribute("path", expectedPath);
+                    if (!linkThingDir.exists()) linkThingDir.mkdirs();
+                    return true;
+                }
                 return false;
             }
         }
 
-        File linkThingDir = new File(Environment.getExternalStorageDirectory(), Constants.LINKTHING_DIR_NAME);
         if (!linkThingDir.exists()) {
             linkThingDir.mkdirs();
         }

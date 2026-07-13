@@ -669,7 +669,7 @@ public class RestApi {
         }
         for (Folder folder : folders) {
             if (folder.path != null && folder.path.startsWith("~/")) {
-                folder.path = folder.path.replaceFirst("^~", FileUtils.getSyncthingTildeAbsolutePath());
+                folder.path = folder.path.replaceFirst("^~", FileUtils.getSyncthingTildeAbsolutePath(mContext));
             }
         }
         Collections.sort(folders, FOLDERS_COMPARATOR);

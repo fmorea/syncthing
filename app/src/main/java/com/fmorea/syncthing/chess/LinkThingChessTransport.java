@@ -1,7 +1,6 @@
 package com.fmorea.syncthing.chess;
 
 import android.content.Context;
-import android.os.Environment;
 import android.os.FileObserver;
 import android.util.Log;
 
@@ -31,7 +30,7 @@ public class LinkThingChessTransport extends NetworkHandler {
 
     public LinkThingChessTransport(Context context, File customFile) {
         super(0);
-        this.rootDir = new File(Environment.getExternalStorageDirectory(), Constants.LINKTHING_DIR_NAME);
+        this.rootDir = new File(context.getFilesDir(), Constants.LINKTHING_DIR_NAME);
         this.stateFile = (customFile != null) ? customFile : new File(rootDir, "global_game.chess");
         
         Log.d(TAG, "Initialized with state file: " + stateFile.getAbsolutePath());
@@ -40,8 +39,9 @@ public class LinkThingChessTransport extends NetworkHandler {
         
         setupObserver();
         startPeriodicScan();
-        
-        // Initial load
+    }
+
+    public void triggerLoad() {
         executor.execute(this::loadState);
     }
 

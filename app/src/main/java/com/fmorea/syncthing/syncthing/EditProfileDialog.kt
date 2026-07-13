@@ -65,7 +65,7 @@ fun EditProfileDialog(
                         .clip(CircleShape)
                         .clickable { imagePickerLauncher.launch("image/*") }
                 ) {
-                    val rootDir = File(android.os.Environment.getExternalStorageDirectory(), com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
+                    val rootDir = File(context.filesDir, com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
                     val photo = UserProfile.findPhoto(profile.deviceId, profile.discloserId, rootDir)
                     if (photo != null) {
                         val bitmap = BitmapFactory.decodeFile(photo.absolutePath)

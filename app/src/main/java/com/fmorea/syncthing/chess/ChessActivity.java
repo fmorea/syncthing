@@ -82,17 +82,23 @@ public class ChessActivity extends SyncthingActivity implements ChessGameControl
         
         transport = new LinkThingChessTransport(this, initialFile);
         controller = new ChessGameController(model, transport, this);
+        transport.addListener(controller); // Ensure it's added
         
         if (binding.chessBoardView != null) {
             binding.chessBoardView.setChessDelegate(controller);
         }
         model.setChessDelegate(controller);
 
+        binding.playerName.setText("Tu");
+        binding.opponentName.setText("Avversario");
+
         setupUI();
         makeNavControlsDraggable();
         setupSensors();
         
         transport.startServer();
+        // Trigger an immediate load to ensure the controller gets the state
+        transport.triggerLoad();
         controller.notifyUI();
 
         if (initialFile != null) {
@@ -158,15 +164,21 @@ public class ChessActivity extends SyncthingActivity implements ChessGameControl
             } else if ("content".equals(uri.getScheme())) {
                 // Try using our FileUtils which handles some content URIs
                 String path = FileUtils.getAbsolutePathFromSAFUri(this, uri);
-                if (path != null) return new File(path);
+                if (path != null) {
+                    File f = new File(path);
+                    if (f.exists()) return f;
+                }
                 
-                // Fallback for FileProvider if SAF resolution fails
-                // FileProvider URIs for this app usually point to the LinkThing folder
+                // Fallback for FileProvider
                 if (uri.getAuthority().contains(".provider")) {
-                    // Try to extract filename and look in LinkThing dir
                     String fileName = uri.getLastPathSegment();
                     if (fileName != null) {
-                        File linkThingDir = new File(android.os.Environment.getExternalStorageDirectory(), com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME);
+                        // FileProvider segments can be "internal_files/EtherMesh/name.chess"
+                        // we want just the name.chess
+                        if (fileName.contains("/")) {
+                            fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
+                        }
+                        File linkThingDir = new File(getFilesDir(), com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME);
                         File candidate = new File(linkThingDir, fileName);
                         if (candidate.exists()) return candidate;
                     }

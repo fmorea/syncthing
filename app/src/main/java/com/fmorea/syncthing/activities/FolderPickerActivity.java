@@ -132,8 +132,8 @@ public class FolderPickerActivity extends SyncthingActivity
         if (getIntent().hasExtra(EXTRA_ROOT_DIRECTORY) && !TextUtils.isEmpty(rootDir)) {
             roots.add(new File(rootDir));
         } else {
+            roots.add(getFilesDir());
             roots.addAll(Arrays.asList(getExternalFilesDirs(null)));
-            roots.remove(getExternalFilesDir(null));
             roots.remove(null);      // getExternalFilesDirs may return null for an ejected SDcard.
             roots.add(Environment.getExternalStorageDirectory());
             roots.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES));

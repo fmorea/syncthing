@@ -339,7 +339,7 @@ public class EventProcessor implements  Runnable, RestApi.OnReceiveEventListener
                 folder = new Folder();
                 folder.id = folderId;
                 folder.label = folderLabel;
-                folder.path = new File(android.os.Environment.getExternalStorageDirectory(), Constants.LINKTHING_DIR_NAME).getAbsolutePath();
+                folder.path = new File(mContext.getFilesDir(), Constants.LINKTHING_DIR_NAME).getAbsolutePath();
                 folder.type = Constants.FOLDER_TYPE_SEND_RECEIVE;
                 folder.fsWatcherEnabled = true;
                 folder.fsWatcherDelayS = 1.0f;

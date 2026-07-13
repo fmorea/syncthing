@@ -21,6 +21,7 @@ import com.fmorea.syncthing.activities.SyncthingActivity
 import com.fmorea.syncthing.service.NotificationHandler
 import com.fmorea.syncthing.service.SyncthingService
 import com.fmorea.syncthing.theme.ApplicationTheme
+import com.fmorea.syncthing.util.LocalActivity
 import com.fmorea.syncthing.util.LocalActivityScope
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,6 +83,7 @@ class SettingsActivity : SyncthingActivity() {
                 CompositionLocalProvider(
                     LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
                     LocalActivityScope provides activityScope,
+                    LocalActivity provides this,
                     LocalSettingsNavigator provides navigator,
                     LocalSyncthingService provides syncthingServiceState,
                     LocalServiceUpdateTick provides serviceUpdateTick,

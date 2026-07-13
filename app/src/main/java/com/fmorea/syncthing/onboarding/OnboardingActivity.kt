@@ -30,8 +30,8 @@ import com.fmorea.syncthing.service.SyncthingRunnable.ExecutableNotFoundExceptio
 import com.fmorea.syncthing.theme.ApplicationTheme
 import com.fmorea.syncthing.util.ConfigXml
 import com.fmorea.syncthing.util.ConfigXml.OpenConfigException
+import com.fmorea.syncthing.util.LocalActivity
 import com.fmorea.syncthing.util.LocalActivityScope
-import com.fmorea.syncthing.util.PermissionUtil
 import com.fmorea.syncthing.util.Util
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +41,6 @@ import kotlinx.coroutines.withContext
 data class OnboardingUiState(
     val pages: List<OnboardingPage> = emptyList(),
     val currentPage: Int = 0,
-    val hasStoragePermission: Boolean = false,
     val hasIgnoreDozePermission: Boolean = false,
     val hasLocationPermission: Boolean = false,
     val hasNotificationPermission: Boolean = false,
@@ -161,7 +160,6 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         val isRunningOnTv = Util.isRunningOnTV(this)
         Log.d(TAG, if (isRunningOnTv) "Running on a TV Device" else "Running on a non-TV Device")
 
-        val haveStoragePermission = haveStoragePermission()
         val haveIgnoreDozePermission = haveIgnoreDozePermission()
         val haveLocationPermission = haveLocationPermission()
         val haveNotificationPermission = haveNotificationPermission()
@@ -173,7 +171,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         val savedState = restoreUiState(savedInstanceState)
 
         if (savedState == null) {
-            val shouldSkipToMain = haveStoragePermission && haveNotificationPermission && haveCameraPermission && haveConfig
+            val shouldSkipToMain = haveNotificationPermission && haveCameraPermission && haveConfig
             if (shouldSkipToMain) {
                 // minimum requirements met, go to main
                 return startApp()
@@ -182,7 +180,6 @@ class OnboardingActivity : ThemedAppCompatActivity() {
 
         uiState = savedState?.copy(
             // Permissions/config may have changed while we were gone; re-derive these.
-            hasStoragePermission = haveStoragePermission,
             hasIgnoreDozePermission = haveIgnoreDozePermission,
             hasLocationPermission = haveLocationPermission,
             hasNotificationPermission = haveNotificationPermission,
@@ -195,14 +192,12 @@ class OnboardingActivity : ThemedAppCompatActivity() {
             pages = listOfNotNull(
                 OnboardingPage.WELCOME,
                 OnboardingPage.INTRODUCTION,
-                OnboardingPage.STORAGE_PERMISSION.takeUnless { haveStoragePermission },
                 OnboardingPage.BATTERY_OPTIMIZATION.takeUnless { haveIgnoreDozePermission },
                 OnboardingPage.LOCATION_PERMISSION.takeUnless { haveLocationPermission },
                 OnboardingPage.NOTIFICATION_PERMISSION.takeUnless { haveNotificationPermission },
                 OnboardingPage.CAMERA_PERMISSION.takeUnless { haveCameraPermission },
                 OnboardingPage.KEY_GENERATION.takeUnless { haveConfig },
             ),
-            hasStoragePermission = haveStoragePermission,
             hasIgnoreDozePermission = haveIgnoreDozePermission,
             hasLocationPermission = haveLocationPermission,
             hasNotificationPermission = haveNotificationPermission,
@@ -225,6 +220,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
             ApplicationTheme {
                 CompositionLocalProvider(
                     LocalActivityScope provides activityScope,
+                    LocalActivity provides this,
                 ) {
                     OnboardingScreen(
                         uiState = uiState,
@@ -263,12 +259,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         val oldState = uiState
         refreshPermissionState()
         val currentPage = uiState.pages.getOrNull(uiState.currentPage)
-        if (currentPage == OnboardingPage.STORAGE_PERMISSION &&
-            !oldState.hasStoragePermission &&
-            uiState.hasStoragePermission
-        ) {
-            advance()
-        } else if (currentPage == OnboardingPage.BATTERY_OPTIMIZATION &&
+        if (currentPage == OnboardingPage.BATTERY_OPTIMIZATION &&
             !oldState.hasIgnoreDozePermission &&
             uiState.hasIgnoreDozePermission
         ) {
@@ -291,17 +282,6 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
-        if (requestCode == REQUEST_WRITE_STORAGE) {
-            refreshPermissionState()
-            if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, "User denied WRITE_EXTERNAL_STORAGE permission.")
-            } else {
-                Toast.makeText(this, R.string.permission_granted, Toast.LENGTH_SHORT).show()
-                Log.i(TAG, "User granted WRITE_EXTERNAL_STORAGE permission.")
-                advanceIfCurrentPage(OnboardingPage.STORAGE_PERMISSION)
-            }
-            return
-        }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
@@ -360,17 +340,12 @@ class OnboardingActivity : ThemedAppCompatActivity() {
 
     private fun refreshPermissionState() {
         uiState = uiState.copy(
-            hasStoragePermission = haveStoragePermission(),
             hasIgnoreDozePermission = haveIgnoreDozePermission(),
             hasLocationPermission = haveLocationPermission(),
             hasNotificationPermission = haveNotificationPermission(),
             hasCameraPermission = haveCameraPermission(),
             hasConfig = checkForParseableConfig(),
         )
-    }
-
-    private fun haveStoragePermission(): Boolean {
-        return PermissionUtil.haveStoragePermission(this)
     }
 
     private fun haveIgnoreDozePermission(): Boolean {

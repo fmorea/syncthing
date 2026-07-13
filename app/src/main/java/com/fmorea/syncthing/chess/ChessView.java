@@ -119,11 +119,24 @@ public class ChessView extends View {
                     R.drawable.rook_white, R.drawable.rook_black
             };
             for (int resID : resIDs) {
-                bitmaps.put(resID, BitmapFactory.decodeResource(getResources(), resID));
+                bitmaps.put(resID, drawableToBitmap(resID));
             }
         } catch (Exception e) {
             Log.e("ChessView", "Failed to load bitmaps", e);
         }
+    }
+
+    private Bitmap drawableToBitmap(int resId) {
+        android.graphics.drawable.Drawable drawable = ContextCompat.getDrawable(getContext(), resId);
+        if (drawable == null) return null;
+        if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
+            return ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+        }
+        Bitmap bitmap = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     private void initTools(Context context) {
@@ -408,7 +421,10 @@ public class ChessView extends View {
         }
         Collections.sort(pieceList, (a, b) -> Float.compare(a.projY, b.projY));
         for (PiecePos pp : pieceList) {
-            drawPieceBillboardAt(canvas, getScreenX(pp.col), getScreenY(pp.row), bitmaps.get(pp.piece.getResID()));
+            Bitmap b = bitmaps.get(pp.piece.getResID());
+            if (b != null) {
+                drawPieceBillboardAt(canvas, getScreenX(pp.col), getScreenY(pp.row), b);
+            }
         }
 
         if (isDraggingPiece && movingPieceBitmap != null) {

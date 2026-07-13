@@ -369,10 +369,10 @@ public class FileUtils {
     /**
      * Expands the "~" path.
      * Equals SyncthingRunnable env "HOME"
-     * Result: e.g. /storage/emulated/0/syncthing
+     * Result: e.g. /data/user/0/com.fmorea.syncthing/files/syncthing
      */
-    public static String getSyncthingTildeAbsolutePath() {
-        return FileUtils.getInternalStorageRootAbsolutePath() + "/syncthing";
+    public static String getSyncthingTildeAbsolutePath(Context context) {
+        return context.getFilesDir().getAbsolutePath() + "/syncthing";
     }
     
     private static String getInternalStorageRootAbsolutePath() {

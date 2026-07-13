@@ -22,7 +22,7 @@ class LinkThingRepository(
     private val getLocalDeviceId: () -> String
 ) {
     private val TAG = "LinkThingRepo"
-    val rootDir = File(Environment.getExternalStorageDirectory(), Constants.LINKTHING_DIR_NAME)
+    val rootDir = File(context.filesDir, Constants.LINKTHING_DIR_NAME)
     
     private var currentLimit = 50 
     private val PAGE_SIZE = 50

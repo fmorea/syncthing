@@ -3,7 +3,6 @@ package com.fmorea.syncthing.service;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -824,7 +823,7 @@ public class SyncthingService extends Service {
         if (relPathToZip.isEmpty()) {
             relPathToZip = defaultPath;
         }
-        return new File(Environment.getExternalStorageDirectory(), relPathToZip);
+        return new File(getFilesDir(), relPathToZip);
     }
 
     /**
