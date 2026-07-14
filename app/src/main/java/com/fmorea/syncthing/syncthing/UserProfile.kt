@@ -85,7 +85,7 @@ data class UserProfile(
             }
         }
 
-        private fun loadFromFile(file: File, deviceId: String, discloserId: String): UserProfile {
+        fun loadFromFile(file: File, deviceId: String = "", discloserId: String = ""): UserProfile {
             return try {
                 gson.fromJson(file.readText(), UserProfile::class.java).copy(deviceId = deviceId, discloserId = discloserId)
             } catch (e: Exception) {

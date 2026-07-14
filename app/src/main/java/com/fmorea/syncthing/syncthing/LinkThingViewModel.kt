@@ -102,6 +102,8 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     fun openChess() { _uiEvents.value = UiEvent.OpenChess }
     fun editProfile() { _uiEvents.value = UiEvent.EditProfile }
 
+    fun getRootDir(): File = repository.rootDir
+
     fun shareChessGame(): File? {
         val id = prefsLocalDeviceId
         if (id.isBlank()) return null
@@ -243,6 +245,17 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         refreshFriends()
     }
 
+    fun toggleDevicePause(deviceId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val api = restApi ?: return@launch
+            val device = _friends.value.find { it.deviceID == deviceId } ?: return@launch
+            device.paused = !device.paused
+            configRouter.updateDevice(api, device)
+            api.sendConfig()
+            refreshFriends()
+        }
+    }
+
     fun addFriend(deviceId: String) {
         val api = restApi ?: return
         val currentFriends = getFriends()
@@ -337,6 +350,17 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteMessages(messages: List<LinkThingMessage>) { repository.deleteMessages(messages) }
     fun editMessage(message: LinkThingMessage, newContent: String) { if (newContent.isNotBlank()) repository.editMessage(message, newContent) }
     fun loadMoreMessages() { repository.loadMore() }
+    
+    fun findMessageForFile(file: File): LinkThingMessage? {
+        val inCache = messages.value.find { it.isAttachment && it.file?.absolutePath == file.absolutePath }
+        if (inCache != null) return inCache
+        
+        // If not in current visible messages, try to find it on disk manually
+        return if (file.exists()) {
+            LinkThingMessage.fromFile(file, prefsLocalDeviceId)
+        } else null
+    }
+
     fun forceSync() {
         viewModelScope.launch(Dispatchers.IO) {
             val api = restApi ?: return@launch

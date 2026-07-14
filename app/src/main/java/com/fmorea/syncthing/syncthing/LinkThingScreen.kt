@@ -47,15 +47,9 @@ import android.media.MediaRecorder
 import android.media.MediaPlayer
 import android.graphics.BitmapFactory
 import android.util.Log
-import android.util.LruCache
 
-// Simple in-memory cache for images to improve scrolling performance
-private val imageCache = object : LruCache<String, android.graphics.Bitmap>(
-    (Runtime.getRuntime().maxMemory() / 1024 / 8).toInt() // Use 1/8th of available memory
-) {
-    override fun sizeOf(key: String, value: android.graphics.Bitmap): Int {
-        return value.byteCount / 1024
-    }
+enum class LinkThingTab {
+    CHAT, FILE_VAULT, NETWORK
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -79,6 +73,10 @@ fun LinkThingScreen(
     }
 
     var inputText by remember { mutableStateOf("") }
+    var currentTab by remember { mutableStateOf(LinkThingTab.CHAT) }
+    var vaultTargetFile by remember { mutableStateOf<File?>(null) }
+    var chatTargetMessageId by remember { mutableStateOf<String?>(null) }
+
     val listState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
     val clipboardManager = LocalClipboardManager.current
@@ -113,13 +111,26 @@ fun LinkThingScreen(
     
     var showAddFriendDialog by remember { mutableStateOf(false) }
     var editingProfileByDeviceId by remember { mutableStateOf<String?>(null) }
+    var croppingImageFile by remember { mutableStateOf<File?>(null) }
+
+    if (croppingImageFile != null) {
+        ImageCropper(
+            imageFile = croppingImageFile!!,
+            onCropDone = { cropped ->
+                if (editingProfileByDeviceId == localDevice?.deviceID) viewModel.updateMyPhoto(cropped)
+                else viewModel.updateFriendPhoto(editingProfileByDeviceId!!, cropped)
+                croppingImageFile = null
+            },
+            onDismiss = { croppingImageFile = null }
+        )
+    }
 
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showMessageInfo by remember { mutableStateOf<LinkThingMessage?>(null) }
     val isSelectionMode = selectedIds.isNotEmpty()
 
-    if (editingProfileByDeviceId != null) {
+    if (editingProfileByDeviceId != null && croppingImageFile == null) {
         val profileToEdit = if (editingProfileByDeviceId == localDevice?.deviceID) userProfile 
                             else friendProfiles[editingProfileByDeviceId] ?: UserProfile(editingProfileByDeviceId!!)
         EditProfileDialog(
@@ -130,8 +141,7 @@ fun LinkThingScreen(
                 else viewModel.updateFriendProfile(editingProfileByDeviceId!!, it)
             },
             onPhotoSelected = { 
-                if (editingProfileByDeviceId == localDevice?.deviceID) viewModel.updateMyPhoto(it)
-                else viewModel.updateFriendPhoto(editingProfileByDeviceId!!, it)
+                croppingImageFile = it
             }
         )
     }
@@ -162,8 +172,17 @@ fun LinkThingScreen(
     }
 
     // Optimization: in reverseLayout, the list starts at index 0 (bottom)
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
+    LaunchedEffect(messages.size, chatTargetMessageId) {
+        if (chatTargetMessageId != null) {
+            val index = messages.indexOfFirst { it.uniqueId == chatTargetMessageId }
+            if (index != -1) {
+                listState.animateScrollToItem(index)
+                chatTargetMessageId = null
+            } else {
+                // If not found, it might be in an older page
+                viewModel.loadMoreMessages()
+            }
+        } else if (messages.isNotEmpty()) {
             // Newest message is index 0. If we just sent/received, ensure it's visible.
             if (listState.firstVisibleItemIndex <= 1) {
                 listState.animateScrollToItem(0)
@@ -207,11 +226,28 @@ fun LinkThingScreen(
             onDismissRequest = { showEditDialog = false },
             title = { Text("Modifica messaggio") },
             text = {
-                TextField(
-                    value = editContent,
-                    onValueChange = { editContent = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        IconButton(onClick = { editContent = "$editContent**TestoBold**" }) {
+                            Icon(Icons.Default.FormatBold, "Bold")
+                        }
+                        IconButton(onClick = { editContent = "$editContent*TestoItalic*" }) {
+                            Icon(Icons.Default.FormatItalic, "Italic")
+                        }
+                        IconButton(onClick = { editContent = "$editContent`codice`" }) {
+                            Icon(Icons.Default.Code, "Codice")
+                        }
+                    }
+                    TextField(
+                        value = editContent,
+                        onValueChange = { editContent = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 5
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -281,6 +317,7 @@ fun LinkThingScreen(
     Scaffold(
         topBar = {
             if (isSelectionMode) {
+                // ... selection mode TopAppBar
                 TopAppBar(
                     title = { Text("${selectedIds.size} selezionati") },
                     navigationIcon = {
@@ -318,12 +355,19 @@ fun LinkThingScreen(
                     title = {
                         Column {
                             val alias = localDevice?.name ?: "Io"
-                            val id = localDevice?.deviceID ?: ""
-                            val shortId = id.take(6)
-                            val endId = id.takeLast(6)
+                            val title = when (currentTab) {
+                                LinkThingTab.CHAT -> {
+                                    val id = localDevice?.deviceID ?: ""
+                                    val shortId = id.take(6)
+                                    val endId = id.takeLast(6)
+                                    "$alias ($shortId..$endId)"
+                                }
+                                LinkThingTab.FILE_VAULT -> "File Vault"
+                                LinkThingTab.NETWORK -> "Network"
+                            }
                             
                             Text(
-                                text = "$alias ($shortId..$endId)",
+                                text = title,
                                 style = MaterialTheme.typography.titleMedium,
                                 maxLines = 1
                             )
@@ -339,6 +383,18 @@ fun LinkThingScreen(
                         }
                     },
                     actions = {
+                        if (currentTab == LinkThingTab.NETWORK) {
+                            IconButton(onClick = { showAddFriendDialog = true }) {
+                                Icon(Icons.Default.PersonAdd, contentDescription = "Aggiungi Amico")
+                            }
+                            IconButton(onClick = { viewModel.showMyId() }) {
+                                Icon(Icons.Default.QrCode, contentDescription = "Il Mio QR")
+                            }
+                            IconButton(onClick = { editingProfileByDeviceId = localDevice?.deviceID }) {
+                                Icon(Icons.Default.AccountCircle, contentDescription = "Modifica Profilo")
+                            }
+                        }
+                        
                         IconButton(onClick = { viewModel.forceSync() }) {
                             Icon(Icons.Default.Sync, contentDescription = "Sincronizza")
                         }
@@ -401,146 +457,167 @@ fun LinkThingScreen(
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
                 Column(modifier = Modifier.navigationBarsPadding()) {
-                    if (replyingTo != null) {
-                        val replierName = deviceNames[replyingTo!!.deviceId] ?: replyingTo!!.deviceId.take(8)
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                    if (currentTab == LinkThingTab.CHAT) {
+                        if (replyingTo != null) {
+                            val replierName = deviceNames[replyingTo!!.deviceId] ?: replyingTo!!.deviceId.take(8)
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Box(modifier = Modifier.width(4.dp).height(40.dp).background(MaterialTheme.colorScheme.primary))
-                                Column(modifier = Modifier.padding(start = 8.dp).weight(1f)) {
-                                    Text(replierName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                                    Text(replyingTo!!.content, style = MaterialTheme.typography.bodySmall, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                IconButton(onClick = { replyingTo = null }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Annulla")
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(modifier = Modifier.width(4.dp).height(40.dp).background(MaterialTheme.colorScheme.primary))
+                                    Column(modifier = Modifier.padding(start = 8.dp).weight(1f)) {
+                                        Text(replierName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                        Text(replyingTo!!.content, style = MaterialTheme.typography.bodySmall, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    IconButton(onClick = { replyingTo = null }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Annulla")
+                                    }
                                 }
                             }
                         }
-                    }
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                            .fillMaxWidth()
-                            .imePadding(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (isRecording) {
-                            Icon(
-                                Icons.Default.Mic, 
-                                contentDescription = null, 
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(horizontal = 12.dp)
-                            )
-                            Text(
-                                "Registrazione in corso...", 
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            IconButton(onClick = {
-                                isRecording = false
-                                recorder?.apply {
-                                    try { stop() } catch(e: Exception) {}
-                                    release()
-                                }
-                                recorder = null
-                                audioFile?.delete()
-                            }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Annulla", tint = MaterialTheme.colorScheme.error)
-                            }
-                            IconButton(onClick = {
-                                isRecording = false
-                                recorder?.apply {
-                                    try {
-                                        stop()
-                                        release()
-                                    } catch (e: Exception) {}
-                                }
-                                recorder = null
-                                audioFile?.let { viewModel.sendAudio(it) }
-                            }) {
-                                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia Audio", tint = MaterialTheme.colorScheme.primary)
-                            }
-                        } else {
-                            IconButton(onClick = { filePickerLauncher.launch("*/*") }) {
-                                Icon(Icons.Default.AttachFile, contentDescription = "Allega", tint = MaterialTheme.colorScheme.primary)
-                            }
-
-                            TextField(
-                                value = inputText,
-                                onValueChange = { inputText = it },
-                                modifier = Modifier.weight(1f),
-                                placeholder = { Text("Messaggio...") },
-                                maxLines = 4,
-                                shape = RoundedCornerShape(24.dp),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent,
-                                    errorIndicatorColor = Color.Transparent
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isRecording) {
+                                // ... existing recording UI
+                                Icon(
+                                    Icons.Default.Mic, 
+                                    contentDescription = null, 
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
                                 )
-                            )
-                            
-                            Spacer(modifier = Modifier.width(4.dp))
-
-                            if (inputText.isNotBlank()) {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.sendMessage(inputText, replyingTo)
-                                        inputText = ""
-                                        replyingTo = null
-                                        focusManager.clearFocus()
-                                    },
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
-                                ) {
-                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia", tint = MaterialTheme.colorScheme.onPrimary)
+                                Text(
+                                    "Registrazione in corso...", 
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                IconButton(onClick = {
+                                    isRecording = false
+                                    recorder?.apply {
+                                        try { stop() } catch(e: Exception) {}
+                                        release()
+                                    }
+                                    recorder = null
+                                    audioFile?.delete()
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Annulla", tint = MaterialTheme.colorScheme.error)
+                                }
+                                IconButton(onClick = {
+                                    isRecording = false
+                                    recorder?.apply {
+                                        try {
+                                            stop()
+                                            release()
+                                        } catch (e: Exception) {}
+                                    }
+                                    recorder = null
+                                    audioFile?.let { viewModel.sendAudio(it) }
+                                }) {
+                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia Audio", tint = MaterialTheme.colorScheme.primary)
                                 }
                             } else {
-                                IconButton(
-                                    onClick = {
-                                        if (recordPermissionState.status.isGranted) {
-                                            try {
-                                                val file = File(context.cacheDir, "rec_${System.currentTimeMillis()}.m4a")
-                                                audioFile = file
-                                                
-                                                val newRecorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                                                    MediaRecorder(context)
-                                                } else {
-                                                    @Suppress("DEPRECATION")
-                                                    MediaRecorder()
-                                                }
-                                                
-                                                newRecorder.apply {
-                                                    setAudioSource(MediaRecorder.AudioSource.MIC)
-                                                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                                                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                                                    setAudioSamplingRate(44100)
-                                                    setAudioEncodingBitRate(128000)
-                                                    setOutputFile(file.absolutePath)
-                                                    prepare()
-                                                    start()
-                                                }
-                                                recorder = newRecorder
-                                                isRecording = true
-                                            } catch (e: Exception) {
-                                                Log.e("AudioRec", "Failed to start recording", e)
-                                                isRecording = false
-                                                audioFile = null
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                                        horizontalArrangement = Arrangement.Start
+                                    ) {
+                                        IconButton(onClick = {
+                                            inputText = "$inputText**TestoBold**"
+                                        }) { Icon(Icons.Default.FormatBold, "Bold") }
+                                        IconButton(onClick = {
+                                            inputText = "$inputText*TestoItalic*"
+                                        }) { Icon(Icons.Default.FormatItalic, "Italic") }
+                                        IconButton(onClick = {
+                                            inputText = "$inputText`codice`"
+                                        }) { Icon(Icons.Default.Code, "Codice") }
+                                    }
+                                    
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(onClick = { filePickerLauncher.launch("*/*") }) {
+                                            Icon(Icons.Default.AttachFile, contentDescription = "Allega", tint = MaterialTheme.colorScheme.primary)
+                                        }
+
+                                        TextField(
+                                            value = inputText,
+                                            onValueChange = { inputText = it },
+                                            modifier = Modifier.weight(1f),
+                                            placeholder = { Text("Messaggio...") },
+                                            maxLines = 4,
+                                            shape = RoundedCornerShape(24.dp),
+                                            colors = TextFieldDefaults.colors(
+                                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent,
+                                                errorIndicatorColor = Color.Transparent
+                                            )
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.width(4.dp))
+
+                                        if (inputText.isNotBlank()) {
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.sendMessage(inputText, replyingTo)
+                                                    inputText = ""
+                                                    replyingTo = null
+                                                    focusManager.clearFocus()
+                                                },
+                                                modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
+                                            ) {
+                                                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia", tint = MaterialTheme.colorScheme.onPrimary)
                                             }
                                         } else {
-                                            recordPermissionState.launchPermissionRequest()
+                                            IconButton(
+                                                onClick = {
+                                                    if (recordPermissionState.status.isGranted) {
+                                                        try {
+                                                            val file = File(context.cacheDir, "rec_${System.currentTimeMillis()}.m4a")
+                                                            audioFile = file
+                                                            
+                                                            val newRecorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                                                                MediaRecorder(context)
+                                                            } else {
+                                                                @Suppress("DEPRECATION")
+                                                                MediaRecorder()
+                                                            }
+                                                            
+                                                            newRecorder.apply {
+                                                                setAudioSource(MediaRecorder.AudioSource.MIC)
+                                                                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                                                                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                                                                setAudioSamplingRate(44100)
+                                                                setAudioEncodingBitRate(128000)
+                                                                setOutputFile(file.absolutePath)
+                                                                prepare()
+                                                                start()
+                                                            }
+                                                            recorder = newRecorder
+                                                            isRecording = true
+                                                        } catch (e: Exception) {
+                                                            Log.e("AudioRec", "Failed to start recording", e)
+                                                            isRecording = false
+                                                            audioFile = null
+                                                        }
+                                                    } else {
+                                                        recordPermissionState.launchPermissionRequest()
+                                                    }
+                                                },
+                                                modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                                            ) {
+                                                Icon(Icons.Default.Mic, contentDescription = "Registra", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            }
                                         }
-                                    },
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
-                                ) {
-                                    Icon(Icons.Default.Mic, contentDescription = "Registra", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    }
                                 }
                             }
                         }
@@ -554,15 +631,22 @@ fun LinkThingScreen(
                         NavigationBarItem(
                             icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null) },
                             label = { Text("Chat") },
-                            selected = true,
-                            onClick = { /* Already here */ }
+                            selected = currentTab == LinkThingTab.CHAT,
+                            onClick = { currentTab = LinkThingTab.CHAT }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Folder, contentDescription = null) },
+                            label = { Text("File Vault") },
+                            selected = currentTab == LinkThingTab.FILE_VAULT,
+                            onClick = { currentTab = LinkThingTab.FILE_VAULT }
                         )
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.People, contentDescription = null) },
                             label = { Text("Network") },
-                            selected = false,
+                            selected = currentTab == LinkThingTab.NETWORK,
                             onClick = { 
-                                viewModel.manageFriends()
+                                currentTab = LinkThingTab.NETWORK
+                                viewModel.refreshFriends()
                             }
                         )
                     }
@@ -579,228 +663,257 @@ fun LinkThingScreen(
                     detectTapGestures(onTap = { focusManager.clearFocus() })
                 }
         ) {
-            if (messages.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.ChatBubbleOutline,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "Nessun messaggio",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Text(
-                            "Inizia una conversazione con i tuoi amici",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            }
-
-            LazyColumn(
-                state = listState,
-                reverseLayout = true,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 8.dp, top = 8.dp, start = 8.dp, end = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Optimization: use stable keys and animate item entry
-                items(
-                    items = messages,
-                    key = { it.uniqueId }
-                ) { message ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem() // Modern animation for item entry/removal
-                    ) {
-                        if (message.dateHeader != null) {
-                            key(message.dateHeader) {
-                                DateDivider(message.dateHeader!!)
+            when (currentTab) {
+                LinkThingTab.CHAT -> {
+                    if (messages.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.ChatBubbleOutline,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "Nessun messaggio",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    "Inizia una conversazione con i tuoi amici",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                                )
                             }
                         }
+                    }
 
-                        var showMessageMenu by remember { mutableStateOf(false) }
-                        val isSelected = selectedIds.contains(message.uniqueId)
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent)
-                                .padding(vertical = 2.dp, horizontal = 4.dp),
-                            horizontalArrangement = if (message.isLocal) Arrangement.End else Arrangement.Start,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            if (!message.isLocal) {
-                                Avatar(
-                                    deviceId = message.deviceId, 
-                                    profile = friendProfiles[message.deviceId],
-                                    onClick = { 
-                                        if (isSelectionMode) {
-                                            selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
-                                        } else {
-                                            editingProfileByDeviceId = message.deviceId
-                                        }
-                                    }
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                            }
-
-                            Box(
+                    LazyColumn(
+                        state = listState,
+                        reverseLayout = true,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 8.dp, top = 8.dp, start = 8.dp, end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(
+                            items = messages,
+                            key = { it.uniqueId }
+                        ) { message ->
+                            Column(
                                 modifier = Modifier
-                                    .weight(1f, fill = false)
-                                    .pointerInput(isSelectionMode, isSelected) {
-                                        detectTapGestures(
-                                            onTap = {
+                                    .fillMaxWidth()
+                                    .animateItem() 
+                            ) {
+                                if (message.dateHeader != null) {
+                                    key(message.dateHeader) {
+                                        DateDivider(message.dateHeader!!)
+                                    }
+                                }
+
+                                var showMessageMenu by remember { mutableStateOf(false) }
+                                val isSelected = selectedIds.contains(message.uniqueId)
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent)
+                                        .padding(vertical = 2.dp, horizontal = 4.dp),
+                                    horizontalArrangement = if (message.isLocal) Arrangement.End else Arrangement.Start,
+                                    verticalAlignment = Alignment.Bottom
+                                ) {
+                                    if (!message.isLocal) {
+                                        Avatar(
+                                            deviceId = message.deviceId, 
+                                            profile = friendProfiles[message.deviceId],
+                                            onClick = { 
                                                 if (isSelectionMode) {
                                                     selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
                                                 } else {
-                                                    replyingTo = message
-                                                }
-                                            },
-                                            onLongPress = {
-                                                if (!isSelectionMode) {
-                                                    selectedIds = setOf(message.uniqueId)
-                                                } else {
-                                                    selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
+                                                    editingProfileByDeviceId = message.deviceId
                                                 }
                                             }
                                         )
+                                        Spacer(modifier = Modifier.width(4.dp))
                                     }
-                            ) {
-                                val senderProfile = if (message.isLocal) userProfile else friendProfiles[message.deviceId]
-                                MessageBubble(
-                                    message = message,
-                                    deviceNames = deviceNames,
-                                    profile = senderProfile,
-                                    allMessages = messages
-                                )
-                                DropdownMenu(
-                                    expanded = showMessageMenu,
-                                    onDismissRequest = { showMessageMenu = false }
-                                ) {
-                                    if (message.isAttachment && message.file != null) {
-                                        val ext = message.file.extension.lowercase()
-                                        if (ext == "chess") {
-                                            DropdownMenuItem(
-                                                text = { Text("Apri scacchi") },
-                                                onClick = {
-                                                    showMessageMenu = false
-                                                    val intent = Intent(context, com.fmorea.syncthing.chess.ChessActivity::class.java).apply {
-                                                        action = Intent.ACTION_VIEW
-                                                        val uri = androidx.core.content.FileProvider.getUriForFile(
-                                                            context, "${context.packageName}.provider", message.file
-                                                        )
-                                                        data = uri
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f, fill = false)
+                                            .pointerInput(isSelectionMode, isSelected) {
+                                                detectTapGestures(
+                                                    onTap = {
+                                                        if (isSelectionMode) {
+                                                            selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
+                                                        } else {
+                                                            replyingTo = message
+                                                        }
+                                                    },
+                                                    onLongPress = {
+                                                        if (!isSelectionMode) {
+                                                            showMessageMenu = true
+                                                        } else {
+                                                            selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
+                                                        }
                                                     }
-                                                    context.startActivity(intent)
-                                                },
-                                                leadingIcon = { Icon(Icons.Default.Extension, null) }
-                                            )
-                                        } else {
-                                            DropdownMenuItem(
-                                                text = { Text("Apri file") },
-                                                onClick = {
-                                                    showMessageMenu = false
-                                                    FileUtils.openFile(context, message.file.absolutePath)
-                                                },
-                                                leadingIcon = { Icon(Icons.Default.FileOpen, null) }
-                                            )
-                                        }
-                                    }
-                                    
-                                    DropdownMenuItem(
-                                        text = { Text("Copia Testo") },
-                                        onClick = {
-                                            showMessageMenu = false
-                                            clipboardManager.setText(AnnotatedString(message.content))
-                                            android.widget.Toast.makeText(context, "Copiato", android.widget.Toast.LENGTH_SHORT).show()
-                                        },
-                                        leadingIcon = { Icon(Icons.Default.ContentCopy, null) }
-                                    )
+                                                )
+                                            }
+                                    ) {
+                                        val senderProfile = if (message.isLocal) userProfile else friendProfiles[message.deviceId]
+                MessageBubble(
+                    message = message,
+                    deviceNames = deviceNames,
+                    profile = senderProfile,
+                    allMessages = messages
+                )
+                                        DropdownMenu(
+                                            expanded = showMessageMenu,
+                                            onDismissRequest = { showMessageMenu = false }
+                                        ) {
+                                            if (message.file != null) {
+                                                DropdownMenuItem(
+                                                    text = { Text("Vedi nel Vault") },
+                                                    onClick = {
+                                                        showMessageMenu = false
+                                                        vaultTargetFile = message.file
+                                                        currentTab = LinkThingTab.FILE_VAULT
+                                                    },
+                                                    leadingIcon = { Icon(Icons.Default.Folder, null) }
+                                                )
+                                            }
 
-                                    DropdownMenuItem(
-                                        text = { Text("Condividi Esternamente") },
-                                        onClick = {
-                                            showMessageMenu = false
-                                            val sendIntent = Intent().apply {
-                                                action = Intent.ACTION_SEND
-                                                if (message.isAttachment && message.file != null) {
-                                                    val uri = androidx.core.content.FileProvider.getUriForFile(
-                                                        context, "${context.packageName}.provider", message.file
+                                            if (message.isAttachment && message.file != null) {
+                                                val ext = message.file.extension.lowercase()
+                                                if (ext == "chess") {
+                                                    DropdownMenuItem(
+                                                        text = { Text("Apri scacchi") },
+                                                        onClick = {
+                                                            showMessageMenu = false
+                                                            val intent = Intent(context, com.fmorea.syncthing.chess.ChessActivity::class.java).apply {
+                                                                action = Intent.ACTION_VIEW
+                                                                val uri = androidx.core.content.FileProvider.getUriForFile(
+                                                                    context, "${context.packageName}.provider", message.file
+                                                                )
+                                                                data = uri
+                                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                            }
+                                                            context.startActivity(intent)
+                                                        },
+                                                        leadingIcon = { Icon(Icons.Default.Extension, null) }
                                                     )
-                                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                                    type = context.contentResolver.getType(uri) ?: "*/*"
-                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                                 } else {
-                                                    putExtra(Intent.EXTRA_TEXT, message.content)
-                                                    type = "text/plain"
+                                                    DropdownMenuItem(
+                                                        text = { Text("Apri file") },
+                                                        onClick = {
+                                                            showMessageMenu = false
+                                                            FileUtils.openFile(context, message.file.absolutePath)
+                                                        },
+                                                        leadingIcon = { Icon(Icons.Default.FileOpen, null) }
+                                                    )
                                                 }
                                             }
-                                            context.startActivity(Intent.createChooser(sendIntent, null))
-                                        },
-                                        leadingIcon = { Icon(Icons.Default.Share, null) }
-                                    )
+                                            
+                                            DropdownMenuItem(
+                                                text = { Text("Copia Testo") },
+                                                onClick = {
+                                                    showMessageMenu = false
+                                                    clipboardManager.setText(AnnotatedString(message.content))
+                                                    android.widget.Toast.makeText(context, "Copiato", android.widget.Toast.LENGTH_SHORT).show()
+                                                },
+                                                leadingIcon = { Icon(Icons.Default.ContentCopy, null) }
+                                            )
 
-                                    if (!message.isAttachment) {
-                                        DropdownMenuItem(
-                                            text = { Text("Modifica") },
-                                            onClick = {
-                                                showMessageMenu = false
-                                                selectedMessage = message
-                                                editContent = message.content
-                                                showEditDialog = true
-                                            },
-                                            leadingIcon = { Icon(Icons.Default.Edit, null) }
-                                        )
-                                    }
-                                    DropdownMenuItem(
-                                        text = { Text("Info") },
-                                        onClick = {
-                                            showMessageMenu = false
-                                            showMessageInfo = message
-                                        },
-                                        leadingIcon = { Icon(Icons.Default.Info, null) }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Elimina") },
-                                        onClick = {
-                                            showMessageMenu = false
-                                            viewModel.deleteMessage(message)
-                                        },
-                                        leadingIcon = { Icon(Icons.Default.Delete, null) },
-                                        colors = MenuDefaults.itemColors(
-                                            textColor = MaterialTheme.colorScheme.error,
-                                            leadingIconColor = MaterialTheme.colorScheme.error
-                                        )
-                                    )
-                                }
-                            }
+                                            DropdownMenuItem(
+                                                text = { Text("Condividi Esternamente") },
+                                                onClick = {
+                                                    showMessageMenu = false
+                                                    val sendIntent = Intent().apply {
+                                                        action = Intent.ACTION_SEND
+                                                        if (message.isAttachment && message.file != null) {
+                                                            val uri = androidx.core.content.FileProvider.getUriForFile(
+                                                                context, "${context.packageName}.provider", message.file
+                                                            )
+                                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                                            type = context.contentResolver.getType(uri) ?: "*/*"
+                                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                        } else {
+                                                            putExtra(Intent.EXTRA_TEXT, message.content)
+                                                            type = "text/plain"
+                                                        }
+                                                    }
+                                                    context.startActivity(Intent.createChooser(sendIntent, null))
+                                                },
+                                                leadingIcon = { Icon(Icons.Default.Share, null) }
+                                            )
 
-                            if (message.isLocal) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Avatar(
-                                    deviceId = message.deviceId,
-                                    profile = userProfile,
-                                    onClick = { 
-                                        if (isSelectionMode) {
-                                            selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
-                                        } else {
-                                            editingProfileByDeviceId = message.deviceId
+                                            if (!message.isAttachment) {
+                                                DropdownMenuItem(
+                                                    text = { Text("Modifica") },
+                                                    onClick = {
+                                                        showMessageMenu = false
+                                                        selectedMessage = message
+                                                        editContent = message.content
+                                                        showEditDialog = true
+                                                    },
+                                                    leadingIcon = { Icon(Icons.Default.Edit, null) }
+                                                )
+                                            }
+                                            DropdownMenuItem(
+                                                text = { Text("Info") },
+                                                onClick = {
+                                                    showMessageMenu = false
+                                                    showMessageInfo = message
+                                                },
+                                                leadingIcon = { Icon(Icons.Default.Info, null) }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Elimina") },
+                                                onClick = {
+                                                    showMessageMenu = false
+                                                    viewModel.deleteMessage(message)
+                                                },
+                                                leadingIcon = { Icon(Icons.Default.Delete, null) },
+                                                colors = MenuDefaults.itemColors(
+                                                    textColor = MaterialTheme.colorScheme.error,
+                                                    leadingIconColor = MaterialTheme.colorScheme.error
+                                                )
+                                            )
                                         }
                                     }
-                                )
+
+                                    if (message.isLocal) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Avatar(
+                                            deviceId = message.deviceId,
+                                            profile = userProfile,
+                                            onClick = { 
+                                                if (isSelectionMode) {
+                                                    selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId
+                                                } else {
+                                                    editingProfileByDeviceId = message.deviceId
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                LinkThingTab.FILE_VAULT -> FileVaultScreen(
+                    viewModel = viewModel,
+                    initialFile = vaultTargetFile,
+                    onShowInChat = { msg ->
+                        chatTargetMessageId = msg.uniqueId
+                        currentTab = LinkThingTab.CHAT
+                        vaultTargetFile = null
+                    }
+                )
+                LinkThingTab.NETWORK -> NetworkView(
+                    viewModel = viewModel,
+                    onEditMyProfile = { editingProfileByDeviceId = localDevice?.deviceID },
+                    onEditFriendProfile = { editingProfileByDeviceId = it }
+                )
             }
         }
     }
@@ -826,61 +939,6 @@ fun DateDivider(date: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-}
-
-@Composable
-fun Avatar(deviceId: String, profile: UserProfile? = null, onClick: () -> Unit = {}) {
-    val initial = (profile?.firstName?.take(1) ?: deviceId.take(1)).uppercase()
-    Surface(
-        modifier = Modifier.size(32.dp).clickable(onClick = onClick),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            val rootDir = File(LocalContext.current.filesDir, com.fmorea.syncthing.service.Constants.LINKTHING_DIR_NAME)
-            // Use discloserId if available to find the correct photo
-            val photo = UserProfile.findPhoto(deviceId, profile?.discloserId ?: "", rootDir)
-            if (photo != null) {
-                AsyncImageAvatar(file = photo)
-            } else {
-                Text(
-                    text = initial,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AsyncImageAvatar(file: File) {
-    var bitmap by remember(file.absolutePath) { mutableStateOf(imageCache.get(file.absolutePath)) }
-    LaunchedEffect(file.absolutePath) {
-        if (bitmap == null) {
-            withContext(Dispatchers.IO) {
-                try {
-                    val decoded = BitmapFactory.decodeFile(file.absolutePath)
-                    if (decoded != null) {
-                        imageCache.put(file.absolutePath, decoded)
-                        bitmap = decoded
-                    }
-                } catch (e: Exception) {
-                    Log.e("Avatar", "Failed to decode", e)
-                }
-                Unit
-            }
-        }
-    }
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap!!.asImageBitmap(),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
     }
 }
 
@@ -945,7 +1003,13 @@ fun MessageBubble(
                 }
             }
             
-            if (message.isAttachment && message.file != null) {
+            if (!message.isAttachment) {
+                MarkdownText(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            } else if (message.file != null) {
                 val extension = remember(message.file.name) { message.file.extension.lowercase() }
                 val isImage = remember(extension) { extension in listOf("jpg", "jpeg", "png", "webp", "gif") }
                 val isAudio = remember(extension) { extension in listOf("m4a", "mp3", "wav", "ogg") }
@@ -1022,72 +1086,6 @@ fun MessageBubble(
             }
         }
     }
-}
-
-@Composable
-fun AsyncImage(file: File, modifier: Modifier) {
-    var bitmap by remember { mutableStateOf(imageCache.get(file.absolutePath)) }
-    
-    LaunchedEffect(file.absolutePath) {
-        if (bitmap == null) {
-            // Offload decoding to background thread
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    if (!file.exists()) return@withContext
-                    val options = BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
-                    BitmapFactory.decodeFile(file.absolutePath, options)
-                    
-                    if (options.outWidth <= 0 || options.outHeight <= 0) return@withContext
-
-                    // Simple downsampling
-                    options.inSampleSize = calculateInSampleSize(options, 400, 400)
-                    options.inJustDecodeBounds = false
-                    
-                    val decoded = BitmapFactory.decodeFile(file.absolutePath, options)
-                    if (decoded != null) {
-                        imageCache.put(file.absolutePath, decoded)
-                        bitmap = decoded
-                    }
-                } catch (e: Exception) {
-                    Log.e("AsyncImage", "Failed to decode ${file.name}", e)
-                }
-            }
-        }
-    }
-
-    Crossfade(targetState = bitmap, animationSpec = tween(500)) { targetBitmap ->
-        if (targetBitmap != null) {
-            Image(
-                bitmap = targetBitmap.asImageBitmap(),
-                contentDescription = null,
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            }
-        }
-    }
-}
-
-fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
-    val (height: Int, width: Int) = options.outHeight to options.outWidth
-    var inSampleSize = 1
-
-    if (height > reqHeight || width > reqWidth) {
-        val halfHeight: Int = height / 2
-        val halfWidth: Int = width / 2
-        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
-            inSampleSize *= 2
-        }
-    }
-    return inSampleSize
 }
 
 @Composable
