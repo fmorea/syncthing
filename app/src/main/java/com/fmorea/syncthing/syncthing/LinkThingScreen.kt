@@ -82,6 +82,7 @@ fun LinkThingScreen(
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
+    var showConnectedDialog by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -194,8 +195,8 @@ fun LinkThingScreen(
     LaunchedEffect(syncStatus) {
         if (syncStatus == "Attivo") {
             while (true) {
-                kotlinx.coroutines.delay(60000) // 1 minute refresh to save battery
                 viewModel.refreshFriends()
+                kotlinx.coroutines.delay(10000) // 10 seconds refresh for live badge
             }
         }
     }
@@ -314,6 +315,33 @@ fun LinkThingScreen(
         )
     }
 
+    if (showConnectedDialog) {
+        val connectedFriends = friends.filter { it.numConnections > 0 }
+        AlertDialog(
+            onDismissRequest = { showConnectedDialog = false },
+            title = { Text("Utenti Online") },
+            text = {
+                Column {
+                    if (connectedFriends.isEmpty()) {
+                        Text("Nessun utente connesso al momento.", color = MaterialTheme.colorScheme.outline)
+                    } else {
+                        connectedFriends.forEach { friend ->
+                            val name = friendProfiles[friend.deviceID]?.getDisplayName() ?: friend.getDisplayName()
+                            ListItem(
+                                headlineContent = { Text(name) },
+                                leadingContent = { Avatar(deviceId = friend.deviceID, profile = friendProfiles[friend.deviceID]) },
+                                supportingContent = { Text("Connesso • ${friend.deviceID.take(8)}") }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showConnectedDialog = false }) { Text("Chiudi") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             if (isSelectionMode) {
@@ -371,15 +399,22 @@ fun LinkThingScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 maxLines = 1
                             )
-                            Text(
-                                syncStatus,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = when {
-                                    syncStatus == "Attivo" -> MaterialTheme.colorScheme.primary
-                                    syncStatus.startsWith("Errore") -> MaterialTheme.colorScheme.error
-                                    else -> MaterialTheme.colorScheme.secondary
-                                }
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                LiveConnectionBadge(
+                                    friends = friends,
+                                    onClick = { showConnectedDialog = true }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    syncStatus,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = when {
+                                        syncStatus == "Attivo" -> MaterialTheme.colorScheme.primary
+                                        syncStatus.startsWith("Errore") -> MaterialTheme.colorScheme.error
+                                        else -> MaterialTheme.colorScheme.secondary
+                                    }
+                                )
+                            }
                         }
                     },
                     actions = {
@@ -527,17 +562,17 @@ fun LinkThingScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                                        horizontalArrangement = Arrangement.Start
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        IconButton(onClick = {
+                                        EditorActionButton(Icons.Default.FormatBold, "Bold") {
                                             inputText = "$inputText**TestoBold**"
-                                        }) { Icon(Icons.Default.FormatBold, "Bold") }
-                                        IconButton(onClick = {
+                                        }
+                                        EditorActionButton(Icons.Default.FormatItalic, "Italic") {
                                             inputText = "$inputText*TestoItalic*"
-                                        }) { Icon(Icons.Default.FormatItalic, "Italic") }
-                                        IconButton(onClick = {
+                                        }
+                                        EditorActionButton(Icons.Default.Code, "Codice") {
                                             inputText = "$inputText`codice`"
-                                        }) { Icon(Icons.Default.Code, "Codice") }
+                                        }
                                     }
                                     
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -915,6 +950,40 @@ fun LinkThingScreen(
                     onEditFriendProfile = { editingProfileByDeviceId = it }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun LiveConnectionBadge(
+    friends: List<com.fmorea.syncthing.model.Device>,
+    onClick: () -> Unit = {}
+) {
+    val connectedCount = remember(friends) { friends.count { it.numConnections > 0 } }
+    
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.height(20.dp).clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = if (connectedCount > 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.outline
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = connectedCount.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (connectedCount > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+            )
         }
     }
 }

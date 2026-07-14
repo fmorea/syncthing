@@ -51,10 +51,13 @@ fun FileVaultScreen(
     onShowInChat: (LinkThingMessage) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val friends by viewModel.friends.collectAsState()
     var viewMode by remember { mutableStateOf(FileViewMode.DASHBOARD) }
     var sortMode by remember { mutableStateOf(FileSortMode.TYPE) }
     
     var searchQuery by remember { mutableStateOf("") }
+    var activeCategoryLabel by remember { mutableStateOf<String?>(null) }
+    var showConnectedDialog by remember { mutableStateOf(false) }
     var isSearchExpanded by remember { mutableStateOf(false) }
     var isRegexSearch by remember { mutableStateOf(false) }
     
@@ -108,8 +111,13 @@ fun FileVaultScreen(
         }
         
         filtered.sortedWith { f1, f2 ->
+            // Always keep directories at the top, except when sorting specifically by something else that might override it?
+            // Actually, most file managers keep folders first.
+            if (f1.isDirectory && !f2.isDirectory) return@sortedWith -1
+            if (!f1.isDirectory && f2.isDirectory) return@sortedWith 1
+            
             when (sortMode) {
-                FileSortMode.TYPE -> compareBy<File>({ !it.isDirectory }, { it.extension.lowercase() }, { it.name.lowercase() }).compare(f1, f2)
+                FileSortMode.TYPE -> compareBy<File>({ it.extension.lowercase() }, { it.name.lowercase() }).compare(f1, f2)
                 FileSortMode.NAME_ASC -> f1.name.lowercase().compareTo(f2.name.lowercase())
                 FileSortMode.NAME_DESC -> f2.name.lowercase().compareTo(f1.name.lowercase())
                 FileSortMode.DATE_ASC -> f1.lastModified().compareTo(f2.lastModified())
@@ -188,12 +196,16 @@ fun FileVaultScreen(
                     isSearchExpanded = isSearchExpanded,
                     onSearchExpandedChange = { isSearchExpanded = it },
                     isRegexSearch = isRegexSearch,
-                    onSearchQueryChange = { searchQuery = it },
+                    onSearchQueryChange = { 
+                        searchQuery = it
+                        if (it.isEmpty()) activeCategoryLabel = null
+                    },
                     onToggleRegex = { isRegexSearch = !isRegexSearch },
                     onBack = { 
                         if (isSearchExpanded) { 
                             isSearchExpanded = false
                             searchQuery = "" 
+                            activeCategoryLabel = null
                         } else if (highlightedFile != null) {
                             highlightedFile = null
                         } else if (viewMode == FileViewMode.DASHBOARD) { 
@@ -204,7 +216,18 @@ fun FileVaultScreen(
                             currentPath = currentPath.parentFile ?: viewModel.getRootDir() 
                         }
                     },
-                    onHomeClick = { viewMode = FileViewMode.DASHBOARD },
+                    onHomeClick = { 
+                        viewMode = FileViewMode.DASHBOARD 
+                        searchQuery = ""
+                        activeCategoryLabel = null
+                        isSearchExpanded = false
+                        currentPath = viewModel.getRootDir()
+                    },
+                    activeCategoryLabel = activeCategoryLabel,
+                    onClearCategory = { 
+                        activeCategoryLabel = null
+                        searchQuery = ""
+                    },
                     onPathEdit = { newPath ->
                         val f = File(newPath)
                         if (f.exists() && f.isDirectory) {
@@ -218,31 +241,24 @@ fun FileVaultScreen(
                     onNavigateTo = { folder ->
                         currentPath = folder
                         viewMode = FileViewMode.GRID
-                    }
+                    },
+                    friends = friends,
+                    onConnectedClick = { showConnectedDialog = true }
                 )
             }
         },
         bottomBar = {
-            if (!isSelectionMode) {
-                FileVaultBottomBar(
-                    viewMode = viewMode,
-                    onNewFolder = { showCreateFolderDialog = true },
-                    onToggleView = { viewMode = if (viewMode == FileViewMode.GRID) FileViewMode.LIST else FileViewMode.GRID },
-                    onGoUp = {
-                        if (highlightedFile != null) {
-                            highlightedFile = null
-                        } else if (viewMode != FileViewMode.DASHBOARD) {
-                            if (currentPath == viewModel.getRootDir()) {
-                                viewMode = FileViewMode.DASHBOARD
-                            } else {
-                                currentPath = currentPath.parentFile ?: viewModel.getRootDir()
-                            }
-                        }
-                    },
-                    onGoHome = { viewMode = FileViewMode.DASHBOARD },
-                    onSort = { sortMode = it },
-                    onSearchClick = { isSearchExpanded = true }
-                )
+            // Bottom bar removed as controls are now context-aware in headers or FAB
+        },
+        floatingActionButton = {
+            if (viewMode != FileViewMode.DASHBOARD && !isSelectionMode) {
+                FloatingActionButton(
+                    onClick = { showCreateFolderDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.CreateNewFolder, contentDescription = stringResource(R.string.new_folder))
+                }
             }
         }
     ) { padding ->
@@ -251,18 +267,42 @@ fun FileVaultScreen(
                 FileVaultDashboard(
                     rootDir = viewModel.getRootDir(),
                     viewModel = viewModel,
-                    onCategoryClick = { extList ->
+                    onCategoryClick = { extList, label ->
                         searchQuery = extList.joinToString(" ")
+                        activeCategoryLabel = label
                         viewMode = FileViewMode.GRID
                     },
                     onOpenPath = {
                         currentPath = it
                         viewMode = FileViewMode.GRID
                     },
-                    onEditFile = { editingFile = it }
+                    onEditFile = { editingFile = it },
+                    viewMode = viewMode,
+                    onToggleView = { viewMode = if (viewMode == FileViewMode.GRID) FileViewMode.LIST else FileViewMode.GRID },
+                    sortMode = sortMode,
+                    onSort = { sortMode = it }
                 )
             } else {
-                if (filteredFiles.isEmpty()) {
+                FileVaultListHeader(
+                    currentPath = currentPath,
+                    rootDir = viewModel.getRootDir(),
+                    viewMode = viewMode,
+                    onToggleView = { viewMode = if (viewMode == FileViewMode.GRID) FileViewMode.LIST else FileViewMode.GRID },
+                    sortMode = sortMode,
+                    onSort = { sortMode = it },
+                    onGoUp = {
+                        if (currentPath == viewModel.getRootDir()) {
+                            viewMode = FileViewMode.DASHBOARD
+                        } else {
+                            currentPath = currentPath.parentFile ?: viewModel.getRootDir()
+                        }
+                    }
+                )
+                
+                val labelNet = stringResource(R.string.category_network)
+                if (activeCategoryLabel == labelNet) {
+                    NetworkGraphView(viewModel = viewModel, modifier = Modifier.weight(1f))
+                } else if (filteredFiles.isEmpty()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.Inbox, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
@@ -273,11 +313,11 @@ fun FileVaultScreen(
                     if (viewMode == FileViewMode.GRID) {
                         LazyVerticalGrid(
                             state = gridState,
-                            columns = GridCells.Fixed(4),
+                            columns = GridCells.Adaptive(minSize = 90.dp),
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentPadding = PaddingValues(8.dp)
                         ) {
-                            items(filteredFiles) { file ->
+                            items(filteredFiles, key = { it.absolutePath }) { file ->
                                 val isSelected = selectedFiles.contains(file)
                                 val isHighlighted = highlightedFile?.absolutePath == file.absolutePath
                                 FileVaultItem(
@@ -386,6 +426,32 @@ fun FileVaultScreen(
         )
     }
 
+    if (showConnectedDialog) {
+        val connectedFriends = friends.filter { it.numConnections > 0 }
+        AlertDialog(
+            onDismissRequest = { showConnectedDialog = false },
+            title = { Text("Utenti Online") },
+            text = {
+                Column {
+                    if (connectedFriends.isEmpty()) {
+                        Text("Nessun utente connesso al momento.", color = MaterialTheme.colorScheme.outline)
+                    } else {
+                        connectedFriends.forEach { friend ->
+                            ListItem(
+                                headlineContent = { Text(friend.getDisplayName()) },
+                                leadingContent = { Icon(Icons.Default.AccountCircle, null, tint = MaterialTheme.colorScheme.primary) },
+                                supportingContent = { Text("Connesso • ${friend.deviceID.take(8)}") }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showConnectedDialog = false }) { Text("Chiudi") }
+            }
+        )
+    }
+
     if (fileToDelete != null) {
         AlertDialog(
             onDismissRequest = { fileToDelete = null },
@@ -421,7 +487,11 @@ fun FileVaultTopBar(
     onBack: () -> Unit,
     onHomeClick: () -> Unit,
     onPathEdit: (String) -> Unit,
-    onNavigateTo: (File) -> Unit
+    onNavigateTo: (File) -> Unit,
+    activeCategoryLabel: String? = null,
+    onClearCategory: () -> Unit = {},
+    friends: List<com.fmorea.syncthing.model.Device> = emptyList(),
+    onConnectedClick: () -> Unit = {}
 ) {
     var isPathEditing by remember { mutableStateOf(false) }
     var editedPath by remember { mutableStateOf(currentPath.absolutePath) }
@@ -492,64 +562,92 @@ fun FileVaultTopBar(
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onHomeClick, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Home, null, modifier = Modifier.size(20.dp))
-                    }
-                    
-                    Surface(
-                        color = Color(0xFF0288D1),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(horizontal = 4.dp)
+                    Row(
+                        modifier = Modifier
+                            .clickable(onClick = onHomeClick)
+                            .padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Icon(Icons.Default.Smartphone, null, modifier = Modifier.size(14.dp), tint = Color.White)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Local", style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                        }
+                        Icon(Icons.Default.Home, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Home",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        LiveConnectionBadge(
+                            friends = friends,
+                            onClick = onConnectedClick
+                        )
                     }
 
                     Row(
                         modifier = Modifier
                             .weight(1f)
-                            .horizontalScroll(rememberScrollState())
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { 
-                                    editedPath = currentPath.absolutePath
-                                    isPathEditing = true 
-                                }
-                            ),
+                            .horizontalScroll(rememberScrollState()),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val pathParts = remember(currentPath, rootDir) {
-                            val relative = currentPath.absolutePath.removePrefix(rootDir.parentFile?.absolutePath ?: "")
-                            relative.split(File.separator).filter { it.isNotBlank() }
+                            val rootPath = rootDir.absolutePath
+                            val current = currentPath.absolutePath
+                            if (current == rootPath) emptyList()
+                            else if (current.startsWith(rootPath)) {
+                                current.removePrefix(rootPath).split(File.separator).filter { it.isNotBlank() }
+                            } else {
+                                // Outside root? Show full path or just parts
+                                current.split(File.separator).filter { it.isNotBlank() }
+                            }
                         }
                         
-                        Text(
-                            "/", 
-                            modifier = Modifier
-                                .clickable { onNavigateTo(rootDir) }
-                                .padding(horizontal = 8.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
+                        InputChip(
+                            selected = currentPath == rootDir,
+                            onClick = { onNavigateTo(rootDir) },
+                            label = { Text("Vault") },
+                            leadingIcon = { Icon(Icons.Default.FolderZip, null, modifier = Modifier.size(16.dp)) },
+                            border = null,
+                            colors = InputChipDefaults.inputChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         )
                         
-                        var accumulatedPath = rootDir.parentFile ?: rootDir
+                        var accumulatedPath = rootDir
                         pathParts.forEach { part ->
                             accumulatedPath = File(accumulatedPath, part)
                             val thisPath = accumulatedPath
                             
                             Icon(Icons.AutoMirrored.Filled.NavigateNext, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
-                            Text(
-                                part,
-                                modifier = Modifier
-                                    .clickable { onNavigateTo(thisPath) }
-                                    .padding(horizontal = 4.dp),
-                                style = MaterialTheme.typography.bodyMedium
+                            
+                            InputChip(
+                                selected = currentPath == thisPath,
+                                onClick = { onNavigateTo(thisPath) },
+                                label = { Text(part) },
+                                border = null,
+                                colors = InputChipDefaults.inputChipColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            )
+                        }
+
+                        if (activeCategoryLabel != null) {
+                            Icon(Icons.AutoMirrored.Filled.NavigateNext, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
+                            InputChip(
+                                selected = true,
+                                onClick = onClearCategory,
+                                label = { Text(activeCategoryLabel) },
+                                trailingIcon = { Icon(Icons.Default.Close, null, modifier = Modifier.size(12.dp)) },
+                                border = null,
+                                colors = InputChipDefaults.inputChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
                             )
                         }
                     }
@@ -564,59 +662,16 @@ fun FileVaultTopBar(
 }
 
 @Composable
-fun FileVaultBottomBar(
-    viewMode: FileViewMode,
-    onNewFolder: () -> Unit,
-    onToggleView: () -> Unit,
-    onGoUp: () -> Unit,
-    onGoHome: () -> Unit,
-    onSort: (FileSortMode) -> Unit,
-    onSearchClick: () -> Unit
-) {
-    var showSortMenu by remember { mutableStateOf(false) }
-    
-    BottomAppBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.height(64.dp)
-    ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            BottomActionItem(Icons.Default.Add, stringResource(R.string.action_new), onNewFolder)
-            BottomActionItem(Icons.Default.Search, stringResource(R.string.action_search), onSearchClick)
-            BottomActionItem(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_go_up), onGoUp)
-            BottomActionItem(Icons.Default.Home, stringResource(R.string.action_home), onGoHome)
-            BottomActionItem(if (viewMode == FileViewMode.GRID) Icons.AutoMirrored.Filled.List else Icons.Default.GridView, stringResource(R.string.action_view), onToggleView)
-            Box {
-                BottomActionItem(Icons.Default.Sort, stringResource(R.string.action_sort), { showSortMenu = true })
-                DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.sort_name_asc)) }, onClick = { onSort(FileSortMode.NAME_ASC); showSortMenu = false })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.sort_date_desc)) }, onClick = { onSort(FileSortMode.DATE_DESC); showSortMenu = false })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.sort_size_desc)) }, onClick = { onSort(FileSortMode.SIZE_DESC); showSortMenu = false })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.sort_type)) }, onClick = { onSort(FileSortMode.TYPE); showSortMenu = false })
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BottomActionItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier.clickable(onClick = onClick).padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(icon, null, modifier = Modifier.size(24.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall)
-    }
-}
-
-@Composable
 fun FileVaultDashboard(
     rootDir: File,
     viewModel: LinkThingViewModel,
-    onCategoryClick: (List<String>) -> Unit,
+    onCategoryClick: (List<String>, String) -> Unit,
     onOpenPath: (File) -> Unit,
-    onEditFile: (File) -> Unit
+    onEditFile: (File) -> Unit,
+    viewMode: FileViewMode,
+    onToggleView: () -> Unit,
+    sortMode: FileSortMode,
+    onSort: (FileSortMode) -> Unit
 ) {
     val stats = remember(rootDir) {
         val allFiles = rootDir.walkTopDown().filter { it.isFile }.toList()
@@ -636,87 +691,201 @@ fun FileVaultDashboard(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        // First row
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            CategoryItem(Icons.AutoMirrored.Filled.Message, stringResource(R.string.category_messages), stats["Messages"] ?: 0, Color(0xFF2196F3)) { 
-                // Filter messages (not replies)
-                onCategoryClick(listOf("msg")) // Note: the filter logic in the main screen might need to be smarter for this
-            }
-            CategoryItem(Icons.AutoMirrored.Filled.Reply, stringResource(R.string.category_replies), stats["Replies"] ?: 0, Color(0xFF00BCD4)) { 
-                onCategoryClick(listOf("msg")) 
-            }
-            CategoryItem(Icons.Default.Lan, stringResource(R.string.category_network), stats["Network"] ?: 0, Color(0xFF4CAF50)) { onCategoryClick(listOf("net")) }
-            CategoryItem(Icons.Default.DoneAll, stringResource(R.string.category_acks), stats["Acks"] ?: 0, Color(0xFFFF9800)) { onCategoryClick(listOf("ack")) }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Second row
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            CategoryItem(Icons.Default.PermMedia, stringResource(R.string.category_media), stats["Media"] ?: 0, Color(0xFF9C27B0)) { onCategoryClick(listOf("jpg", "png", "webp", "mp3", "m4a", "mp4")) }
-            CategoryItem(Icons.Default.AccountCircle, stringResource(R.string.category_profiles), stats["Profiles"] ?: 0, Color(0xFF795548)) { onCategoryClick(listOf("info")) }
-            CategoryItem(Icons.Default.Extension, stringResource(R.string.category_chess), stats["Chess"] ?: 0, Color(0xFF607D8B)) { onCategoryClick(listOf("chess")) }
-            CategoryItem(Icons.Default.MoreHoriz, stringResource(R.string.category_others), stats["Others"] ?: 0, Color(0xFF9E9E9E)) { 
-                onCategoryClick(emptyList()) // Show all or special filter
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.FolderZip, null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.vault_occupancy), style = MaterialTheme.typography.titleSmall)
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Categories Grid
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                val labelMsg = stringResource(R.string.category_messages)
+                CategoryItem(Icons.AutoMirrored.Filled.Message, labelMsg, stats["Messages"] ?: 0, Color(0xFF2196F3), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("msg"), labelMsg)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                val vaultSize = remember(rootDir) {
-                    rootDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-                }
-                val totalSpace = rootDir.totalSpace
-                val progress = if (totalSpace > 0) vaultSize.toFloat() / totalSpace else 0f
-                
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(formatSize(vaultSize), style = MaterialTheme.typography.labelSmall)
-                    Text(stringResource(R.string.size_of_total, formatSize(vaultSize), formatSize(totalSpace)), style = MaterialTheme.typography.labelSmall)
+                val labelReply = stringResource(R.string.category_replies)
+                CategoryItem(Icons.AutoMirrored.Filled.Reply, labelReply, stats["Replies"] ?: 0, Color(0xFF00BCD4), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("msg"), labelReply) 
                 }
             }
-        }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                val labelNet = stringResource(R.string.category_network)
+                CategoryItem(Icons.Default.Lan, labelNet, stats["Network"] ?: 0, Color(0xFF4CAF50), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("net"), labelNet) 
+                }
+                val labelAck = stringResource(R.string.category_acks)
+                CategoryItem(Icons.Default.DoneAll, labelAck, stats["Acks"] ?: 0, Color(0xFFFF9800), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("ack"), labelAck) 
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                val labelMedia = stringResource(R.string.category_media)
+                CategoryItem(Icons.Default.PermMedia, labelMedia, stats["Media"] ?: 0, Color(0xFF9C27B0), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("jpg", "jpeg", "png", "webp", "mp3", "m4a", "mp4"), labelMedia) 
+                }
+                val labelProfile = stringResource(R.string.category_profiles)
+                CategoryItem(Icons.Default.AccountCircle, labelProfile, stats["Profiles"] ?: 0, Color(0xFF795548), Modifier.weight(1f)) { 
+                    onCategoryClick(listOf("info"), labelProfile) 
+                }
+            }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(stringResource(R.string.all_files), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val allFiles = remember(rootDir) { rootDir.listFiles()?.filter { it.isFile }?.sortedByDescending { it.lastModified() } ?: emptyList() }
-        
-        allFiles.forEach { file ->
-            val context = LocalContext.current
-            ListItem(
-                modifier = Modifier.clickable { 
-                    handleFileClick(file, context, viewModel, onOpenPath, onEditFile)
-                },
-                headlineContent = { Text(file.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                supportingContent = { Text(formatSize(file.length())) },
-                leadingContent = {
-                    val icon = when {
-                        file.name.endsWith(".msg") -> Icons.AutoMirrored.Filled.Message
-                        file.name.endsWith(".ack") -> Icons.Default.DoneAll
-                        file.name.endsWith(".net") -> Icons.Default.Lan
-                        file.name.endsWith(".INFO") -> Icons.Default.Info
-                        else -> Icons.AutoMirrored.Filled.InsertDriveFile
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(), 
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Storage, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.vault_occupancy), style = MaterialTheme.typography.titleSmall)
                     }
-                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    val vaultSize = remember(rootDir) {
+                        rootDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+                    }
+                    val totalSpace = rootDir.totalSpace
+                    val progress = if (totalSpace > 0) vaultSize.toFloat() / totalSpace else 0f
+                    
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(formatSize(vaultSize), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        val percent = (progress * 100).toInt()
+                        Text("$percent% usato", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    }
                 }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            tonalElevation = 1.dp
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                FileVaultListHeader(
+                    currentPath = rootDir,
+                    rootDir = rootDir,
+                    viewMode = viewMode,
+                    onToggleView = onToggleView,
+                    sortMode = sortMode,
+                    onSort = onSort,
+                    title = stringResource(R.string.all_files),
+                    showGoUp = false
+                )
+
+                val allFiles = remember(rootDir) { rootDir.listFiles()?.filter { it.isFile }?.sortedByDescending { it.lastModified() } ?: emptyList() }
+                
+                if (allFiles.isEmpty()) {
+                    Text(
+                        "Nessun file nel root", 
+                        modifier = Modifier.padding(vertical = 32.dp).fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+
+                allFiles.forEach { file ->
+                    val context = LocalContext.current
+                    FileVaultItem(
+                        file = file,
+                        viewMode = FileViewMode.LIST,
+                        onTap = { handleFileClick(file, context, viewModel, onOpenPath, onEditFile) },
+                        onRename = {}, // Dashboard preview doesn't need all actions
+                        onDelete = {},
+                        onShowInChat = {}
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FileVaultListHeader(
+    currentPath: File,
+    rootDir: File,
+    viewMode: FileViewMode,
+    onToggleView: () -> Unit,
+    sortMode: FileSortMode,
+    onSort: (FileSortMode) -> Unit,
+    title: String? = null,
+    showGoUp: Boolean = true,
+    onGoUp: () -> Unit = {}
+) {
+    var showSortMenu by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showGoUp && currentPath != rootDir) {
+                IconButton(onClick = onGoUp) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Text(
+                text = title ?: currentPath.name.ifEmpty { "Vault" },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = if (showGoUp) 0.dp else 16.dp)
             )
+        }
+        
+        Row {
+            IconButton(onClick = onToggleView) {
+                Icon(
+                    if (viewMode == FileViewMode.GRID) Icons.AutoMirrored.Filled.List else Icons.Default.GridView,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Box {
+                IconButton(onClick = { showSortMenu = true }) {
+                    val sortIcon = when(sortMode) {
+                        FileSortMode.NAME_ASC, FileSortMode.NAME_DESC -> Icons.Default.SortByAlpha
+                        FileSortMode.DATE_ASC, FileSortMode.DATE_DESC -> Icons.Default.Schedule
+                        FileSortMode.SIZE_ASC, FileSortMode.SIZE_DESC -> Icons.Default.Storage
+                        FileSortMode.TYPE -> Icons.Default.Category
+                    }
+                    Icon(sortIcon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+                DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Default.SortByAlpha, null) },
+                        text = { Text(stringResource(R.string.sort_name_asc)) }, 
+                        onClick = { onSort(FileSortMode.NAME_ASC); showSortMenu = false }
+                    )
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Default.Schedule, null) },
+                        text = { Text(stringResource(R.string.sort_date_desc)) }, 
+                        onClick = { onSort(FileSortMode.DATE_DESC); showSortMenu = false }
+                    )
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Default.Storage, null) },
+                        text = { Text(stringResource(R.string.sort_size_desc)) }, 
+                        onClick = { onSort(FileSortMode.SIZE_DESC); showSortMenu = false }
+                    )
+                    DropdownMenuItem(
+                        leadingIcon = { Icon(Icons.Default.Category, null) },
+                        text = { Text(stringResource(R.string.sort_type)) }, 
+                        onClick = { onSort(FileSortMode.TYPE); showSortMenu = false }
+                    )
+                }
+            }
         }
     }
 }
@@ -729,16 +898,26 @@ private fun formatSize(size: Long): String {
 }
 
 @Composable
-fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, count: Int, color: Color, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onClick)) {
-        Surface(shape = RoundedCornerShape(12.dp), color = color.copy(alpha = 0.1f), modifier = Modifier.size(56.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(28.dp))
+fun CategoryItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, count: Int, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = color.copy(alpha = 0.05f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.1f))
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Surface(shape = CircleShape, color = color.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(count.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(count.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
     }
 }
 
@@ -787,7 +966,7 @@ fun FileVaultItem(
         else -> Icons.AutoMirrored.Filled.InsertDriveFile
     }
     
-    val baseIconColor = if (file.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+    val baseIconColor = if (file.isDirectory) Color(0xFFFFC107) else MaterialTheme.colorScheme.secondary
     val iconColor = if (highlighted || selected) MaterialTheme.colorScheme.error else baseIconColor
     val backgroundColor = when {
         selected -> MaterialTheme.colorScheme.primaryContainer
@@ -795,9 +974,9 @@ fun FileVaultItem(
         else -> Color.Transparent
     }
 
-    Box(modifier = Modifier.background(backgroundColor, shape = RoundedCornerShape(8.dp))) {
+    Box(modifier = Modifier.background(backgroundColor, shape = RoundedCornerShape(12.dp))) {
         if (viewMode == FileViewMode.GRID) {
-            Card(
+            Column(
                 modifier = Modifier
                     .padding(4.dp)
                     .fillMaxWidth()
@@ -807,55 +986,54 @@ fun FileVaultItem(
                             onLongClick()
                             if (!selected) showContextMenu = true 
                         }
-                    ),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = when {
-                    selected -> BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                    highlighted -> BorderStroke(2.dp, MaterialTheme.colorScheme.error)
-                    else -> null
-                }
+                    )
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(8.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val ext = remember(file.name) { file.extension.lowercase() }
+                val ext = remember(file.name) { file.extension.lowercase() }
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
                     if (file.isDirectory) {
-                        Icon(icon, null, modifier = Modifier.size(48.dp), tint = iconColor)
+                        Icon(icon, null, modifier = Modifier.size(56.dp), tint = iconColor)
                     } else if (ext in listOf("jpg", "jpeg", "png", "webp", "gif")) {
                         AsyncImage(
                             file = file,
-                            modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp))
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
                         )
                     } else if (ext == "info") {
                         InfoFilePreview(file)
                     } else {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(64.dp)
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
-                                val previewText = remember(file) {
-                                    try { file.readText().take(100) } catch(e: Exception) { "" }
-                                }
-                                MarkdownText(
-                                    text = previewText,
-                                    style = TextStyle(fontSize = 6.sp, lineHeight = 8.sp)
-                                )
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(4.dp)) {
+                                Icon(icon, null, modifier = Modifier.size(32.dp), tint = iconColor.copy(alpha = 0.5f))
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = file.name,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.heightIn(min = 32.dp)
-                    )
+                    
+                    if (selected) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(Alignment.TopEnd).size(20.dp).offset(x = 4.dp, y = (-4).dp)
+                        ) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                        }
+                    }
                 }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = file.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.heightIn(min = 32.dp),
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
             }
         } else {
             val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
@@ -868,7 +1046,14 @@ fun FileVaultItem(
                         if (!selected) showContextMenu = true 
                     }
                 ),
-                headlineContent = { Text(file.name) },
+                headlineContent = { 
+                    Text(
+                        file.name, 
+                        maxLines = 1, 
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (file.isDirectory) FontWeight.Medium else FontWeight.Normal
+                    ) 
+                },
                 supportingContent = {
                     val ext = file.extension.lowercase()
                     if (ext == "info") {
@@ -878,7 +1063,25 @@ fun FileVaultItem(
                         Text(if (file.isDirectory) stringResource(R.string.folder_label_vault) else "${formatSize(file.length())} • $lastModified")
                     }
                 },
-                leadingContent = { Icon(icon, null, tint = iconColor) }
+                leadingContent = { 
+                    Box {
+                        Icon(icon, null, tint = iconColor, modifier = Modifier.size(32.dp))
+                        if (selected) {
+                            Icon(
+                                Icons.Default.CheckCircle, 
+                                null, 
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp).align(Alignment.BottomEnd).background(Color.White, CircleShape)
+                            )
+                        }
+                    }
+                },
+                trailingContent = {
+                    IconButton(onClick = { showContextMenu = true }) {
+                        Icon(Icons.Default.MoreVert, null)
+                    }
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
         }
 

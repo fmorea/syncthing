@@ -297,22 +297,26 @@ fun InternalTextEditor(
         bottomBar = {
             if (!isLoading && !isPreviewMode) {
                 Surface(
-                    tonalElevation = 2.dp,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 3.dp,
                     shadowElevation = 8.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        EditorActionButton(Icons.Default.FormatBold, stringResource(R.string.action_bold)) { applyFormatting("**") }
-                        EditorActionButton(Icons.Default.FormatItalic, stringResource(R.string.action_italic)) { applyFormatting("*") }
-                        EditorActionButton(Icons.Default.FormatQuote, stringResource(R.string.action_quote)) { applyFormatting("> ") }
-                        EditorActionButton(Icons.AutoMirrored.Filled.FormatListBulleted, stringResource(R.string.action_list)) { applyFormatting("- ") }
-                        EditorActionButton(Icons.Default.Code, stringResource(R.string.action_code)) { applyFormatting("`") }
-                        EditorActionButton(Icons.Default.Link, stringResource(R.string.action_link)) { applyFormatting("[", "](url)") }
+                    Column(modifier = Modifier.navigationBarsPadding()) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        Row(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            EditorActionButton(Icons.Default.FormatBold, stringResource(R.string.action_bold)) { applyFormatting("**") }
+                            EditorActionButton(Icons.Default.FormatItalic, stringResource(R.string.action_italic)) { applyFormatting("*") }
+                            EditorActionButton(Icons.Default.FormatQuote, stringResource(R.string.action_quote)) { applyFormatting("> ") }
+                            EditorActionButton(Icons.AutoMirrored.Filled.FormatListBulleted, stringResource(R.string.action_list)) { applyFormatting("- ") }
+                            EditorActionButton(Icons.Default.Code, stringResource(R.string.action_code)) { applyFormatting("`") }
+                            EditorActionButton(Icons.Default.Link, stringResource(R.string.action_link)) { applyFormatting("[", "](url)") }
+                        }
                     }
                 }
             }

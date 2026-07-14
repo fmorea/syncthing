@@ -128,10 +128,10 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 delay(500) // Small delay to let async Rest calls settle if they were needed
 
                 val allDevices = api.getDevices(true)
-                val others = allDevices.filter { it.deviceID != prefsLocalDeviceId }
-                others.forEach { device ->
+                val others = allDevices.filter { it.deviceID != prefsLocalDeviceId }.map { device ->
                     val conn = api.getRemoteDeviceStatus(device.deviceID)
                     device.numConnections = if (conn.connected) 1 else 0
+                    device
                 }
                 _friends.value = others
                 _localDevice.value = allDevices.find { it.deviceID == prefsLocalDeviceId }
