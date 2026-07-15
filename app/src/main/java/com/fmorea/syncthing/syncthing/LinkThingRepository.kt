@@ -40,6 +40,9 @@ class LinkThingRepository(
     private val _meshTopology = MutableStateFlow<Map<String, String>>(emptyMap())
     val meshTopology: StateFlow<Map<String, String>> = _meshTopology
 
+    private val _meshEdges = MutableStateFlow<Set<Pair<String, String>>>(emptySet())
+    val meshEdges: StateFlow<Set<Pair<String, String>>> = _meshEdges
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val messageCache = ConcurrentHashMap<String, LinkThingMessage>()
     private val fileTimestampCache = ConcurrentHashMap<String, Long>()
@@ -273,6 +276,7 @@ class LinkThingRepository(
             
             val foundIds = mutableSetOf<String>()
             val topology = mutableMapOf<String, String>()
+            val edges = mutableSetOf<Pair<String, String>>()
             
             allNetFiles.forEach { file ->
                 val nameParts = file.name.removeSuffix(".net").split("_")
@@ -281,14 +285,16 @@ class LinkThingRepository(
                     val nodeB = nameParts[1]
                     foundIds.add(nodeA)
                     foundIds.add(nodeB)
+                    edges.add(nodeA to nodeB)
                     
                     // The file content can specify the real direction: nodeA introduced nodeB
                     try {
                         val content = file.readText().trim()
                         if (content.length > 10) { // Likely a device ID
                             topology[nodeB] = content
+                            edges.add(content to nodeB)
                         } else {
-                            topology[nodeB] = nodeA // Default: the creator of the file knows the other
+                            topology[nodeB] = nodeA 
                         }
                     } catch (e: Exception) {}
                 }
@@ -296,19 +302,20 @@ class LinkThingRepository(
             
             _beaconDeviceIds.value = foundIds
             _meshTopology.value = topology
+            _meshEdges.value = edges
         }
     }
 
-    fun updateBeacons(knownFriendIds: List<String>) {
+    fun updateBeacons(friends: List<com.fmorea.syncthing.model.Device>) {
         scope.launch {
             val myId = getLocalDeviceId()
             if (myId.isBlank()) return@launch
-            knownFriendIds.forEach { friendId ->
-                val file = File(rootDir, "${myId}_${friendId}.net")
+            friends.forEach { friend ->
+                val file = File(rootDir, "${myId}_${friend.deviceID}.net")
                 if (!file.exists()) {
                     try { 
-                        // Write our ID as the one who knows this friend
-                        file.writeText(myId) 
+                        // Write the introducer ID if known, otherwise our own
+                        file.writeText(friend.introducedBy.ifBlank { myId })
                     } catch (e: Exception) {}
                 }
             }

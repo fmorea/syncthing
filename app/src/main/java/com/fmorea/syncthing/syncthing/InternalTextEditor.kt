@@ -2,22 +2,25 @@ package com.fmorea.syncthing.syncthing
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -30,11 +33,9 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.fmorea.syncthing.R
 import java.io.File
 import java.text.SimpleDateFormat
@@ -53,16 +54,42 @@ data class FileMetadata(
 )
 
 /**
- * A Markdown VisualTransformation to highlight Bold, Italic and Code.
+ * A Markdown and Code VisualTransformation to highlight syntax.
  */
 class MarkdownVisualTransformation(
-    private val boldColor: androidx.compose.ui.graphics.Color,
-    private val italicColor: androidx.compose.ui.graphics.Color,
-    private val codeColor: androidx.compose.ui.graphics.Color
+    private val boldColor: Color,
+    private val italicColor: Color,
+    private val codeColor: Color,
+    private val searchHighlightColor: Color = Color.Yellow,
+    private val searchQuery: String = "",
+    private val extension: String = ""
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
+        val highlighted = if (extension in listOf("msg", "ack", "net", "info", "chess", "md", "txt", "markdown")) {
+            highlightMarkdown(text.text)
+        } else {
+            highlightCode(text.text, extension)
+        }
+        
+        val withSearch = if (searchQuery.isNotBlank()) {
+            buildAnnotatedString {
+                append(highlighted)
+                var start = 0
+                while (true) {
+                    val index = highlighted.text.indexOf(searchQuery, start, ignoreCase = true)
+                    if (index == -1) break
+                    addStyle(
+                        SpanStyle(background = searchHighlightColor.copy(alpha = 0.5f), color = Color.Black),
+                        index,
+                        index + searchQuery.length
+                    )
+                    start = index + searchQuery.length
+                }
+            }
+        } else highlighted
+
         return TransformedText(
-            highlightMarkdown(text.text),
+            withSearch,
             OffsetMapping.Identity
         )
     }
@@ -97,7 +124,7 @@ class MarkdownVisualTransformation(
                     content.startsWith("`", i) -> {
                         val end = content.indexOf("`", i + 1)
                         if (end != -1) {
-                            withStyle(SpanStyle(background = codeColor.copy(alpha = 0.2f), fontFamily = FontFamily.Monospace)) {
+                            withStyle(SpanStyle(background = codeColor.copy(alpha = 0.1f), fontFamily = FontFamily.Monospace, color = codeColor)) {
                                 append(content.substring(i, end + 1))
                             }
                             i = end + 1
@@ -105,8 +132,101 @@ class MarkdownVisualTransformation(
                             append(content[i]); i++
                         }
                     }
+                    content.startsWith("#", i) -> {
+                        val end = content.indexOf("\n", i)
+                        val headerEnd = if (end != -1) end else content.length
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = boldColor, fontSize = 18.sp)) {
+                            append(content.substring(i, headerEnd))
+                        }
+                        i = headerEnd
+                    }
                     else -> {
                         append(content[i]); i++
+                    }
+                }
+            }
+        }
+    }
+
+    private fun highlightCode(content: String, ext: String): AnnotatedString {
+        val keywordColor = Color(0xFF2196F3)
+        val stringColor = Color(0xFF4CAF50)
+        val commentColor = Color.Gray
+        val attrColor = Color(0xFF9C27B0)
+        val numberColor = Color(0xFFF44336)
+
+        return buildAnnotatedString {
+            var i = 0
+            while (i < content.length) {
+                val char = content[i]
+                when {
+                    char == '\"' || char == '\'' -> {
+                        val quote = char
+                        val end = content.indexOf(quote, i + 1)
+                        if (end != -1) {
+                            withStyle(SpanStyle(color = stringColor)) {
+                                append(content.substring(i, end + 1))
+                            }
+                            i = end + 1
+                        } else { append(char); i++ }
+                    }
+                    content.startsWith("//", i) -> {
+                        val end = content.indexOf('\n', i)
+                        val comment = if (end != -1) content.substring(i, end) else content.substring(i)
+                        withStyle(SpanStyle(color = commentColor)) {
+                            append(comment)
+                        }
+                        i += comment.length
+                    }
+                    content.startsWith("/*", i) -> {
+                        val end = content.indexOf("*/", i + 2)
+                        val comment = if (end != -1) content.substring(i, end + 2) else content.substring(i)
+                        withStyle(SpanStyle(color = commentColor)) {
+                            append(comment)
+                        }
+                        i += comment.length
+                    }
+                    ext in listOf("xml", "html") && char == '<' -> {
+                        val end = content.indexOf('>', i + 1)
+                        if (end != -1) {
+                            withStyle(SpanStyle(color = keywordColor)) {
+                                append(content.substring(i, end + 1))
+                            }
+                            i = end + 1
+                        } else { append(char); i++ }
+                    }
+                    char.isDigit() -> {
+                        var j = i
+                        while (j < content.length && content[j].isDigit()) j++
+                        withStyle(SpanStyle(color = numberColor)) {
+                            append(content.substring(i, j))
+                        }
+                        i = j
+                    }
+                    char.isLetter() -> {
+                        var j = i
+                        while (j < content.length && (content[j].isLetterOrDigit() || content[j] == '_')) j++
+                        val word = content.substring(i, j)
+                        val keywords = listOf("val", "var", "fun", "class", "import", "package", "if", "else", "for", "while", "return", "true", "false", "null", "public", "private", "protected", "static", "void", "String", "int", "boolean")
+                        if (word in keywords) {
+                            withStyle(SpanStyle(color = keywordColor, fontWeight = FontWeight.Bold)) {
+                                append(word)
+                            }
+                        } else if (ext == "json" && i > 0 && content.getOrNull(i-1) == '\"') {
+                            val k = content.indexOf(':', j)
+                            if (k != -1 && content.substring(j, k).isBlank()) {
+                                withStyle(SpanStyle(color = attrColor)) {
+                                    append(word)
+                                }
+                            } else append(word)
+                        } else {
+                            append(word)
+                        }
+                        i = j
+                    }
+                    else -> {
+                        append(char)
+                        i++
                     }
                 }
             }
@@ -120,13 +240,29 @@ fun InternalTextEditor(
     file: File,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
-    onShowInChat: ((LinkThingMessage) -> Unit)? = null
+    onShowInChat: ((LinkThingMessage) -> Unit)? = null,
+    searchQuery: String = "",
+    isPreviewMode: Boolean = false,
+    showMetadata: Boolean = false,
+    onPreviewModeChange: (Boolean) -> Unit = {},
+    onMetadataToggle: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
     var textValue by remember { mutableStateOf(TextFieldValue("")) }
     var isLoading by remember { mutableStateOf(true) }
-    var isPreviewMode by remember { mutableStateOf(false) }
-    var showMetadata by remember { mutableStateOf(true) }
+    
+    // Simple Undo/Redo Stack
+    val undoStack = remember { mutableStateListOf<String>() }
+    val redoStack = remember { mutableStateListOf<String>() }
+    
+    fun pushUndo(content: String) {
+        if (undoStack.isEmpty() || undoStack.last() != content) {
+            undoStack.add(content)
+            if (undoStack.size > 50) undoStack.removeAt(0)
+            redoStack.clear()
+        }
+    }
 
     val metadata = remember(file) {
         val name = file.name
@@ -180,7 +316,7 @@ fun InternalTextEditor(
                 } else FileMetadata(type = context.getString(R.string.type_chess))
             }
             ext == "info" -> {
-                val profile = try { UserProfile.loadFromFile(file) } catch (e: Exception) { null }
+                val profile = try { UserProfile.loadFromFile(file) } catch (_: Exception) { null }
                 val partsInfo = file.name.removeSuffix(".INFO").split("_")
                 val deviceIdFromPath = partsInfo.getOrNull(0) ?: ""
                 val discloserIdFromPath = partsInfo.getOrNull(1) ?: ""
@@ -188,13 +324,12 @@ fun InternalTextEditor(
                 FileMetadata(
                     type = context.getString(R.string.metadata_user_profile),
                     profile = profile?.copy(
-                        deviceId = if (profile.deviceId.isBlank()) deviceIdFromPath else profile.deviceId,
-                        discloserId = if (profile.discloserId.isBlank()) discloserIdFromPath else profile.discloserId
+                        deviceId = profile.deviceId.ifBlank { deviceIdFromPath },
+                        discloserId = profile.discloserId.ifBlank { discloserIdFromPath }
                     )
                 )
             }
             else -> {
-                // Try attachment format: timestamp_senderId_filename
                 if (parts.size >= 3) {
                     FileMetadata(
                         timestamp = parts[0].toLongOrNull(),
@@ -206,11 +341,18 @@ fun InternalTextEditor(
         }
     }
 
-    val markdownTransformation = remember {
+    val keywordColor = Color(0xFF2196F3)
+    val boldColor = Color(0xFFFF9800)
+    val italicColor = Color(0xFF9C27B0)
+    val codeColor = Color(0xFFE91E63)
+
+    val markdownTransformation = remember(searchQuery, file.extension, keywordColor, boldColor, italicColor, codeColor) {
         MarkdownVisualTransformation(
-            boldColor = androidx.compose.ui.graphics.Color.Unspecified,
-            italicColor = androidx.compose.ui.graphics.Color.Unspecified,
-            codeColor = androidx.compose.ui.graphics.Color.Gray
+            boldColor = boldColor,
+            italicColor = italicColor,
+            codeColor = codeColor,
+            searchQuery = searchQuery,
+            extension = file.extension.lowercase()
         )
     }
 
@@ -219,110 +361,175 @@ fun InternalTextEditor(
         try {
             val content = file.readText()
             textValue = TextFieldValue(content)
+            undoStack.clear()
+            redoStack.clear()
+            undoStack.add(content)
         } catch (e: Exception) {
             textValue = TextFieldValue(context.getString(R.string.error_loading_file, e.message))
         }
         isLoading = false
     }
 
-    fun applyFormatting(prefix: String, suffix: String = prefix) {
-        val selection = textValue.selection
-        val text = textValue.text
-        val selectedText = text.substring(selection.start, selection.end)
-        val newText = text.replaceRange(selection.start, selection.end, "$prefix$selectedText$suffix")
-        
-        val newCursorPos = if (selection.collapsed) selection.start + prefix.length else selection.end + prefix.length + suffix.length
-        textValue = textValue.copy(
-            text = newText,
-            selection = TextRange(newCursorPos)
-        )
-    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (!isLoading && !isPreviewMode) {
+            Surface(tonalElevation = 4.dp, shadowElevation = 2.dp) {
+                Column {
+                    // Toolbar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, "Close", modifier = Modifier.size(20.dp))
+                        }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Column {
-                        Text(
-                            file.name, 
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            file.parent ?: "",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                actions = {
-                    if (file.name.endsWith(".msg") && onShowInChat != null) {
-                        val msg = remember(file) { LinkThingMessage.fromFile(file, "") }
-                        if (msg != null) {
-                            IconButton(onClick = { onShowInChat.invoke(msg) }) {
-                                Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = stringResource(R.string.action_show_in_chat))
+                        IconButton(onClick = { /* Files switch logic */ }) {
+                            Icon(Icons.Default.FilterNone, "Files", modifier = Modifier.size(20.dp))
+                        }
+                        
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("edit", style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                    }
-                    IconButton(onClick = { showMetadata = !showMetadata }) {
-                        Icon(
-                            if (showMetadata) Icons.Default.Info else Icons.Default.Info,
-                            contentDescription = stringResource(R.string.action_metadata),
-                            tint = if (showMetadata) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                        )
-                    }
-                    IconButton(onClick = { isPreviewMode = !isPreviewMode }) {
-                        Icon(
-                            if (isPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
-                            contentDescription = if (isPreviewMode) stringResource(R.string.action_edit) else stringResource(R.string.action_preview)
-                        )
-                    }
-                    IconButton(onClick = { 
-                        onSave(textValue.text)
-                        Toast.makeText(context, context.getString(R.string.toast_file_saved), Toast.LENGTH_SHORT).show()
-                    }) {
-                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.save_title))
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            if (!isLoading && !isPreviewMode) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 3.dp,
-                    shadowElevation = 8.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.navigationBarsPadding()) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                        Row(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            EditorActionButton(Icons.Default.FormatBold, stringResource(R.string.action_bold)) { applyFormatting("**") }
-                            EditorActionButton(Icons.Default.FormatItalic, stringResource(R.string.action_italic)) { applyFormatting("*") }
-                            EditorActionButton(Icons.Default.FormatQuote, stringResource(R.string.action_quote)) { applyFormatting("> ") }
-                            EditorActionButton(Icons.AutoMirrored.Filled.FormatListBulleted, stringResource(R.string.action_list)) { applyFormatting("- ") }
-                            EditorActionButton(Icons.Default.Code, stringResource(R.string.action_code)) { applyFormatting("`") }
-                            EditorActionButton(Icons.Default.Link, stringResource(R.string.action_link)) { applyFormatting("[", "](url)") }
+                        
+                        IconButton(onClick = { 
+                            onSave(textValue.text)
+                            Toast.makeText(context, R.string.toast_file_saved, Toast.LENGTH_SHORT).show()
+                        }) {
+                            Icon(Icons.Default.Save, "Save", modifier = Modifier.size(20.dp))
+                        }
+
+                        if (file.extension.lowercase() in listOf("msg", "ack") && onShowInChat != null) {
+                            IconButton(onClick = { 
+                                // Simplified LinkThingMessage creation for jumping to chat
+                                val msg = LinkThingMessage(
+                                    fileName = file.name,
+                                    timestamp = metadata.timestamp ?: 0L,
+                                    deviceId = metadata.senderId ?: "",
+                                    content = textValue.text,
+                                    file = file
+                                )
+                                onShowInChat(msg)
+                            }) {
+                                Icon(Icons.AutoMirrored.Filled.Chat, "Chat", modifier = Modifier.size(20.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        // Jump to Start/End
+                        IconButton(onClick = { textValue = textValue.copy(selection = TextRange(0)) }) {
+                            Icon(Icons.Default.VerticalAlignTop, "Start", modifier = Modifier.size(20.dp))
+                        }
+                        IconButton(onClick = { textValue = textValue.copy(selection = TextRange(textValue.text.length)) }) {
+                            Icon(Icons.Default.VerticalAlignBottom, "End", modifier = Modifier.size(20.dp))
+                        }
+
+                        VerticalDivider(modifier = Modifier.height(24.dp).padding(horizontal = 4.dp))
+
+                        IconButton(onClick = {
+                            if (undoStack.size > 1) {
+                                val current = undoStack.removeAt(undoStack.size - 1)
+                                redoStack.add(current)
+                                val previous = undoStack.last()
+                                textValue = textValue.copy(text = previous)
+                            }
+                        }, enabled = undoStack.size > 1) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, "Undo")
+                        }
+                        IconButton(onClick = {
+                            if (redoStack.isNotEmpty()) {
+                                val next = redoStack.removeAt(redoStack.size - 1)
+                                undoStack.add(next)
+                                textValue = textValue.copy(text = next)
+                            }
+                        }, enabled = redoStack.isNotEmpty()) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, "Redo")
                         }
                     }
+                    
+                    // Filename Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${file.name} | UTF-8",
+                            style = TextStyle(
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        Spacer(Modifier.weight(1f))
+                        
+                        var showEditMenu by remember { mutableStateOf(false) }
+                        Text(
+                            "MODIFICA", 
+                            modifier = Modifier.clickable { showEditMenu = true },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        DropdownMenu(expanded = showEditMenu, onDismissRequest = { showEditMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_metadata)) },
+                                onClick = {
+                                    showEditMenu = false
+                                    onMetadataToggle()
+                                },
+                                leadingIcon = { Icon(Icons.Default.Fingerprint, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_preview)) },
+                                onClick = {
+                                    showEditMenu = false
+                                    onPreviewModeChange(!isPreviewMode)
+                                },
+                                leadingIcon = { Icon(Icons.Default.Visibility, null) }
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Cerca/Sostituisci") },
+                                onClick = {
+                                    showEditMenu = false
+                                    Toast.makeText(context, "Usa la barra di ricerca in alto", Toast.LENGTH_SHORT).show()
+                                },
+                                leadingIcon = { Icon(Icons.Default.Search, null) }
+                            )
+                        }
+                    }
+                    
+                    FormattingToolbar(
+                        textValue = textValue,
+                        onValueChange = { 
+                            pushUndo(it.text)
+                            textValue = it 
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                 }
             }
         }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        
+        Column(modifier = Modifier.fillMaxSize()) {
             if (showMetadata) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -390,51 +597,69 @@ fun InternalTextEditor(
                     val scrollState = rememberScrollState()
                     val lines = textValue.text.split("\n")
                     val lineCount = lines.size.coerceAtLeast(1)
+                    val lineHeightDp = with(density) { 20.sp.toDp() }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        // Line Numbers
-                        Column(
+                        Row(
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(horizontal = 8.dp, vertical = 16.dp),
-                            horizontalAlignment = Alignment.End
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
                         ) {
-                            repeat(lineCount) { index ->
-                                Text(
-                                    text = (index + 1).toString(),
-                                    style = TextStyle(
+                            // Line Numbers
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                repeat(lineCount) { index ->
+                                    Text(
+                                        text = (index + 1).toString(),
+                                        style = TextStyle(
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                                        ),
+                                        modifier = Modifier
+                                            .height(lineHeightDp)
+                                            .padding(horizontal = 8.dp)
+                                    )
+                                }
+                            }
+
+                            VerticalDivider(
+                                modifier = Modifier.fillMaxHeight(),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                            )
+
+                            Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+                                BasicTextField(
+                                    value = textValue,
+                                    onValueChange = { 
+                                        pushUndo(it.text)
+                                        textValue = it 
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                                    textStyle = TextStyle(
                                         fontFamily = FontFamily.Monospace,
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.outline
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     ),
-                                    modifier = Modifier.height(20.dp)
+                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                    visualTransformation = markdownTransformation,
+                                    decorationBox = { innerTextField ->
+                                        innerTextField()
+                                    }
                                 )
                             }
                         }
-
-                        // Editor
-                        BasicTextField(
-                            value = textValue,
-                            onValueChange = { textValue = it },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
-                            textStyle = TextStyle(
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            visualTransformation = markdownTransformation,
-                            decorationBox = { innerTextField ->
-                                innerTextField()
-                            }
-                        )
                     }
                 }
             }
@@ -447,19 +672,5 @@ fun MetadataRow(label: String, value: String) {
     Row(modifier = Modifier.padding(vertical = 2.dp)) {
         Text("$label: ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
         Text(value, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
-    }
-}
-
-@Composable
-fun EditorActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: String, onClick: () -> Unit) {
-    FilledIconButton(
-        onClick = onClick,
-        modifier = Modifier.size(40.dp),
-        colors = IconButtonDefaults.filledIconButtonColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    ) {
-        Icon(icon, contentDescription = description, modifier = Modifier.size(20.dp))
     }
 }

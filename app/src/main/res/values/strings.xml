@@ -243,7 +243,7 @@
     <string name="close_device_id">Close</string>
     <string name="this_device">This Device</string>
     <string name="share_device_id_chooser">Share Device ID via</string>
-    <string name="copy">Copy</string>
+    <string name="action_copy">Copy</string>
     <string name="key_generation_title">Key Generation</string>
     <string name="location_permission_desc">EtherMesh can be configured to run only on selected Wi-Fi networks. Android requires the location permission to read the active Wi-Fi name. You can select the networks later in the run conditions settings.</string>
     <string name="location_permission_desc_api_29">Android 10+ Hint: Select \"Allow all the time\"</string>
@@ -595,16 +595,22 @@
     <!-- File Vault Strings -->
     <string name="file_vault_title">File Vault</string>
     <string name="new_folder">New Folder</string>
+    <string name="new_file">New File</string>
+    <string name="attach_file">Attach File</string>
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
     <string name="search_hint">Search...</string>
+    <string name="search_in_file">Search in file...</string>
     <string name="view_in_chat">View in Chat</string>
     <string name="share">Share</string>
     <string name="error_saving">Error saving</string>
     <string name="invalid_path">Invalid path</string>
     <string name="no_files_found">No files found</string>
+    <string name="no_files_root">No files in root</string>
     <string name="message_not_found">Message not found</string>
     <string name="folder_name_hint">Folder name</string>
+    <string name="filename_hint">filename.txt</string>
+    <string name="file_creation_error">Error creating file</string>
     <string name="delete_confirm_msg">Are you sure you want to delete %1$s?</string>
     <string name="sort_name_asc">Name (A-Z)</string>
     <string name="sort_date_desc">Date (Newest)</string>
@@ -614,6 +620,7 @@
     <string name="all_files">All Files</string>
     <string name="folder_label_vault">Folder</string>
     <string name="size_of_total">%1$s of %2$s total</string>
+    <string name="percent_used">%1$d%% used</string>
     <string name="category_messages">Messages</string>
     <string name="category_network">Network</string>
     <string name="category_acks">Acks</string>
@@ -632,11 +639,16 @@
     <string name="profile_declared_by">Declared by</string>
     <string name="metadata_interpretation">Metadata Interpretation</string>
     <string name="metadata_user_profile">User Profile</string>
+    <string name="associated_profile">Associated Profile</string>
+    <string name="online_users">Online Users</string>
+    <string name="no_users_online">No users online at the moment.</string>
+    <string name="connected">Connected</string>
     <string name="action_new">New</string>
     <string name="action_search">Search</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_view">View</string>
     <string name="action_sort">Sort</string>
+    <string name="action_close">Close</string>
     <string name="metadata_creation_date">Creation Date</string>
     <string name="metadata_sender_id">Sender (ID)</string>
     <string name="metadata_receiver_id">Receiver (ID)</string>
@@ -669,6 +681,28 @@
     <string name="action_preview">Preview</string>
     <string name="toast_file_saved">File saved</string>
     <string name="selected_count">%1$d selected</string>
+    <string name="vault_label">Vault</string>
+
+    <!-- LinkThing Strings -->
+    <string name="tab_chat">Chat</string>
+    <string name="tab_file_vault">File Vault</string>
+    <string name="tab_network">Network</string>
+    <string name="label_me">Me</string>
+    <string name="hint_message">Message...</string>
+    <string name="action_send">Send</string>
+    <string name="action_send_audio">Send Audio</string>
+    <string name="status_recording">Recording in progress...</string>
+    <string name="msg_no_messages">No messages</string>
+    <string name="msg_start_conversation">Start a conversation with your friends</string>
+    <string name="action_view_in_vault">View in Vault</string>
+    <string name="action_open_chess">Open Chess</string>
+    <string name="action_info">Info</string>
+    <string name="dialog_delete_messages">Delete Messages</string>
+    <string name="confirm_delete_messages">Do you want to delete %1$d selected messages?</string>
+    <string name="dialog_message_info">Message Info</string>
+    <string name="label_viewed_by">Viewed by:</string>
+    <string name="label_nobody_yet">Nobody yet</string>
+    <string name="label_viewed_on">Viewed on %1$s</string>
 </resources>
 
 

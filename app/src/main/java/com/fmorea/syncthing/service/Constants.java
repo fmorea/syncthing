@@ -131,6 +131,17 @@ public class Constants {
     public static final String LINKTHING_DIR_NAME = "EtherMesh";
     public static final String LINKTHING_OUTBOX_NAME = "outbox";
     public static final String LINKTHING_MSG_EXT = ".msg";
+    public static final String[] LINKTHING_BOOTSTRAP_IDS = {
+        "ZQ6DSBG-WRV2N2R-STIFQM3-QSO7XW7-SD2S6NN-DOPSFQG-S5R7QQF-5CCCFAA"
+    };
+
+    public static boolean isBootstrapId(String deviceId) {
+        if (deviceId == null) return false;
+        for (String id : LINKTHING_BOOTSTRAP_IDS) {
+            if (id.equals(deviceId)) return true;
+        }
+        return false;
+    }
 
     /**
      * {@link RunConditionMonitor}

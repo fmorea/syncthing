@@ -167,6 +167,7 @@ fun NetworkManagementScreen(
     if (showEditProfileDialog) {
         EditProfileDialog(
             profile = userProfile,
+            isMe = true,
             onDismiss = { showEditProfileDialog = false },
             onSave = { viewModel.updateMyProfile(it) },
             onPhotoSelected = { viewModel.updateMyPhoto(it) }
@@ -178,6 +179,7 @@ fun NetworkManagementScreen(
         val profileToEdit = friendProfiles[targetId] ?: UserProfile(targetId)
         EditProfileDialog(
             profile = profileToEdit,
+            isMe = false,
             onDismiss = { editingProfileForDeviceId = null },
             onSave = { viewModel.updateFriendProfile(targetId, it) },
             onPhotoSelected = { viewModel.updateFriendPhoto(targetId, it) }

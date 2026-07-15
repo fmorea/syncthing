@@ -3,6 +3,7 @@ package com.fmorea.syncthing.syncthing
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import com.fmorea.syncthing.service.Constants
 import kotlinx.coroutines.delay
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -38,9 +40,10 @@ data class GraphEdge(
 @Composable
 fun NetworkGraphView(
     viewModel: LinkThingViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNodeClick: (String) -> Unit = {}
 ) {
-    val meshTopology by viewModel.meshTopology.collectAsState()
+    val meshEdges by viewModel.meshEdges.collectAsState()
     val friends by viewModel.friends.collectAsState()
     val localDevice by viewModel.localDevice.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
@@ -52,19 +55,26 @@ fun NetworkGraphView(
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface)
 
+    var viewportSize by remember { mutableStateOf(Offset(800f, 800f)) }
+
+    // Helper to get device by ID
+    fun getDevice(id: String) = if (id == localDevice?.deviceID) localDevice else friends.find { it.deviceID == id }
+
+    val localDeviceID = viewModel.getLocalDeviceId()
+
     // Initialize/Update nodes and edges when data changes
-    LaunchedEffect(meshTopology, friends, localDevice) {
+    LaunchedEffect(meshEdges, friends, localDevice) {
         val currentIds = nodes.map { it.id }.toSet()
-        val allDevices = (friends.map { it.deviceID } + (localDevice?.deviceID ?: "")).filter { it.isNotBlank() }.toSet()
-        val meshDevices = meshTopology.keys + meshTopology.values
+        val allDevices = (friends.map { it.deviceID } + (localDevice?.deviceID ?: localDeviceID)).filter { it.isNotBlank() }.toSet()
+        val meshDevices = meshEdges.flatMap { listOf(it.first, it.second) }.toSet()
         val totalDevices = (allDevices + meshDevices).filter { it.isNotBlank() }.toSet()
 
         // Add new nodes
         totalDevices.forEach { id ->
             if (id !in currentIds) {
-                val label = if (id == localDevice?.deviceID) userProfile.getDisplayName() 
+                val label = if (id == localDevice?.deviceID || id == localDeviceID) userProfile.getDisplayName() 
                             else friendProfiles[id]?.getDisplayName() ?: id.take(6)
-                nodes.add(GraphNode(id, label, Offset(300f + (Math.random() * 100).toFloat(), 300f + (Math.random() * 100).toFloat())))
+                nodes.add(GraphNode(id, label, Offset(viewportSize.x / 2f + (Math.random() * 200 - 100).toFloat(), viewportSize.y / 2f + (Math.random() * 200 - 100).toFloat())))
             }
         }
 
@@ -73,14 +83,17 @@ fun NetworkGraphView(
 
         // Update edges
         edges.clear()
-        meshTopology.forEach { (child, parent) ->
-            if (child.isNotBlank() && parent.isNotBlank()) {
+        meshEdges.forEach { (parent, child) ->
+            if (parent.isNotBlank() && child.isNotBlank()) {
                 edges.add(GraphEdge(parent, child))
             }
         }
     }
 
-    var viewportSize by remember { mutableStateOf(Offset(1000f, 1000f)) }
+    // Force refresh beacons on composition
+    LaunchedEffect(Unit) {
+        viewModel.refreshFriends()
+    }
 
     // Physics Engine Simulation
     LaunchedEffect(viewportSize) {
@@ -149,6 +162,12 @@ fun NetworkGraphView(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        val clickedNode = nodes.find { (it.position - offset).getDistance() < 50f }
+                        clickedNode?.let { onNodeClick(it.id) }
+                    }
+                }
+                .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
                             draggedNode = nodes.find { (it.position - offset).getDistance() < 50f }?.id
@@ -170,13 +189,19 @@ fun NetworkGraphView(
 
             // Draw Edges with Directional Arrows
             edges.forEach { edge ->
-                val start = nodes.find { it.id == edge.from }?.position
-                val end = nodes.find { it.id == edge.to }?.position
+                val startNode = nodes.find { it.id == edge.from }
+                val endNode = nodes.find { it.id == edge.to }
+                val start = startNode?.position
+                val end = endNode?.position
+                
                 if (start != null && end != null) {
                     val angle = atan2(end.y - start.y, end.x - start.x)
                     
+                    val isEndIntroducer = getDevice(edge.to)?.introducer == true
+                    val endRadius = if (isEndIntroducer) 40f else 25f
+
                     // Stop edge before node center to show arrow clearly
-                    val arrowOffset = 25f 
+                    val arrowOffset = endRadius + 5f 
                     val arrowEnd = Offset(
                         end.x - arrowOffset * cos(angle),
                         end.y - arrowOffset * sin(angle)
@@ -209,25 +234,45 @@ fun NetworkGraphView(
 
             // Draw Nodes
             nodes.forEach { node ->
-                val color = if (node.id == localDevice?.deviceID) primaryColor else secondaryColor
+                val device = getDevice(node.id)
+                val isBootstrap = Constants.isBootstrapId(node.id)
+                val isIntroducer = device?.introducer == true || isBootstrap
+                val baseRadius = if (isBootstrap) 40f else if (isIntroducer) 30f else 20f
+                val outerRadius = baseRadius + 5f
+
+                val color = when {
+                    node.id == localDevice?.deviceID -> primaryColor
+                    isBootstrap -> Color(0xFF4CAF50) // Bootstrap is always prominent green
+                    else -> secondaryColor
+                }
                 
                 drawCircle(
                     color = color,
-                    radius = 20f,
+                    radius = baseRadius,
                     center = node.position
                 )
                 
+                if (isBootstrap) {
+                    drawCircle(
+                        color = color,
+                        radius = outerRadius + 5f,
+                        center = node.position,
+                        style = Stroke(width = 3f)
+                    )
+                }
+
                 drawCircle(
                     color = color.copy(alpha = 0.3f),
-                    radius = 25f,
+                    radius = outerRadius,
                     center = node.position,
                     style = Stroke(width = 2f)
                 )
 
-                val textLayoutResult = textMeasurer.measure(node.label, labelStyle)
+                val displayLabel = if (isBootstrap) "BOOTSTRAPPER" else node.label
+                val textLayoutResult = textMeasurer.measure(displayLabel, labelStyle)
                 drawText(
                     textLayoutResult,
-                    topLeft = node.position + Offset(-textLayoutResult.size.width / 2f, 25f)
+                    topLeft = node.position + Offset(-textLayoutResult.size.width / 2f, outerRadius + 5f)
                 )
             }
         }

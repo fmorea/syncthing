@@ -22,7 +22,8 @@ import java.io.File
 fun NetworkView(
     viewModel: LinkThingViewModel,
     onEditMyProfile: () -> Unit,
-    onEditFriendProfile: (String) -> Unit
+    onEditFriendProfile: (String) -> Unit,
+    onShowGraph: () -> Unit
 ) {
     val friends by viewModel.friends.collectAsState()
     val localDevice by viewModel.localDevice.collectAsState()
@@ -106,16 +107,14 @@ fun NetworkView(
                             },
                             supportingContent = { Text(identityType) },
                             trailingContent = {
-                                if (!isOwner) {
-                                    Row {
-                                        if (!isVerifiedByMe) {
-                                            IconButton(onClick = { viewModel.updateFriendProfile(targetDeviceId, profile) }) {
-                                                Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                                            }
+                                Row {
+                                    if (!isVerifiedByMe) {
+                                        IconButton(onClick = { viewModel.updateFriendProfile(targetDeviceId, profile) }) {
+                                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                                         }
-                                        IconButton(onClick = { viewModel.deleteIdentity(targetDeviceId, profile.discloserId) }) {
-                                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
-                                        }
+                                    }
+                                    IconButton(onClick = { viewModel.deleteIdentity(targetDeviceId, profile.discloserId) }) {
+                                        Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }
@@ -149,11 +148,19 @@ fun NetworkView(
                 )
             }
             item {
-                Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     TextButton(onClick = { viewModel.showMyId() }) {
                         Icon(Icons.Default.QrCode, null)
                         Spacer(Modifier.width(8.dp))
                         Text("Il mio ID QR")
+                    }
+                    TextButton(onClick = onShowGraph) {
+                        Icon(Icons.Default.Hub, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Network Graph")
                     }
                 }
             }

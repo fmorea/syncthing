@@ -30,7 +30,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import com.fmorea.syncthing.R
+import androidx.compose.ui.text.input.TextFieldValue
 import android.content.Intent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,7 +52,7 @@ import android.graphics.BitmapFactory
 import android.util.Log
 
 enum class LinkThingTab {
-    CHAT, FILE_VAULT, NETWORK
+    CHAT, FILE_VAULT, NETWORK, NETWORK_GRAPH
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -59,6 +62,7 @@ fun LinkThingScreen(
     scannedDeviceId: String = ""
 ) {
     val messages by viewModel.messages.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val syncStatus by viewModel.syncStatus.collectAsState()
     val localDevice by viewModel.localDevice.collectAsState()
     val friends by viewModel.friends.collectAsState()
@@ -72,7 +76,8 @@ fun LinkThingScreen(
         map
     }
 
-    var inputText by remember { mutableStateOf("") }
+    var inputText by remember { mutableStateOf(TextFieldValue("")) }
+    var isSearching by remember { mutableStateOf(false) }
     var currentTab by remember { mutableStateOf(LinkThingTab.CHAT) }
     var vaultTargetFile by remember { mutableStateOf<File?>(null) }
     var chatTargetMessageId by remember { mutableStateOf<String?>(null) }
@@ -131,11 +136,12 @@ fun LinkThingScreen(
     var showMessageInfo by remember { mutableStateOf<LinkThingMessage?>(null) }
     val isSelectionMode = selectedIds.isNotEmpty()
 
-    if (editingProfileByDeviceId != null && croppingImageFile == null) {
+    if (editingProfileByDeviceId != null) {
         val profileToEdit = if (editingProfileByDeviceId == localDevice?.deviceID) userProfile 
                             else friendProfiles[editingProfileByDeviceId] ?: UserProfile(editingProfileByDeviceId!!)
         EditProfileDialog(
             profile = profileToEdit,
+            isMe = editingProfileByDeviceId == localDevice?.deviceID,
             onDismiss = { editingProfileByDeviceId = null },
             onSave = { 
                 if (editingProfileByDeviceId == localDevice?.deviceID) viewModel.updateMyProfile(it)
@@ -153,6 +159,10 @@ fun LinkThingScreen(
             selectedIds = emptySet()
         } else if (showMenu) {
             showMenu = false
+        } else if (currentTab == LinkThingTab.NETWORK_GRAPH) {
+            currentTab = LinkThingTab.NETWORK
+        } else if (currentTab != LinkThingTab.CHAT) {
+            currentTab = LinkThingTab.CHAT
         } else {
             focusManager.clearFocus()
         }
@@ -378,7 +388,40 @@ fun LinkThingScreen(
                         }
                     }
                 )
-            } else {
+            } else if (isSearching && currentTab == LinkThingTab.CHAT) {
+                TopAppBar(
+                    title = {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setSearchQuery(it) },
+                            placeholder = { Text(stringResource(R.string.search_hint)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
+                                        Icon(Icons.Default.Clear, "Cancella")
+                                    }
+                                }
+                            }
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { 
+                            isSearching = false
+                            viewModel.setSearchQuery("")
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
+                        }
+                    }
+                )
+            } else if (currentTab != LinkThingTab.FILE_VAULT) {
                 TopAppBar(
                     title = {
                         Column {
@@ -390,8 +433,9 @@ fun LinkThingScreen(
                                     val endId = id.takeLast(6)
                                     "$alias ($shortId..$endId)"
                                 }
-                                LinkThingTab.FILE_VAULT -> "File Vault"
                                 LinkThingTab.NETWORK -> "Network"
+                                LinkThingTab.NETWORK_GRAPH -> "Network Graph"
+                                else -> ""
                             }
                             
                             Text(
@@ -418,6 +462,11 @@ fun LinkThingScreen(
                         }
                     },
                     actions = {
+                        if (currentTab == LinkThingTab.CHAT) {
+                            IconButton(onClick = { isSearching = true }) {
+                                Icon(Icons.Default.Search, contentDescription = "Cerca in Chat")
+                            }
+                        }
                         if (currentTab == LinkThingTab.NETWORK) {
                             IconButton(onClick = { showAddFriendDialog = true }) {
                                 Icon(Icons.Default.PersonAdd, contentDescription = "Aggiungi Amico")
@@ -560,20 +609,11 @@ fun LinkThingScreen(
                                 }
                             } else {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        EditorActionButton(Icons.Default.FormatBold, "Bold") {
-                                            inputText = "$inputText**TestoBold**"
-                                        }
-                                        EditorActionButton(Icons.Default.FormatItalic, "Italic") {
-                                            inputText = "$inputText*TestoItalic*"
-                                        }
-                                        EditorActionButton(Icons.Default.Code, "Codice") {
-                                            inputText = "$inputText`codice`"
-                                        }
-                                    }
+                                    FormattingToolbar(
+                                        textValue = inputText,
+                                        onValueChange = { inputText = it },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                     
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         IconButton(onClick = { filePickerLauncher.launch("*/*") }) {
@@ -599,11 +639,11 @@ fun LinkThingScreen(
                                         
                                         Spacer(modifier = Modifier.width(4.dp))
 
-                                        if (inputText.isNotBlank()) {
+                                        if (inputText.text.isNotBlank()) {
                                             IconButton(
                                                 onClick = {
-                                                    viewModel.sendMessage(inputText, replyingTo)
-                                                    inputText = ""
+                                                    viewModel.sendMessage(inputText.text, replyingTo)
+                                                    inputText = TextFieldValue("")
                                                     replyingTo = null
                                                     focusManager.clearFocus()
                                                 },
@@ -678,9 +718,13 @@ fun LinkThingScreen(
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.People, contentDescription = null) },
                             label = { Text("Network") },
-                            selected = currentTab == LinkThingTab.NETWORK,
+                            selected = currentTab == LinkThingTab.NETWORK || currentTab == LinkThingTab.NETWORK_GRAPH,
                             onClick = { 
-                                currentTab = LinkThingTab.NETWORK
+                                if (currentTab == LinkThingTab.NETWORK) {
+                                    currentTab = LinkThingTab.NETWORK_GRAPH
+                                } else {
+                                    currentTab = LinkThingTab.NETWORK
+                                }
                                 viewModel.refreshFriends()
                             }
                         )
@@ -947,7 +991,12 @@ fun LinkThingScreen(
                 LinkThingTab.NETWORK -> NetworkView(
                     viewModel = viewModel,
                     onEditMyProfile = { editingProfileByDeviceId = localDevice?.deviceID },
-                    onEditFriendProfile = { editingProfileByDeviceId = it }
+                    onEditFriendProfile = { editingProfileByDeviceId = it },
+                    onShowGraph = { currentTab = LinkThingTab.NETWORK_GRAPH }
+                )
+                LinkThingTab.NETWORK_GRAPH -> NetworkGraphView(
+                    viewModel = viewModel,
+                    onNodeClick = { editingProfileByDeviceId = it }
                 )
             }
         }

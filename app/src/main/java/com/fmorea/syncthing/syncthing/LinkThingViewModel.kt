@@ -27,8 +27,20 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         get() = prefs.getString(Constants.PREF_LOCAL_DEVICE_ID, "") ?: ""
     
     private val repository = LinkThingRepository(application) { prefsLocalDeviceId }
-    val messages: StateFlow<List<LinkThingMessage>> = repository.messages
+    
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+    
+    val messages: StateFlow<List<LinkThingMessage>> = combine(
+        repository.messages,
+        _searchQuery
+    ) { allMessages, query ->
+        if (query.isBlank()) allMessages
+        else allMessages.filter { it.content.contains(query, ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val meshTopology: StateFlow<Map<String, String>> = repository.meshTopology
+    val meshEdges: StateFlow<Set<Pair<String, String>>> = repository.meshEdges
 
     private val _friends = MutableStateFlow<List<Device>>(emptyList())
     val friends: StateFlow<List<Device>> = _friends
@@ -85,6 +97,20 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
 
+        // Auto-discovery from mesh beacons
+        viewModelScope.launch {
+            discoveredDevices.collect { discovered ->
+                if (discovered.isNotEmpty()) {
+                    val api = restApi
+                    if (api != null && api.isConfigLoaded) {
+                        discovered.forEach { id ->
+                            addFriend(id)
+                        }
+                    }
+                }
+            }
+        }
+
         // Periodic refresh for discovery and connection status
         viewModelScope.launch {
             while (isActive) {
@@ -101,6 +127,10 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     fun openSettings() { _uiEvents.value = UiEvent.OpenSettings }
     fun openChess() { _uiEvents.value = UiEvent.OpenChess }
     fun editProfile() { _uiEvents.value = UiEvent.EditProfile }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
 
     fun getRootDir(): File = repository.rootDir
 
@@ -123,6 +153,15 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             val api = restApi ?: return@launch
             if (api.isConfigLoaded) {
+                // Ensure bootstrap nodes are always added
+                val allDevicesPre = api.getDevices(true)
+                val allDeviceIds = allDevicesPre.map { it.deviceID }
+                Constants.LINKTHING_BOOTSTRAP_IDS.forEach { bootstrapId ->
+                    if (bootstrapId !in allDeviceIds && bootstrapId != prefsLocalDeviceId) {
+                        addFriendInternal(api, bootstrapId)
+                    }
+                }
+
                 // Prime the cache with a single call for all devices
                 api.getRemoteDeviceStatus("") 
                 delay(500) // Small delay to let async Rest calls settle if they were needed
@@ -165,7 +204,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 _allProfiles.value = allIdentities
 
-                repository.updateBeacons(others.map { it.deviceID }) // Announce our friends to the mesh
+                repository.updateBeacons(others) // Announce our friends to the mesh
                 repository.refreshBeacons() // Update topology and beacon data
                 
                 var configChanged = false
@@ -210,17 +249,46 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun updateMyPhoto(photoFile: File) {
         viewModelScope.launch(Dispatchers.IO) {
-            val destFile = File(repository.rootDir, "${prefsLocalDeviceId}_${prefsLocalDeviceId}.jpg")
+            val timestamp = System.currentTimeMillis()
+            val destFile = File(repository.rootDir, "${prefsLocalDeviceId}_${prefsLocalDeviceId}_$timestamp.jpg")
+            
+            // Clean up old photos for this device/discloser
+            repository.rootDir.listFiles { _, name -> 
+                name.startsWith("${prefsLocalDeviceId}_${prefsLocalDeviceId}") && 
+                (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp"))
+            }?.forEach { it.delete() }
+
             photoFile.copyTo(destFile, overwrite = true)
+            photoFile.delete() // Clean up temp cropped file
+            
             refreshFriends()
+            
+            // Clear cache for the new image path
+            withContext(Dispatchers.Main) {
+                android.widget.Toast.makeText(getApplication(), "Foto profilo aggiornata", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     fun updateFriendPhoto(friendDeviceId: String, photoFile: File) {
         viewModelScope.launch(Dispatchers.IO) {
-            val destFile = File(repository.rootDir, "${friendDeviceId}_${prefsLocalDeviceId}.jpg")
+            val timestamp = System.currentTimeMillis()
+            val destFile = File(repository.rootDir, "${friendDeviceId}_${prefsLocalDeviceId}_$timestamp.jpg")
+            
+            // Clean up old photos
+            repository.rootDir.listFiles { _, name -> 
+                name.startsWith("${friendDeviceId}_${prefsLocalDeviceId}") && 
+                (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp"))
+            }?.forEach { it.delete() }
+
             photoFile.copyTo(destFile, overwrite = true)
+            photoFile.delete() // Clean up temp cropped file
+            
             refreshFriends()
+
+            withContext(Dispatchers.Main) {
+                android.widget.Toast.makeText(getApplication(), "Foto caricata", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -258,12 +326,17 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun addFriend(deviceId: String) {
         val api = restApi ?: return
-        val currentFriends = getFriends()
+        addFriendInternal(api, deviceId)
+        refreshFriends()
+    }
+
+    private fun addFriendInternal(api: RestApi, deviceId: String) {
+        val currentFriends = api.getDevices(true)
         val hasIntroducer = currentFriends.any { it.introducer }
         
         val device = Device()
         device.deviceID = deviceId
-        device.name = "Amico (${deviceId.take(7)})"
+        device.name = if (Constants.isBootstrapId(deviceId)) "EtherMesh Bootstrapper" else "Amico (${deviceId.take(7)})"
         device.addresses = listOf("dynamic")
         device.autoAcceptFolders = true
         
@@ -272,7 +345,6 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
         configRouter.updateDevice(api, device)
         ensureFolderExists(api)
-        refreshFriends()
     }
 
     fun clearUiEvent() { _uiEvents.value = null }

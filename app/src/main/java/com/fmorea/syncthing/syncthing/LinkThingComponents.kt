@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,18 +23,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fmorea.syncthing.R
 import com.fmorea.syncthing.model.Device
+import com.fmorea.syncthing.service.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -113,7 +119,7 @@ fun MarkdownText(
 }
 
 @Composable
-fun AsyncImage(file: File, modifier: Modifier) {
+fun AsyncImage(file: File, modifier: Modifier, targetSize: Int = 400) {
     var bitmap by remember { mutableStateOf(imageCacheShared.get(file.absolutePath)) }
 
     LaunchedEffect(file.absolutePath) {
@@ -128,7 +134,7 @@ fun AsyncImage(file: File, modifier: Modifier) {
                 
                     if (options.outWidth <= 0 || options.outHeight <= 0) return@withContext
 
-                    options.inSampleSize = calculateInSampleSize(options, 400, 400)
+                    options.inSampleSize = calculateInSampleSize(options, targetSize, targetSize)
                     options.inJustDecodeBounds = false
                 
                     val decoded = BitmapFactory.decodeFile(file.absolutePath, options)
@@ -277,15 +283,17 @@ fun DeviceItem(
     onTogglePause: () -> Unit = {}
 ) {
     val isOnline = (device.numConnections ?: 0) > 0
+    val isBootstrap = Constants.isBootstrapId(device.deviceID)
     val statusText = when {
         isMe -> "Tu"
+        isBootstrap -> "EtherMesh Bootstrapper"
         device.paused -> "In pausa"
         isOnline -> "Online"
         else -> "Offline"
     }
     
     val statusColor = when {
-        isMe || isOnline -> Color(0xFF4CAF50)
+        isMe || isOnline || isBootstrap -> Color(0xFF4CAF50)
         device.paused -> Color(0xFFF44336)
         else -> Color(0xFF9E9E9E)
     }
@@ -371,7 +379,14 @@ fun AsyncImageAvatar(file: File) {
         if (bitmap == null) {
             withContext(Dispatchers.IO) {
                 try {
-                    val decoded = BitmapFactory.decodeFile(file.absolutePath)
+                    val options = BitmapFactory.Options().apply {
+                        inJustDecodeBounds = true
+                    }
+                    BitmapFactory.decodeFile(file.absolutePath, options)
+                    options.inSampleSize = calculateInSampleSize(options, 256, 256)
+                    options.inJustDecodeBounds = false
+                    
+                    val decoded = BitmapFactory.decodeFile(file.absolutePath, options)
                     if (decoded != null) {
                         imageCacheShared.put(file.absolutePath, decoded)
                         bitmap = decoded
@@ -392,3 +407,61 @@ fun AsyncImageAvatar(file: File) {
         )
     }
 }
+
+@Composable
+fun EditorActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: String, onClick: () -> Unit) {
+    FilledIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(36.dp),
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    ) {
+        Icon(icon, contentDescription = description, modifier = Modifier.size(18.dp))
+    }
+}
+
+@Composable
+fun FormattingToolbar(
+    textValue: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    fun applyFormatting(prefix: String, suffix: String = prefix) {
+        val selection = textValue.selection
+        val text = textValue.text
+        val selectedText = text.substring(selection.start, selection.end)
+        val newText = text.replaceRange(selection.start, selection.end, "$prefix$selectedText$suffix")
+        
+        val newCursorPos = if (selection.collapsed) selection.start + prefix.length else selection.end + prefix.length + suffix.length
+        onValueChange(textValue.copy(
+            text = newText,
+            selection = TextRange(newCursorPos)
+        ))
+    }
+
+    fun moveCursor(delta: Int) {
+        val newPos = (textValue.selection.start + delta).coerceIn(0, textValue.text.length)
+        onValueChange(textValue.copy(selection = TextRange(newPos)))
+    }
+
+    Row(
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        EditorActionButton(Icons.Default.FormatBold, stringResource(R.string.action_bold)) { applyFormatting("**") }
+        EditorActionButton(Icons.Default.FormatItalic, stringResource(R.string.action_italic)) { applyFormatting("*") }
+        EditorActionButton(Icons.Default.FormatQuote, stringResource(R.string.action_quote)) { applyFormatting("> ") }
+        EditorActionButton(Icons.AutoMirrored.Filled.FormatListBulleted, stringResource(R.string.action_list)) { applyFormatting("- ") }
+        EditorActionButton(Icons.Default.Code, stringResource(R.string.action_code)) { applyFormatting("`") }
+        EditorActionButton(Icons.Default.Link, stringResource(R.string.action_link)) { applyFormatting("[", "](url)") }
+        
+        Spacer(modifier = Modifier.weight(1f))
+        
+        EditorActionButton(Icons.AutoMirrored.Filled.ArrowBack, "Indietro") { moveCursor(-1) }
+        EditorActionButton(Icons.AutoMirrored.Filled.ArrowForward, "Avanti") { moveCursor(1) }
+    }
+}
+

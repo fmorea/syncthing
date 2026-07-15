@@ -177,10 +177,10 @@ fun PortraitDialogContent(
             FilledTonalButton(onCopy, Modifier.weight(1f)) {
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = stringResource(R.string.copy)
+                    contentDescription = stringResource(R.string.action_copy)
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.copy))
+                Text(stringResource(R.string.action_copy))
             }
             FilledTonalButton(onShare, Modifier.weight(1f)) {
                 Icon(
@@ -226,10 +226,10 @@ fun LandscapeDialogContent(
                 FilledTonalButton(onCopy, Modifier.weight(1f)) {
                     Icon(
                         imageVector = Icons.Outlined.ContentCopy,
-                        contentDescription = stringResource(R.string.copy)
+                        contentDescription = stringResource(R.string.action_copy)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.copy))
+                    Text(stringResource(R.string.action_copy))
                 }
                 FilledTonalButton(onShare, Modifier.weight(1f)) {
                     Icon(

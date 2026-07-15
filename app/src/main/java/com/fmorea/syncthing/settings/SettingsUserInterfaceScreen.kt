@@ -20,7 +20,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.ListPreference
-import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.rememberPreferenceState
 
 
@@ -43,8 +42,6 @@ fun SettingsUserInterfaceScreen() {
     val themeValues = stringArrayResource(R.array.app_theme_values)
 
     var theme by rememberPreferenceState(Constants.PREF_APP_THEME, "system")
-    val expertMode = rememberPreferenceState(Constants.PREF_EXPERT_MODE, false)
-    val startInWebGui = rememberPreferenceState(Constants.PREF_START_INTO_WEB_GUI, false)
 
     SettingsScaffold(
         title = stringResource(R.string.category_user_interface),
@@ -89,20 +86,6 @@ fun SettingsUserInterfaceScreen() {
                     val index = themeValues.indexOf(value).coerceAtLeast(0)
                     AnnotatedString(themeNames[index]) 
                 }
-            )
-        }
-        item {
-            SwitchPreference(
-                title = { Text(stringResource(R.string.expert_mode_title)) },
-                summary = { Text(stringResource(R.string.expert_mode_summary)) },
-                state = expertMode,
-            )
-        }
-        item {
-            SwitchPreference(
-                title = { Text(stringResource(R.string.start_into_web_gui_title)) },
-                summary = { Text(stringResource(R.string.start_into_web_gui_summary)) },
-                state = startInWebGui,
             )
         }
     }
