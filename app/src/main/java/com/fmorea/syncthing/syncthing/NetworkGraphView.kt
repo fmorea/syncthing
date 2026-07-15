@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fmorea.syncthing.service.Constants
 import kotlinx.coroutines.delay
 import kotlin.math.atan2
@@ -34,7 +35,8 @@ data class GraphNode(
 
 data class GraphEdge(
     val from: String,
-    val to: String
+    val to: String,
+    val label: String
 )
 
 @Composable
@@ -83,9 +85,9 @@ fun NetworkGraphView(
 
         // Update edges
         edges.clear()
-        meshEdges.forEach { (parent, child) ->
+        meshEdges.forEach { (parent, child, label) ->
             if (parent.isNotBlank() && child.isNotBlank()) {
-                edges.add(GraphEdge(parent, child))
+                edges.add(GraphEdge(parent, child, label))
             }
         }
     }
@@ -155,7 +157,7 @@ fun NetworkGraphView(
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
-    val edgeColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    val edgeColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Canvas(
@@ -186,32 +188,44 @@ fun NetworkGraphView(
                 }
         ) {
             viewportSize = Offset(size.width, size.height)
-
+            
             // Draw Edges with Directional Arrows
             edges.forEach { edge ->
                 val startNode = nodes.find { it.id == edge.from }
                 val endNode = nodes.find { it.id == edge.to }
-                val start = startNode?.position
-                val end = endNode?.position
+                var start = startNode?.position
+                var end = endNode?.position
                 
                 if (start != null && end != null) {
+                    // Check if there is a reverse edge
+                    val hasReverse = edges.any { it.from == edge.to && it.to == edge.from }
+                    
                     val angle = atan2(end.y - start.y, end.x - start.x)
                     
+                    // If bidirectional, offset the line slightly to the right of its direction
+                    if (hasReverse) {
+                        val offsetDistance = 6f
+                        val offsetX = offsetDistance * cos(angle + Math.PI / 2).toFloat()
+                        val offsetY = offsetDistance * sin(angle + Math.PI / 2).toFloat()
+                        start = Offset(start.x + offsetX, start.y + offsetY)
+                        end = Offset(end.x + offsetX, end.y + offsetY)
+                    }
+
                     val isEndIntroducer = getDevice(edge.to)?.introducer == true
                     val endRadius = if (isEndIntroducer) 40f else 25f
 
                     // Stop edge before node center to show arrow clearly
                     val arrowOffset = endRadius + 5f 
                     val arrowEnd = Offset(
-                        end.x - arrowOffset * cos(angle),
-                        end.y - arrowOffset * sin(angle)
+                        end.x - arrowOffset * cos(angle).toFloat(),
+                        end.y - arrowOffset * sin(angle).toFloat()
                     )
 
                     drawLine(
                         color = edgeColor,
                         start = start,
                         end = arrowEnd,
-                        strokeWidth = 2f
+                        strokeWidth = 2.5f
                     )
                     
                     // Draw arrow head
@@ -227,8 +241,8 @@ fun NetworkGraphView(
                         arrowEnd.y - arrowSize * sin(angle + arrowAngle).toFloat()
                     )
                     
-                    drawLine(color = edgeColor, start = arrowEnd, end = p1, strokeWidth = 2f)
-                    drawLine(color = edgeColor, start = arrowEnd, end = p2, strokeWidth = 2f)
+                    drawLine(color = edgeColor, start = arrowEnd, end = p1, strokeWidth = 2.5f)
+                    drawLine(color = edgeColor, start = arrowEnd, end = p2, strokeWidth = 2.5f)
                 }
             }
 

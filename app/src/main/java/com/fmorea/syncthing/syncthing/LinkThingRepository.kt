@@ -6,8 +6,7 @@ import android.os.FileObserver
 import android.util.Log
 import com.fmorea.syncthing.service.Constants
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,10 +39,16 @@ class LinkThingRepository(
     private val _meshTopology = MutableStateFlow<Map<String, String>>(emptyMap())
     val meshTopology: StateFlow<Map<String, String>> = _meshTopology
 
-    private val _meshEdges = MutableStateFlow<Set<Pair<String, String>>>(emptySet())
-    val meshEdges: StateFlow<Set<Pair<String, String>>> = _meshEdges
+    private val _meshEdges = MutableStateFlow<Set<Triple<String, String, String>>>(emptySet())
+    val meshEdges: StateFlow<Set<Triple<String, String, String>>> = _meshEdges
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val _bannedDeviceIds = MutableStateFlow<Set<String>>(emptySet())
+    val bannedDeviceIds: StateFlow<Set<String>> = _bannedDeviceIds
+    
+    val isLocalUserBanned: StateFlow<Boolean> = _bannedDeviceIds.map { banned ->
+        banned.contains(getLocalDeviceId())
+    }.stateIn(scope, SharingStarted.Eagerly, false)
     private val messageCache = ConcurrentHashMap<String, LinkThingMessage>()
     private val fileTimestampCache = ConcurrentHashMap<String, Long>()
 
@@ -76,6 +81,11 @@ class LinkThingRepository(
                     refreshBeacons()
                     return
                 }
+                if (path.endsWith(".ban")) {
+                    refreshBans()
+                    triggerRefresh()
+                    return
+                }
                 if (path.endsWith(".INFO") || isImagePath(path)) {
                     _profilesVersion.value++
                 }
@@ -92,6 +102,7 @@ class LinkThingRepository(
     init {
         ensureDir()
         observers.forEach { it.startWatching() }
+        refreshBans()
         triggerRefresh()
         refreshBeacons()
     }
@@ -103,6 +114,7 @@ class LinkThingRepository(
     fun refresh() {
         ensureDir()
         observers.forEach { it.stopWatching(); it.startWatching() }
+        refreshBans()
         triggerRefresh()
         refreshBeacons()
     }
@@ -123,6 +135,7 @@ class LinkThingRepository(
     private suspend fun refreshMessagesInternal() {
         withContext(Dispatchers.IO) {
             val allFiles = rootDir.listFiles() ?: return@withContext
+            val banned = _bannedDeviceIds.value
             
             // Fast scan for ACKs first
             val ackFiles = rootDir.listFiles { _, name -> name.endsWith(".ack") } ?: emptyArray()
@@ -140,9 +153,10 @@ class LinkThingRepository(
             // Filter as efficiently as possible
             val validFiles = allFiles.filter { file ->
                 val name = file.name
-                file.isFile && !name.startsWith(".") && !name.contains(".syncthing.") && 
+                val isBanned = banned.any { name.contains(it) }
+                !isBanned && file.isFile && !name.startsWith(".") && !name.contains(".syncthing.") && 
                 (name.endsWith(".msg") || name.endsWith(".chess") || name.contains("_")) &&
-                !name.endsWith(".ack") && !name.endsWith(".INFO") && !name.endsWith(".net")
+                !name.endsWith(".ack") && !name.endsWith(".INFO") && !name.endsWith(".net") && !name.endsWith(".ban")
             }
             
             if (validFiles.isEmpty()) {
@@ -270,33 +284,45 @@ class LinkThingRepository(
         return null
     }
 
+    fun refreshBans() {
+        scope.launch {
+            val banFiles = rootDir.listFiles { _, name -> name.endsWith(".ban") } ?: emptyArray()
+            val bannedIds = banFiles.map { it.name.removeSuffix(".ban") }.toSet()
+            _bannedDeviceIds.value = bannedIds
+        }
+    }
+
     fun refreshBeacons() {
         scope.launch {
             val allNetFiles = rootDir.listFiles()?.filter { it.isFile && it.name.endsWith(".net") } ?: emptyList()
+            val banned = _bannedDeviceIds.value
             
             val foundIds = mutableSetOf<String>()
             val topology = mutableMapOf<String, String>()
-            val edges = mutableSetOf<Pair<String, String>>()
+            val edges = mutableSetOf<Triple<String, String, String>>()
             
             allNetFiles.forEach { file ->
-                val nameParts = file.name.removeSuffix(".net").split("_")
+                val netName = file.name.removeSuffix(".net")
+                val nameParts = netName.split("_")
                 if (nameParts.size >= 2) {
                     val nodeA = nameParts[0]
                     val nodeB = nameParts[1]
-                    foundIds.add(nodeA)
-                    foundIds.add(nodeB)
-                    edges.add(nodeA to nodeB)
                     
-                    // The file content can specify the real direction: nodeA introduced nodeB
-                    try {
-                        val content = file.readText().trim()
-                        if (content.length > 10) { // Likely a device ID
-                            topology[nodeB] = content
-                            edges.add(content to nodeB)
-                        } else {
-                            topology[nodeB] = nodeA 
-                        }
-                    } catch (e: Exception) {}
+                    if (!banned.contains(nodeA) && !banned.contains(nodeB)) {
+                        foundIds.add(nodeA)
+                        foundIds.add(nodeB)
+                        edges.add(Triple(nodeA, nodeB, netName))
+                        
+                        try {
+                            val content = file.readText().trim()
+                            if (content.length > 10 && !banned.contains(content)) {
+                                topology[nodeB] = content
+                                edges.add(Triple(content, nodeB, "topology"))
+                            } else if (!banned.contains(nodeA)) {
+                                topology[nodeB] = nodeA 
+                            }
+                        } catch (e: Exception) {}
+                    }
                 }
             }
             

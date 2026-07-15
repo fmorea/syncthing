@@ -295,7 +295,7 @@
   <string name="category_acks">Conferme</string>
   <string name="category_media">Media</string>
   <string name="category_replies">Risposte</string>
-  <string name="category_profiles">Profili</string>
+    <string name="category_profiles">Rubrica</string>
   <string name="category_chess">Scacchi</string>
   <string name="category_others">Altri</string>
   <string name="profile_first_name">Nome</string>

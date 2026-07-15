@@ -39,10 +39,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.asImageBitmap
 import com.fmorea.syncthing.model.Device
 import com.fmorea.syncthing.R
+import com.fmorea.syncthing.service.Constants
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import android.content.Intent
 import android.graphics.Bitmap
+import androidx.compose.ui.text.font.FontFamily
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -61,12 +63,14 @@ fun FileVaultScreen(
     viewModel: LinkThingViewModel,
     modifier: Modifier = Modifier,
     initialFile: java.io.File? = null,
+    initialCategory: String? = null,
+    resetTrigger: Int = 0,
     onShowInChat: (LinkThingMessage) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val friends by viewModel.friends.collectAsState()
-    var isDashboard by remember { mutableStateOf(true) }
+    var isDashboard by remember(initialCategory) { mutableStateOf(initialCategory == null) }
     var viewMode by remember { mutableStateOf(FileViewMode.LIST) }
     var sortMode by remember { mutableStateOf(FileSortMode.TYPE) }
 
@@ -78,12 +82,24 @@ fun FileVaultScreen(
     var commSubFilter by remember { mutableStateOf("All") }
     
     var searchQuery by remember { mutableStateOf("") }
-    var activeCategoryLabel by remember { mutableStateOf<String?>(null) }
+    var activeCategoryLabel by remember(initialCategory) { mutableStateOf(initialCategory) }
     var showConnectedDialog by remember { mutableStateOf(false) }
     var isSearchExpanded by remember { mutableStateOf(false) }
     var isRegexSearch by remember { mutableStateOf(false) }
     
     var currentPath by remember { mutableStateOf(viewModel.getRootDir()) }
+
+    LaunchedEffect(resetTrigger) {
+        if (resetTrigger > 0) {
+            isDashboard = true
+            activeCategoryLabel = null
+            searchQuery = ""
+            isSearchExpanded = false
+            currentPath = viewModel.getRootDir()
+            // Clear other transient states
+            // viewingProfile = null handled by internal state reset if needed
+        }
+    }
     var highlightedFile by remember { mutableStateOf<File?>(null) }
     var selectedFiles by remember { mutableStateOf(setOf<File>()) }
     val isSelectionMode = selectedFiles.isNotEmpty()
@@ -147,6 +163,7 @@ fun FileVaultScreen(
     }
     
     var editingFile by remember { mutableStateOf<File?>(null) }
+    var viewingProfile by remember { mutableStateOf<UserProfile?>(null) }
     var isEditorPreviewMode by remember { mutableStateOf(false) }
     var showEditorMetadata by remember { mutableStateOf(false) }
     var editorContentToSave by remember { mutableStateOf("") }
@@ -155,7 +172,7 @@ fun FileVaultScreen(
     var renameValue by remember { mutableStateOf("") }
     var fileToDelete by remember { mutableStateOf<File?>(null) }
 
-    BackHandler(enabled = editingFile != null || isSearchExpanded || isSelectionMode || activeCategoryLabel != null || !isDashboard) {
+    BackHandler(enabled = editingFile != null || viewingProfile != null || isSearchExpanded || isSelectionMode || activeCategoryLabel != null || !isDashboard) {
         if (isSelectionMode) {
             selectedFiles = emptySet()
         } else if (isSearchExpanded) {
@@ -164,6 +181,8 @@ fun FileVaultScreen(
         } else if (editingFile != null) {
             editingFile = null
             highlightedFile = null
+        } else if (viewingProfile != null) {
+            viewingProfile = null
         } else if (activeCategoryLabel != null) {
             activeCategoryLabel = null
             searchQuery = ""
@@ -528,7 +547,12 @@ fun FileVaultScreen(
                             }
                             
                             AnimatedContent(
-                                targetState = if (activeCategoryLabel == labelNet) "NET" else if (filteredFiles.isEmpty()) "EMPTY" else "LIST_${currentPath.absolutePath}_${viewMode.name}",
+                                targetState = when {
+                                    activeCategoryLabel == labelNet -> "NET"
+                                    activeCategoryLabel == labelProfile -> "RUBRICA"
+                                    filteredFiles.isEmpty() -> "EMPTY"
+                                    else -> "LIST_${currentPath.absolutePath}_${viewMode.name}"
+                                },
                                 transitionSpec = {
                                     fadeIn(tween(250, easing = FastOutSlowInEasing)) togetherWith fadeOut(tween(250, easing = FastOutSlowInEasing))
                                 },
@@ -586,6 +610,40 @@ fun FileVaultScreen(
                                             }
                                             item {
                                                 Spacer(modifier = Modifier.height(32.dp))
+                                            }
+                                        }
+                                    }
+                                    browserState == "RUBRICA" -> {
+                                        val uniqueIdentities = remember(filteredFiles) {
+                                            filteredFiles.mapNotNull { file ->
+                                                try {
+                                                    val profile = UserProfile.loadFromFile(file)
+                                                    profile.deviceId to (file to profile)
+                                                } catch (e: Exception) { null }
+                                            }.groupBy { it.first }
+                                             .map { group -> group.value.maxByOrNull { it.second.first.lastModified() }?.second!! }
+                                             .sortedBy { it.second.getDisplayName().lowercase() }
+                                        }
+
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentPadding = PaddingValues(16.dp),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            item {
+                                                Text(
+                                                    "Identità verificate",
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.padding(bottom = 8.dp)
+                                                )
+                                            }
+                                            items(uniqueIdentities, key = { it.first.absolutePath }) { (file, profile) ->
+                                                RubricaCard(
+                                                    file = file,
+                                                    onClick = { viewingProfile = profile },
+                                                    onDelete = { fileToDelete = file }
+                                                )
                                             }
                                         }
                                     }
@@ -823,21 +881,50 @@ fun FileVaultScreen(
     }
 
     if (fileToDelete != null) {
+        val isProfile = fileToDelete!!.extension.lowercase() == "info"
+        val myId = viewModel.getLocalDeviceId()
+        val isBootstrapper = Constants.isBootstrapId(myId)
+        
         AlertDialog(
             onDismissRequest = { fileToDelete = null },
-            title = { Text(stringResource(R.string.delete)) },
-            text = { Text(stringResource(R.string.delete_confirm_msg, fileToDelete!!.name)) },
+            title = { Text(if (isProfile && isBootstrapper) "Banna Utente" else stringResource(R.string.delete)) },
+            text = { 
+                if (isProfile && isBootstrapper) {
+                    Text("Stai eliminando l'identità di un altro utente come moderatore. Questo creerà un file di BAN per escluderlo permanentemente dalla rete. Confermi?")
+                } else {
+                    Text(stringResource(R.string.delete_confirm_msg, fileToDelete!!.name)) 
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        if (fileToDelete!!.isDirectory) fileToDelete!!.deleteRecursively() else fileToDelete!!.delete()
+                        if (isProfile) {
+                            val profile = UserProfile.loadFromFile(fileToDelete!!)
+                            viewModel.deleteIdentity(profile.deviceId, profile.discloserId)
+                        } else {
+                            if (fileToDelete!!.isDirectory) fileToDelete!!.deleteRecursively() else fileToDelete!!.delete()
+                        }
                         currentPath = File(currentPath.absolutePath)
                         fileToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(R.string.delete)) }
+                ) { Text(if (isProfile && isBootstrapper) "BANNA E ELIMINA" else stringResource(R.string.delete)) }
             },
             dismissButton = { TextButton(onClick = { fileToDelete = null }) { Text(stringResource(R.string.cancel_title)) } }
+        )
+    }
+
+    if (viewingProfile != null) {
+        val myId = viewModel.getLocalDeviceId()
+        EditProfileDialog(
+            profile = viewingProfile!!,
+            isMe = viewingProfile!!.deviceId == myId,
+            onDismiss = { viewingProfile = null },
+            onSave = { 
+                if (viewingProfile!!.deviceId == myId) viewModel.updateMyProfile(it)
+                else viewModel.updateFriendProfile(viewingProfile!!.deviceId, it)
+            },
+            onPhotoSelected = { viewModel.updateMyPhoto(it) } // Minimal implementation for now
         )
     }
 
@@ -963,11 +1050,17 @@ fun FileVaultTopBar(
             if (isSearchExpanded) {
                 TopAppBar(
                     title = {
+                        val labelProfile = stringResource(R.string.category_profiles)
+                        val placeholderText = when {
+                            editingFile != null -> "Cerca nel file..."
+                            activeCategoryLabel == labelProfile -> "Cerca in Rubrica..."
+                            else -> stringResource(R.string.search_hint)
+                        }
                         TextField(
                             value = searchQuery,
                             onValueChange = onSearchQueryChange,
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text(if (editingFile != null) "Cerca nel file..." else stringResource(R.string.search_hint)) },
+                            placeholder = { Text(placeholderText) },
                             trailingIcon = {
                                 Row {
                                     if (editingFile == null) {
@@ -1528,7 +1621,7 @@ private fun handleFileClick(
     } else {
         val ext = file.extension.lowercase()
         // Whitelist safe text extensions for the internal editor
-        val textExtensions = listOf("msg", "ack", "net", "info", "chess", "txt", "log", "md", "json", "xml", "html")
+        val textExtensions = listOf("msg", "ack", "net", "chess", "txt", "log", "md", "json", "xml", "html")
         
         if (ext in textExtensions) {
             onEditFile(file)
@@ -1744,6 +1837,69 @@ fun FileVaultItem(
                     leadingIconColor = MaterialTheme.colorScheme.error
                 )
             )
+        }
+    }
+}
+
+@Composable
+fun RubricaCard(file: File, onClick: () -> Unit, onDelete: () -> Unit) {
+    val profile = remember(file) { UserProfile.loadFromFile(file) }
+    val myId = (LocalContext.current.applicationContext as? com.fmorea.syncthing.SyncthingApp)?.let { 
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(it).getString(Constants.PREF_LOCAL_DEVICE_ID, "") 
+    } ?: ""
+    val isBootstrapper = Constants.isBootstrapId(myId)
+    val isMine = profile.discloserId == myId
+
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Avatar(deviceId = profile.deviceId, profile = profile, size = 64)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = profile.getDisplayName(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = profile.deviceId.take(16) + "...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontFamily = FontFamily.Monospace
+                )
+                
+                if (profile.country.isNotBlank() || profile.address.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = listOfNotNull(profile.country.ifBlank { null }, profile.address.ifBlank { null }).joinToString(", "),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+
+                val discloserLabel = if (profile.discloserId == profile.deviceId) "Auto-dichiarato" else "Segnalato da: ${profile.discloserId.take(8)}"
+                Text(
+                    text = discloserLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                )
+            }
+
+            if (isBootstrapper || isMine) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = if (isBootstrapper && !isMine) Icons.Default.Gavel else Icons.Default.Delete, 
+                        contentDescription = "Rimuovi", 
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
 }

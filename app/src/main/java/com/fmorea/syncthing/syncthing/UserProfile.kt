@@ -86,10 +86,23 @@ data class UserProfile(
         }
 
         fun loadFromFile(file: File, deviceId: String = "", discloserId: String = ""): UserProfile {
+            var dId = deviceId
+            var discId = discloserId
+            
+            if (dId.isBlank() || discId.isBlank()) {
+                val nameParts = file.name.removeSuffix(".INFO").split("_")
+                if (nameParts.size >= 2) {
+                    if (dId.isBlank()) dId = nameParts[0]
+                    if (discId.isBlank()) discId = nameParts[1]
+                } else if (nameParts.size == 1 && dId.isBlank()) {
+                    dId = nameParts[0]
+                }
+            }
+
             return try {
-                gson.fromJson(file.readText(), UserProfile::class.java).copy(deviceId = deviceId, discloserId = discloserId)
+                gson.fromJson(file.readText(), UserProfile::class.java).copy(deviceId = dId, discloserId = discId)
             } catch (e: Exception) {
-                UserProfile(deviceId, discloserId)
+                UserProfile(dId, discId)
             }
         }
 

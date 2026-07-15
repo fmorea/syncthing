@@ -626,7 +626,7 @@
     <string name="category_acks">Acks</string>
     <string name="category_media">Media</string>
     <string name="category_replies">Replies</string>
-    <string name="category_profiles">Profiles</string>
+    <string name="category_profiles">Rubrica</string>
     <string name="category_chess">Chess</string>
     <string name="category_others">Others</string>
     <string name="profile_first_name">First Name</string>

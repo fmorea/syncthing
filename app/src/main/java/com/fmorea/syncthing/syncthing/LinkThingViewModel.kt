@@ -40,7 +40,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val meshTopology: StateFlow<Map<String, String>> = repository.meshTopology
-    val meshEdges: StateFlow<Set<Pair<String, String>>> = repository.meshEdges
+    val meshEdges: StateFlow<Set<Triple<String, String, String>>> = repository.meshEdges
 
     private val _friends = MutableStateFlow<List<Device>>(emptyList())
     val friends: StateFlow<List<Device>> = _friends
@@ -76,6 +76,8 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _uiEvents = MutableLiveData<UiEvent?>(null)
     val uiEvents: LiveData<UiEvent?> = _uiEvents
+    
+    val isLocalUserBanned: StateFlow<Boolean> = repository.isLocalUserBanned
 
     sealed class UiEvent {
         object ShowMyId : UiEvent()
@@ -152,6 +154,8 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     fun refreshFriends() {
         viewModelScope.launch(Dispatchers.IO) {
             val api = restApi ?: return@launch
+            val bannedIds = repository.bannedDeviceIds.value
+            
             if (api.isConfigLoaded) {
                 // Ensure bootstrap nodes are always added
                 val allDevicesPre = api.getDevices(true)
@@ -167,7 +171,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 delay(500) // Small delay to let async Rest calls settle if they were needed
 
                 val allDevices = api.getDevices(true)
-                val others = allDevices.filter { it.deviceID != prefsLocalDeviceId }.map { device ->
+                val others = allDevices.filter { it.deviceID != prefsLocalDeviceId && !bannedIds.contains(it.deviceID) }.map { device ->
                     val conn = api.getRemoteDeviceStatus(device.deviceID)
                     device.numConnections = if (conn.connected) 1 else 0
                     device
@@ -294,8 +298,36 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun deleteIdentity(deviceId: String, discloserId: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val isBootstrapper = Constants.isBootstrapId(prefsLocalDeviceId)
+            if (isBootstrapper && deviceId != prefsLocalDeviceId) {
+                // If bootstrapper deletes someone else, it's a ban
+                // REQUIREMENT: A bootstrapper cannot ban another bootstrapper
+                if (Constants.isBootstrapId(deviceId)) {
+                    withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(getApplication(), "Impossibile bannare un altro bootstrapper", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                    return@launch
+                }
+
+                val banFile = File(repository.rootDir, "$deviceId.ban")
+                if (!banFile.exists()) {
+                    try {
+                        banFile.writeText("Banned by bootstrapper $prefsLocalDeviceId at ${System.currentTimeMillis()}")
+                    } catch (e: Exception) {
+                        Log.e("LinkThingVM", "Fail to create ban file", e)
+                    }
+                }
+            } else if (isBootstrapper && deviceId == prefsLocalDeviceId) {
+                // REQUIREMENT: A bootstrapper cannot auto-ban
+                withContext(Dispatchers.Main) {
+                    android.widget.Toast.makeText(getApplication(), "Un bootstrapper non può auto-bannarsi", android.widget.Toast.LENGTH_LONG).show()
+                }
+                return@launch
+            }
+            
             UserProfile.delete(deviceId, discloserId, repository.rootDir)
             refreshFriends()
+            repository.refresh()
         }
     }
 
