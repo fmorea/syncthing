@@ -412,7 +412,7 @@ fun FileVaultScreen(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             AnimatedContent(
-                targetState = if (editingFile != null) "EDITOR" to editingFile else if (isDashboard) "DASHBOARD" to null else viewMode.name to null,
+                targetState = if (editingFile != null) "EDITOR" to editingFile else if (isDashboard) "DASHBOARD" to null else "BROWSER" to null,
                 transitionSpec = {
                     val ease = FastOutSlowInEasing
                     if (targetState.first == "EDITOR") {
@@ -479,13 +479,16 @@ fun FileVaultScreen(
                             sortMode = sortMode,
                             onSort = { sortMode = it },
                             activeCategoryLabel = activeCategoryLabel,
-                            onCategoryUpdate = { activeCategoryLabel = it },
+                            onCategoryUpdate = { 
+                                activeCategoryLabel = it
+                                if (it != null) isDashboard = false 
+                            },
                             searchQuery = searchQuery,
                             onSearchUpdate = { searchQuery = it },
                             onCommSubFilterUpdate = { commSubFilter = it }
                         )
                     }
-                    else -> {
+                    "BROWSER" -> {
                         Column(modifier = Modifier.fillMaxSize()) {
                             FileVaultListHeader(
                                 currentPath = currentPath,
@@ -1267,11 +1270,9 @@ fun FileVaultDashboard(
                 ) { 
                     onCategoryUpdate(labelComm)
                     onCommSubFilterUpdate("All")
-                    onToggleView() // Force refresh
                 }
                 CategoryItem(Icons.Default.Lan, labelNet, stats["Network"] ?: 0, Color(0xFF4CAF50), Modifier.weight(1f)) { 
                     onCategoryUpdate(labelNet)
-                    onToggleView() // Force refresh
                 }
             }
             
@@ -1280,11 +1281,9 @@ fun FileVaultDashboard(
                 CategoryItem(Icons.Default.PermMedia, labelMedia, stats["Media"] ?: 0, Color(0xFF9C27B0), Modifier.weight(1f)) { 
                     onCategoryUpdate(labelMedia)
                     onSearchUpdate("-msg -ack -net -info")
-                    onToggleView() // Force refresh
                 }
                 CategoryItem(Icons.Default.AccountCircle, labelProfile, stats["Profiles"] ?: 0, Color(0xFF795548), Modifier.weight(1f)) { 
                     onCategoryUpdate(labelProfile)
-                    onToggleView() // Force refresh
                 }
             }
 
