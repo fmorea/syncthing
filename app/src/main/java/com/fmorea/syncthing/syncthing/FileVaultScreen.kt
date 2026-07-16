@@ -78,8 +78,10 @@ fun FileVaultScreen(
     val labelNet = stringResource(R.string.category_network)
     val labelMedia = stringResource(R.string.category_media)
     val labelProfile = stringResource(R.string.category_profiles)
+    val labelCalendar = "Calendario"
     
     var commSubFilter by remember { mutableStateOf("All") }
+    var mediaSubFilter by remember { mutableStateOf("All") }
     
     var searchQuery by remember { mutableStateOf("") }
     var activeCategoryLabel by remember(initialCategory) { mutableStateOf(initialCategory) }
@@ -227,7 +229,11 @@ fun FileVaultScreen(
                 labelMedia -> {
                     val ext = file.extension.lowercase()
                     val special = listOf("msg", "ack", "net", "info")
-                    ext !in special && !file.isDirectory
+                    val isMedia = ext !in special && !file.isDirectory
+                    if (!isMedia) return@filter false
+                    
+                    if (mediaSubFilter == "All") true
+                    else ext == mediaSubFilter.removePrefix(".")
                 }
                 labelProfile -> file.extension.lowercase() == "info"
                 else -> true
@@ -504,7 +510,8 @@ fun FileVaultScreen(
                             },
                             searchQuery = searchQuery,
                             onSearchUpdate = { searchQuery = it },
-                            onCommSubFilterUpdate = { commSubFilter = it }
+                            onCommSubFilterUpdate = { commSubFilter = it },
+                            onMediaSubFilterUpdate = { mediaSubFilter = it }
                         )
                     }
                     "BROWSER" -> {
@@ -541,6 +548,34 @@ fun FileVaultScreen(
                                             selected = commSubFilter == value,
                                             onClick = { commSubFilter = value },
                                             label = { Text(label) }
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (activeCategoryLabel == labelMedia) {
+                                val availableExtensions = remember(allFilesOnDisk) {
+                                    val special = listOf("msg", "ack", "net", "info")
+                                    allFilesOnDisk.filter { it.isFile && it.extension.lowercase() !in special }
+                                        .map { "." + it.extension.lowercase() }
+                                        .distinct()
+                                        .sorted()
+                                }
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    FilterChip(
+                                        selected = mediaSubFilter == "All",
+                                        onClick = { mediaSubFilter = "All" },
+                                        label = { Text(stringResource(R.string.none)) }
+                                    )
+                                    availableExtensions.forEach { ext ->
+                                        FilterChip(
+                                            selected = mediaSubFilter == ext,
+                                            onClick = { mediaSubFilter = ext },
+                                            label = { Text(ext) }
                                         )
                                     }
                                 }
@@ -1324,7 +1359,8 @@ fun FileVaultDashboard(
     onCategoryUpdate: (String?) -> Unit,
     searchQuery: String,
     onSearchUpdate: (String) -> Unit,
-    onCommSubFilterUpdate: (String) -> Unit
+    onCommSubFilterUpdate: (String) -> Unit,
+    onMediaSubFilterUpdate: (String) -> Unit
 ) {
     val stats = remember(rootDir) {
         val allFiles = rootDir.walkTopDown().filter { it.isFile }.toList()
@@ -1373,6 +1409,8 @@ fun FileVaultDashboard(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CategoryItem(Icons.Default.PermMedia, labelMedia, stats["Media"] ?: 0, Color(0xFF9C27B0), Modifier.weight(1f)) { 
                     onCategoryUpdate(labelMedia)
+                    onCommSubFilterUpdate("All")
+                    onMediaSubFilterUpdate("All")
                     onSearchUpdate("-msg -ack -net -info")
                 }
                 CategoryItem(Icons.Default.AccountCircle, labelProfile, stats["Profiles"] ?: 0, Color(0xFF795548), Modifier.weight(1f)) { 

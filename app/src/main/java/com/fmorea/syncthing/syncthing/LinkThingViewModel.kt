@@ -136,6 +136,19 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun getRootDir(): File = repository.rootDir
 
+    fun addCalendarEvent(event: CalendarEvent) {
+        viewModelScope.launch(Dispatchers.IO) {
+            event.toFile(repository.rootDir)
+            repository.refresh()
+            forceSync()
+        }
+    }
+
+    fun getCalendarEvents(): List<CalendarEvent> {
+        val files = repository.rootDir.listFiles { _, name -> name.endsWith(".cal") } ?: emptyArray()
+        return files.mapNotNull { CalendarEvent.fromFile(it) }.sortedBy { it.date }
+    }
+
     fun shareChessGame(): File? {
         val id = prefsLocalDeviceId
         if (id.isBlank()) return null

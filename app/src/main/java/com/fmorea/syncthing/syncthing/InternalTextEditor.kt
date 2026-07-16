@@ -603,61 +603,81 @@ fun InternalTextEditor(
                         color = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scrollState)
-                        ) {
-                            // Line Numbers
-                            Column(
+                        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                            val minHeight = maxHeight
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                                    .padding(vertical = 16.dp),
-                                horizontalAlignment = Alignment.End
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)
+                                    .heightIn(min = minHeight)
                             ) {
-                                repeat(lineCount) { index ->
-                                    Text(
-                                        text = (index + 1).toString(),
-                                        style = TextStyle(
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
-                                        ),
-                                        modifier = Modifier
-                                            .height(lineHeightDp)
-                                            .padding(horizontal = 8.dp)
-                                    )
-                                }
-                            }
-
-                            VerticalDivider(
-                                modifier = Modifier.fillMaxHeight(),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-                            )
-
-                            Box(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                                BasicTextField(
-                                    value = textValue,
-                                    onValueChange = { 
-                                        pushUndo(it.text)
-                                        textValue = it 
-                                    },
+                                // Line Numbers
+                                Column(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
-                                    textStyle = TextStyle(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 14.sp,
-                                        lineHeight = 20.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                    visualTransformation = markdownTransformation,
-                                    decorationBox = { innerTextField ->
-                                        innerTextField()
+                                        .fillMaxHeight()
+                                        .width(40.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .padding(top = 16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    repeat(lineCount) { index ->
+                                        Text(
+                                            text = (index + 1).toString(),
+                                            style = TextStyle(
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                            ),
+                                            modifier = Modifier.height(lineHeightDp)
+                                        )
                                     }
+                                }
+
+                                VerticalDivider(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                                 )
+
+                                Box(modifier = Modifier.weight(1f).fillMaxHeight().horizontalScroll(rememberScrollState())) {
+                                    BasicTextField(
+                                        value = textValue,
+                                        onValueChange = { 
+                                            pushUndo(it.text)
+                                            textValue = it 
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 64.dp),
+                                        textStyle = TextStyle(
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 14.sp,
+                                            lineHeight = 20.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                        visualTransformation = markdownTransformation,
+                                        decorationBox = { innerTextField ->
+                                            innerTextField()
+                                        }
+                                    )
+                                    
+                                    // Character and Line Count Overlay
+                                    Surface(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .padding(16.dp),
+                                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        tonalElevation = 2.dp
+                                    ) {
+                                        Text(
+                                            text = "Lines: $lineCount | Chars: ${textValue.text.length}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

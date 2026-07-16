@@ -155,7 +155,6 @@ fun NetworkGraphView(
 
     var draggedNode by remember { mutableStateOf<String?>(null) }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
     val edgeColor = MaterialTheme.colorScheme.onSurfaceVariant
 
@@ -249,14 +248,14 @@ fun NetworkGraphView(
             // Draw Nodes
             nodes.forEach { node ->
                 val device = getDevice(node.id)
+                val isOnline = (device?.numConnections ?: 0) > 0
                 val isBootstrap = Constants.isBootstrapId(node.id)
                 val isIntroducer = device?.introducer == true || isBootstrap
                 val baseRadius = if (isBootstrap) 40f else if (isIntroducer) 30f else 20f
                 val outerRadius = baseRadius + 5f
 
                 val color = when {
-                    node.id == localDevice?.deviceID -> primaryColor
-                    isBootstrap -> Color(0xFF4CAF50) // Bootstrap is always prominent green
+                    node.id == localDevice?.deviceID || isOnline || isBootstrap -> Color(0xFF4CAF50) // Me, Online or Bootstrap are green
                     else -> secondaryColor
                 }
                 

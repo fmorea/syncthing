@@ -71,11 +71,17 @@ data class LinkThingMessage(
 
                 val isMsg = name.endsWith(".msg")
                 val isChess = name.endsWith(".chess")
+                val isCal = name.endsWith(".cal")
                 
                 // Contenuto testuale o descrizione dell'allegato
                 val content = when {
                     isMsg -> file.readText(Charsets.UTF_8)
                     isChess -> "Sfida a scacchi"
+                    isCal -> {
+                        val event = CalendarEvent.fromFile(file)
+                        if (event != null) "Nuovo Evento: ${event.title}"
+                        else "Evento condiviso"
+                    }
                     else -> "Allegato: ${file.name}"
                 }
 
