@@ -78,13 +78,19 @@ fun FileVaultScreen(
     val labelNet = stringResource(R.string.category_network)
     val labelMedia = stringResource(R.string.category_media)
     val labelProfile = stringResource(R.string.category_profiles)
-    val labelCalendar = "Calendario"
     
     var commSubFilter by remember { mutableStateOf("All") }
     var mediaSubFilter by remember { mutableStateOf("All") }
     
     var searchQuery by remember { mutableStateOf("") }
     var activeCategoryLabel by remember(initialCategory) { mutableStateOf(initialCategory) }
+    
+    // Auto-reset subfilters when category changes
+    LaunchedEffect(activeCategoryLabel) {
+        commSubFilter = "All"
+        mediaSubFilter = "All"
+    }
+
     var showConnectedDialog by remember { mutableStateOf(false) }
     var isSearchExpanded by remember { mutableStateOf(false) }
     var isRegexSearch by remember { mutableStateOf(false) }
@@ -98,8 +104,6 @@ fun FileVaultScreen(
             searchQuery = ""
             isSearchExpanded = false
             currentPath = viewModel.getRootDir()
-            // Clear other transient states
-            // viewingProfile = null handled by internal state reset if needed
         }
     }
     var highlightedFile by remember { mutableStateOf<File?>(null) }
@@ -116,7 +120,6 @@ fun FileVaultScreen(
                 highlightedFile = it
                 isDashboard = false
                 viewMode = FileViewMode.GRID
-                // Clear search to show context
                 searchQuery = ""
             }
         }
@@ -143,7 +146,6 @@ fun FileVaultScreen(
                 try {
                     val id = viewModel.getLocalDeviceId()
                     val timestamp = System.currentTimeMillis()
-                    // Get filename from URI or fallback
                     var fileName = "file_$timestamp"
                     context.contentResolver.query(selectedUri, null, null, null, null)?.use { cursor ->
                         val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
@@ -199,15 +201,24 @@ fun FileVaultScreen(
     }
 
     val allFilesOnDisk = remember(currentPath, activeCategoryLabel) {
+        val root = viewModel.getRootDir()
         if (activeCategoryLabel != null) {
-            // Se una categoria è attiva, mostriamo tutti i file del vault ricorsivamente
-            viewModel.getRootDir().walkTopDown().filter { it.isFile || it.isDirectory }.toList().toTypedArray()
+            when (activeCategoryLabel) {
+                labelNet -> root.listFiles { _, name -> name.lowercase().endsWith(".net") }?.toList() ?: emptyList()
+                labelProfile -> root.listFiles { _, name -> name.lowercase().endsWith(".info") }?.toList() ?: emptyList()
+                labelComm -> root.walkTopDown().filter { it.isFile && (it.extension.lowercase() == "msg" || it.extension.lowercase() == "ack") }.toList()
+                labelMedia -> {
+                    val special = listOf("msg", "ack", "net", "info")
+                    root.walkTopDown().filter { it.isFile && it.extension.lowercase() !in special }.toList()
+                }
+                else -> root.walkTopDown().filter { it.isFile || it.isDirectory }.toList()
+            }
         } else {
-            currentPath.listFiles() ?: emptyArray<File>()
+            currentPath.listFiles()?.toList() ?: emptyList()
         }
     }
     
-    val filteredFiles = remember(allFilesOnDisk, sortMode, searchQuery, isRegexSearch, activeCategoryLabel, commSubFilter) {
+    val filteredFiles = remember(allFilesOnDisk, sortMode, searchQuery, isRegexSearch, activeCategoryLabel, commSubFilter, mediaSubFilter) {
         val filtered = allFilesOnDisk.filter { file ->
             val matchesCategory = when (activeCategoryLabel) {
                 labelComm -> {
@@ -245,7 +256,6 @@ fun FileVaultScreen(
                 val queries = searchQuery.split(Regex("[,\\s]+")).filter { it.isNotBlank() }
                 val (excludeQueries, includeQueries) = queries.partition { it.startsWith("-") }
                 
-                // Exclusion check
                 if (excludeQueries.any { 
                     val extToExclude = it.removePrefix("-")
                     file.extension.equals(extToExclude, ignoreCase = true) 
@@ -263,8 +273,6 @@ fun FileVaultScreen(
         }
         
         filtered.sortedWith { f1, f2 ->
-            // Always keep directories at the top, except when sorting specifically by something else that might override it?
-            // Actually, most file managers keep folders first.
             if (f1.isDirectory && !f2.isDirectory) return@sortedWith -1
             if (!f1.isDirectory && f2.isDirectory) return@sortedWith 1
             
@@ -339,7 +347,6 @@ fun FileVaultScreen(
                         } else if (highlightedFile != null) {
                             highlightedFile = null
                         } else if (isDashboard) { 
-                            // Already home
                         } else if (currentPath == viewModel.getRootDir()) { 
                             isDashboard = true 
                         } else { 
@@ -418,9 +425,6 @@ fun FileVaultScreen(
                     }
                 )
             }
-        },
-        bottomBar = {
-            // Bottom bar removed as controls are now context-aware in headers or FAB
         },
         floatingActionButton = {
             val hideFab = isSelectionMode || activeCategoryLabel == labelNet || editingFile != null
@@ -594,8 +598,8 @@ fun FileVaultScreen(
                                 modifier = Modifier.weight(1f).fillMaxWidth(),
                                 label = "BrowserContentTransition"
                             ) { browserState ->
-                                when {
-                                    browserState == "NET" -> {
+                                when (browserState) {
+                                    "NET" -> {
                                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                                             item {
                                                 Box(modifier = Modifier.height(400.dp).fillMaxWidth()) {
@@ -648,16 +652,24 @@ fun FileVaultScreen(
                                             }
                                         }
                                     }
-                                    browserState == "RUBRICA" -> {
+                                    "RUBRICA" -> {
                                         val uniqueIdentities = remember(filteredFiles) {
-                                            filteredFiles.mapNotNull { file ->
+                                            val validProfiles = filteredFiles.mapNotNull { file ->
                                                 try {
                                                     val profile = UserProfile.loadFromFile(file)
-                                                    profile.deviceId to (file to profile)
+                                                    if (profile.deviceId.isNotBlank()) profile.deviceId to (file to profile)
+                                                    else null
                                                 } catch (e: Exception) { null }
-                                            }.groupBy { it.first }
-                                             .map { group -> group.value.maxByOrNull { it.second.first.lastModified() }?.second!! }
-                                             .sortedBy { it.second.getDisplayName().lowercase() }
+                                            }
+                                            
+                                            if (validProfiles.isEmpty()) emptyList<Pair<File, UserProfile>>()
+                                            else {
+                                                validProfiles.groupBy { it.first }
+                                                    .mapNotNull { group -> 
+                                                        group.value.maxByOrNull { it.second.first.lastModified() }?.second 
+                                                    }
+                                                    .sortedBy { it.second.getDisplayName().lowercase() }
+                                            }
                                         }
 
                                         LazyColumn(
@@ -673,7 +685,7 @@ fun FileVaultScreen(
                                                     modifier = Modifier.padding(bottom = 8.dp)
                                                 )
                                             }
-                                            items(uniqueIdentities, key = { it.first.absolutePath }) { (file, profile) ->
+                                            items(uniqueIdentities, key = { it.second.deviceId }) { (file, profile) ->
                                                 RubricaCard(
                                                     file = file,
                                                     onClick = { viewingProfile = profile },
@@ -682,7 +694,7 @@ fun FileVaultScreen(
                                             }
                                         }
                                     }
-                                    browserState == "EMPTY" -> {
+                                    "EMPTY" -> {
                                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                 Icon(Icons.Default.Inbox, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
@@ -833,13 +845,12 @@ fun FileVaultScreen(
                     if (newFileName.isNotBlank()) {
                         val id = viewModel.getLocalDeviceId()
                         val timestamp = System.currentTimeMillis()
-                        // Assicurati che abbia un'estensione o usa .msg come default
                         val finalName = if (newFileName.contains(".")) newFileName else "$newFileName.msg"
                         val file = File(currentPath, "${timestamp}_${id}_$finalName")
                         try {
                             file.createNewFile()
                             currentPath = File(currentPath.absolutePath)
-                            editingFile = file // Apri l'editor immediatamente
+                            editingFile = file
                             showCreateFileDialog = false
                             newFileName = ""
                         } catch (e: Exception) {
@@ -959,7 +970,7 @@ fun FileVaultScreen(
                 if (viewingProfile!!.deviceId == myId) viewModel.updateMyProfile(it)
                 else viewModel.updateFriendProfile(viewingProfile!!.deviceId, it)
             },
-            onPhotoSelected = { viewModel.updateMyPhoto(it) } // Minimal implementation for now
+            onPhotoSelected = { viewModel.updateMyPhoto(it) }
         )
     }
 
@@ -1144,12 +1155,6 @@ fun FileVaultTopBar(
                                 tint = if (showEditorMetadata) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             )
                         }
-                        IconButton(onClick = onToggleEditorPreview) {
-                            Icon(
-                                if (isEditorPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
-                                contentDescription = if (isEditorPreviewMode) "Modifica" else "Anteprima"
-                            )
-                        }
                         IconButton(onClick = { onSearchExpandedChange(true) }) {
                             Icon(Icons.Default.Search, contentDescription = "Cerca nel testo")
                         }
@@ -1232,7 +1237,6 @@ fun FileVaultTopBar(
                             else if (current.startsWith(rootPath)) {
                                 current.removePrefix(rootPath).split(File.separator).filter { it.isNotBlank() }
                             } else {
-                                // Outside root? Show full path or just parts
                                 current.split(File.separator).filter { it.isNotBlank() }
                             }
                         }
@@ -1386,7 +1390,6 @@ fun FileVaultDashboard(
     
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Categories Grid
             val commCount = (stats["Messages"] ?: 0) + (stats["Replies"] ?: 0) + (stats["Acks"] ?: 0)
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1511,7 +1514,7 @@ fun FileVaultDashboard(
                                     file = file,
                                     viewMode = FileViewMode.GRID,
                                     onTap = { handleFileClick(file, context, viewModel, onOpenPath, onEditFile) },
-                                    onRename = {}, // Dashboard preview doesn't need all actions
+                                    onRename = {}, 
                                     onDelete = {},
                                     onShowInChat = {}
                                 )
@@ -1525,7 +1528,7 @@ fun FileVaultDashboard(
                             file = file,
                             viewMode = FileViewMode.LIST,
                             onTap = { handleFileClick(file, context, viewModel, onOpenPath, onEditFile) },
-                            onRename = {}, // Dashboard preview doesn't need all actions
+                            onRename = {}, 
                             onDelete = {},
                             onShowInChat = {}
                         )
@@ -1658,13 +1661,11 @@ private fun handleFileClick(
         onPathChange(file)
     } else {
         val ext = file.extension.lowercase()
-        // Whitelist safe text extensions for the internal editor
         val textExtensions = listOf("msg", "ack", "net", "chess", "txt", "log", "md", "json", "xml", "html")
         
         if (ext in textExtensions) {
             onEditFile(file)
         } else {
-            // All other formats (PDF, APK, large images, etc.) are treated as media and opened externally
             com.fmorea.syncthing.util.FileUtils.openFile(context, file.absolutePath)
         }
     }
@@ -1882,9 +1883,12 @@ fun FileVaultItem(
 @Composable
 fun RubricaCard(file: File, onClick: () -> Unit, onDelete: () -> Unit) {
     val profile = remember(file) { UserProfile.loadFromFile(file) }
-    val myId = (LocalContext.current.applicationContext as? com.fmorea.syncthing.SyncthingApp)?.let { 
-        androidx.preference.PreferenceManager.getDefaultSharedPreferences(it).getString(Constants.PREF_LOCAL_DEVICE_ID, "") 
-    } ?: ""
+    val context = LocalContext.current
+    val myId = remember(context) {
+        (context.applicationContext as? com.fmorea.syncthing.SyncthingApp)?.let { 
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(it).getString(Constants.PREF_LOCAL_DEVICE_ID, "") 
+        } ?: ""
+    }
     val isBootstrapper = Constants.isBootstrapId(myId)
     val isMine = profile.discloserId == myId
 

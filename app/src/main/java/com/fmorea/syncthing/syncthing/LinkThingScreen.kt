@@ -804,6 +804,8 @@ fun LinkThingScreen(
                     LinkThingTab.NETWORK -> NetworkView(viewModel = viewModel, onEditMyProfile = { editingProfileByDeviceId = localDevice?.deviceID }, onEditFriendProfile = { editingProfileByDeviceId = it }, onShowGraph = { currentTab = LinkThingTab.NETWORK_GRAPH })
                     LinkThingTab.NETWORK_GRAPH -> NetworkGraphView(viewModel = viewModel, onNodeClick = { editingProfileByDeviceId = it })
                     LinkThingTab.APPLICATIONS -> {
+                        val labelRubrica = stringResource(R.string.category_profiles)
+                        val labelNetwork = stringResource(R.string.category_network)
                         ApplicationsTabContent(
                             viewModel = viewModel,
                             onPlayChess = {
@@ -819,13 +821,11 @@ fun LinkThingScreen(
                                 }
                             },
                             onOpenRubrica = {
-                                val label = context.getString(R.string.category_profiles)
-                                vaultTargetCategory = label
+                                vaultTargetCategory = labelRubrica
                                 currentTab = LinkThingTab.FILE_DRIVE
                             },
                             onShowGraph = {
-                                val label = context.getString(R.string.category_network)
-                                vaultTargetCategory = label
+                                vaultTargetCategory = labelNetwork
                                 currentTab = LinkThingTab.FILE_DRIVE
                             },
                             onOpenCalendar = {
