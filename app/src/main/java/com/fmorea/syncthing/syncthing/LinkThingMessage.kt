@@ -17,7 +17,10 @@ data class LinkThingMessage(
     val dateHeader: String? = null, // Intestazione della data calcolata per la UI
     val replyToTimestamp: Long? = null,
     val replyToDeviceId: String? = null,
-    val acknowledgments: Map<String, Long> = emptyMap() // receiverId -> ackTimestamp
+    val acknowledgments: Map<String, Long> = emptyMap(), // receiverId -> ackTimestamp
+    val isMail: Boolean = false,
+    val recipientId: String? = null,
+    val isDecrypted: Boolean = true
 ) {
     /**
      * Identificativo univoco del messaggio (timestamp_deviceId).
@@ -72,10 +75,16 @@ data class LinkThingMessage(
                 val isMsg = name.endsWith(".msg")
                 val isChess = name.endsWith(".chess")
                 val isCal = name.endsWith(".cal")
+                val isMail = name.endsWith(".mail")
                 
+                var recipientId: String? = null
+                if (isMail && parts.size >= 3) {
+                    recipientId = if (parts[2].contains(".")) parts[2].split(".")[0] else parts[2]
+                }
+
                 // Contenuto testuale o descrizione dell'allegato
                 val content = when {
-                    isMsg -> file.readText(Charsets.UTF_8)
+                    isMsg || isMail -> file.readText(Charsets.UTF_8)
                     isChess -> "Sfida a scacchi"
                     isCal -> {
                         val event = CalendarEvent.fromFile(file)
@@ -91,10 +100,13 @@ data class LinkThingMessage(
                     deviceId = deviceId,
                     content = content,
                     isLocal = deviceId == localDeviceId,
-                    isAttachment = !isMsg,
+                    isAttachment = !isMsg && !isMail,
                     file = file,
                     replyToTimestamp = replyTs,
-                    replyToDeviceId = replyId
+                    replyToDeviceId = replyId,
+                    isMail = isMail,
+                    recipientId = recipientId,
+                    isDecrypted = !isMail // Encrypted mails start as not decrypted
                 )
             } catch (e: Exception) {
                 return null

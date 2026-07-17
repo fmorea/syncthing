@@ -315,6 +315,16 @@ fun InternalTextEditor(
                     )
                 } else FileMetadata(type = context.getString(R.string.type_chess))
             }
+            ext == "mail" -> {
+                if (parts.size >= 3) {
+                    FileMetadata(
+                        timestamp = parts[0].toLongOrNull(),
+                        senderId = parts[1],
+                        receiverId = parts[2],
+                        type = context.getString(R.string.type_mail)
+                    )
+                } else FileMetadata(type = context.getString(R.string.type_mail))
+            }
             ext == "info" -> {
                 val profile = try { UserProfile.loadFromFile(file) } catch (_: Exception) { null }
                 val partsInfo = file.name.removeSuffix(".INFO").split("_")

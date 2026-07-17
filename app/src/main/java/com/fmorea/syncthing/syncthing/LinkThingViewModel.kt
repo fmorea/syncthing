@@ -17,6 +17,7 @@ import com.fmorea.syncthing.service.RestApi
 import android.util.Log
 import java.io.File
 import kotlinx.coroutines.*
+import java.security.PrivateKey
 
 class LinkThingViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -31,12 +32,49 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
     
+    private val _friendProfiles = MutableStateFlow<Map<String, UserProfile>>(emptyMap())
+    val friendProfiles: StateFlow<Map<String, UserProfile>> = _friendProfiles
+
+    private val _privateKey = MutableStateFlow<PrivateKey?>(null)
+    val privateKey: StateFlow<PrivateKey?> = _privateKey
+
     val messages: StateFlow<List<LinkThingMessage>> = combine(
         repository.messages,
-        _searchQuery
-    ) { allMessages, query ->
-        if (query.isBlank()) allMessages
-        else allMessages.filter { it.content.contains(query, ignoreCase = true) }
+        _searchQuery,
+        _friendProfiles,
+        _privateKey
+    ) { allMessages, query, profiles, privKey ->
+        val decrypted = allMessages.map { msg ->
+            if (msg.isMail && !msg.isDecrypted && privKey != null) {
+                val senderId = msg.deviceId
+                val recipientId = msg.recipientId
+                val myId = prefsLocalDeviceId
+                
+                if (recipientId == myId || senderId == myId) {
+                    val peerId = if (senderId == myId) recipientId else senderId
+                    val peerProfile = profiles[peerId] ?: UserProfile.load(peerId!!, myId, repository.rootDir)
+                    val peerPubStr = peerProfile.publicKey
+                    
+                    if (peerPubStr != null) {
+                        try {
+                            val peerPub = CryptoUtils.stringToPublicKey(peerPubStr)
+                            val sharedSecret = CryptoUtils.getSharedSecret(privKey, peerPub)
+                            val decryptedContent = CryptoUtils.decrypt(msg.content, sharedSecret)
+                            msg.copy(content = decryptedContent, isDecrypted = true)
+                        } catch (e: Exception) {
+                            msg.copy(content = getApplication<Application>().getString(com.fmorea.syncthing.R.string.error_decryption_failed), isDecrypted = false)
+                        }
+                    } else {
+                        msg.copy(content = getApplication<Application>().getString(com.fmorea.syncthing.R.string.label_missing_public_key), isDecrypted = false)
+                    }
+                } else {
+                    msg.copy(content = getApplication<Application>().getString(com.fmorea.syncthing.R.string.label_private_message), isDecrypted = false)
+                }
+            } else msg
+        }
+        
+        if (query.isBlank()) decrypted
+        else decrypted.filter { it.content.contains(query, ignoreCase = true) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val meshTopology: StateFlow<Map<String, String>> = repository.meshTopology
@@ -47,9 +85,6 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _userProfile = MutableStateFlow(UserProfile(prefsLocalDeviceId))
     val userProfile: StateFlow<UserProfile> = _userProfile
-
-    private val _friendProfiles = MutableStateFlow<Map<String, UserProfile>>(emptyMap())
-    val friendProfiles: StateFlow<Map<String, UserProfile>> = _friendProfiles
 
     private val _allProfiles = MutableStateFlow<Map<String, List<UserProfile>>>(emptyMap())
     val allProfiles: StateFlow<Map<String, List<UserProfile>>> = _allProfiles
@@ -91,8 +126,11 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     init {
+        UserProfile.migrateLegacyProfiles(repository.rootDir)
         _userProfile.value = UserProfile.load(prefsLocalDeviceId, prefsLocalDeviceId, repository.rootDir)
         
+        initializeCryptoKeys()
+
         viewModelScope.launch {
             repository.profilesVersion.collect {
                 refreshFriends()
@@ -221,7 +259,8 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 _allProfiles.value = allIdentities
 
-                repository.updateBeacons(others) // Announce our friends to the mesh
+                val myPub = prefs.getString(Constants.PREF_DH_PUBLIC_KEY, null)
+                repository.updateBeacons(others, myPub) // Announce our friends to the mesh + our public key fallback
                 repository.refreshBeacons() // Update topology and beacon data
                 
                 var configChanged = false
@@ -394,6 +433,69 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun clearUiEvent() { _uiEvents.value = null }
 
+    private fun initializeCryptoKeys() {
+        val storedPriv = prefs.getString(Constants.PREF_DH_PRIVATE_KEY, null)
+        val storedPub = prefs.getString(Constants.PREF_DH_PUBLIC_KEY, null)
+
+        if (storedPriv == null || storedPub == null) {
+            val keyPair = CryptoUtils.generateKeyPair()
+            val privStr = CryptoUtils.privateKeyToString(keyPair.private)
+            val pubStr = CryptoUtils.publicKeyToString(keyPair.public)
+            
+            prefs.edit()
+                .putString(Constants.PREF_DH_PRIVATE_KEY, privStr)
+                .putString(Constants.PREF_DH_PUBLIC_KEY, pubStr)
+                .apply()
+            
+            _privateKey.value = keyPair.private
+            
+            // Auto-update profile with public key
+            val currentProfile = _userProfile.value
+            if (currentProfile.publicKey != pubStr) {
+                updateMyProfile(currentProfile.copy(publicKey = pubStr))
+            }
+        } else {
+            try {
+                _privateKey.value = CryptoUtils.stringToPrivateKey(storedPriv)
+                
+                // Ensure profile has public key
+                val currentProfile = _userProfile.value
+                if (currentProfile.publicKey != storedPub) {
+                    updateMyProfile(currentProfile.copy(publicKey = storedPub))
+                }
+            } catch (e: Exception) {
+                Log.e("LinkThingVM", "Error loading DH keys", e)
+            }
+        }
+    }
+
+    fun sendMail(recipientId: String, content: String) {
+        val myPriv = _privateKey.value ?: return
+        val recipientProfile = _friendProfiles.value[recipientId]
+        val recipientPubStr = recipientProfile?.publicKey
+        
+        if (recipientPubStr == null) {
+            viewModelScope.launch(Dispatchers.Main) {
+                android.widget.Toast.makeText(getApplication(), getApplication<Application>().getString(com.fmorea.syncthing.R.string.error_missing_public_key), android.widget.Toast.LENGTH_LONG).show()
+            }
+            // Auto-request the key when it's missing
+            repository.requestPublicKey(recipientId)
+            return
+        }
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val recipientPub = CryptoUtils.stringToPublicKey(recipientPubStr)
+                val sharedSecret = CryptoUtils.getSharedSecret(myPriv, recipientPub)
+                val encryptedContent = CryptoUtils.encrypt(content, sharedSecret)
+                
+                repository.sendMail(recipientId, encryptedContent)
+            } catch (e: Exception) {
+                Log.e("LinkThingVM", "Error sending mail", e)
+            }
+        }
+    }
+
     private var lastApiInstance: RestApi? = null
 
     fun updateSyncStatus(state: SyncthingService.State, completion: Int, api: RestApi?) {
@@ -456,6 +558,10 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
             if (folder.rescanIntervalS != 60) { folder.rescanIntervalS = 60; changed = true }
             if (changed) configRouter.updateFolder(api, folder)
         }
+    }
+
+    fun requestPublicKey(peerId: String) {
+        repository.requestPublicKey(peerId)
     }
 
     fun sendMessage(content: String, replyTo: LinkThingMessage? = null) { 

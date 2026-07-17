@@ -86,6 +86,14 @@ class LinkThingRepository(
                     triggerRefresh()
                     return
                 }
+                if (path.endsWith(".mail")) {
+                    triggerRefresh()
+                    return
+                }
+                if (path.endsWith(".request")) {
+                    handleKeyRequest(path)
+                    return
+                }
                 if (path.endsWith(".INFO") || isImagePath(path)) {
                     _profilesVersion.value++
                 }
@@ -154,9 +162,13 @@ class LinkThingRepository(
             val validFiles = allFiles.filter { file ->
                 val name = file.name
                 val isBanned = banned.any { name.contains(it) }
+                if (name.endsWith(".request")) {
+                    handleKeyRequest(name)
+                }
                 !isBanned && file.isFile && !name.startsWith(".") && !name.contains(".syncthing.") && 
-                (name.endsWith(".msg") || name.endsWith(".chess") || name.contains("_")) &&
-                !name.endsWith(".ack") && !name.endsWith(".INFO") && !name.endsWith(".net") && !name.endsWith(".ban")
+                (name.endsWith(".msg") || name.endsWith(".chess") || name.endsWith(".mail") || name.contains("_")) &&
+                !name.endsWith(".ack") && !name.endsWith(".INFO") && !name.endsWith(".net") && !name.endsWith(".ban") &&
+                !name.endsWith(".request")
             }
             
             if (validFiles.isEmpty()) {
@@ -243,6 +255,50 @@ class LinkThingRepository(
         }
     }
 
+    fun sendMail(recipientId: String, encryptedContent: String) {
+        scope.launch {
+            val id = getLocalDeviceId()
+            if (id.isBlank()) return@launch
+            val timestamp = getUniqueTimestamp()
+            val fileName = "${timestamp}_${id}_$recipientId.mail"
+            val file = File(rootDir, fileName)
+            try {
+                file.writeText(encryptedContent, Charsets.UTF_8)
+                triggerRefresh()
+            } catch (e: Exception) { Log.e(TAG, "Fail send mail", e) }
+        }
+    }
+
+    fun requestPublicKey(peerId: String) {
+        scope.launch {
+            val myId = getLocalDeviceId()
+            if (myId.isBlank()) return@launch
+            val timestamp = getUniqueTimestamp()
+            val fileName = "${timestamp}_${myId}_${peerId}.request"
+            val file = File(rootDir, fileName)
+            try {
+                file.writeText("REQUEST_PUBLIC_KEY", Charsets.UTF_8)
+            } catch (e: Exception) { Log.e(TAG, "Fail request key", e) }
+        }
+    }
+
+    private fun handleKeyRequest(path: String) {
+        val parts = path.split("_")
+        if (parts.size < 3) return
+        val recipientId = parts[2].substringBefore(".")
+        val myId = getLocalDeviceId()
+        
+        if (recipientId == myId) {
+            // It's for me! I should re-announce my profile to provide my public key
+            scope.launch {
+                val profile = UserProfile.load(myId, myId, rootDir)
+                UserProfile.save(profile, myId, rootDir)
+                // Delete the request file to avoid loops and cleanup
+                File(rootDir, path).delete()
+            }
+        }
+    }
+
     fun sendAttachment(uri: android.net.Uri) {
         scope.launch {
             val id = getLocalDeviceId()
@@ -314,7 +370,9 @@ class LinkThingRepository(
                         edges.add(Triple(nodeA, nodeB, netName))
                         
                         try {
-                            val content = file.readText().trim()
+                            val rawContent = file.readText().trim()
+                            val content = if (rawContent.contains(":")) rawContent.substringBefore(":") else rawContent
+                            
                             if (content.length > 10 && !banned.contains(content)) {
                                 topology[nodeB] = content
                                 edges.add(Triple(content, nodeB, "topology"))
@@ -332,18 +390,18 @@ class LinkThingRepository(
         }
     }
 
-    fun updateBeacons(friends: List<com.fmorea.syncthing.model.Device>) {
+    fun updateBeacons(friends: List<com.fmorea.syncthing.model.Device>, myPublicKey: String? = null) {
         scope.launch {
             val myId = getLocalDeviceId()
             if (myId.isBlank()) return@launch
             friends.forEach { friend ->
                 val file = File(rootDir, "${myId}_${friend.deviceID}.net")
-                if (!file.exists()) {
-                    try { 
-                        // Write the introducer ID if known, otherwise our own
-                        file.writeText(friend.introducedBy.ifBlank { myId })
-                    } catch (e: Exception) {}
-                }
+                // Always update or create if we have a public key to propagate
+                try { 
+                    val introducer = friend.introducedBy.ifBlank { myId }
+                    val content = if (myPublicKey != null) "$introducer:$myPublicKey" else introducer
+                    file.writeText(content)
+                } catch (e: Exception) {}
             }
         }
     }

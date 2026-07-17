@@ -1661,7 +1661,7 @@ private fun handleFileClick(
         onPathChange(file)
     } else {
         val ext = file.extension.lowercase()
-        val textExtensions = listOf("msg", "ack", "net", "chess", "txt", "log", "md", "json", "xml", "html")
+        val textExtensions = listOf("msg", "ack", "net", "chess", "mail", "txt", "log", "md", "json", "xml", "html")
         
         if (ext in textExtensions) {
             onEditFile(file)

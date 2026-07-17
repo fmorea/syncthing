@@ -372,4 +372,8 @@
   <string name="label_viewed_by">Visualizzato da:</string>
   <string name="label_nobody_yet">Nessuno ancora</string>
   <string name="label_viewed_on">Visualizzato il %1$s</string>
+  <string name="error_missing_public_key">L\'amico non ha una chiave pubblica. La sto richiedendo...</string>
+  <string name="error_decryption_failed">[Errore decrittazione]</string>
+  <string name="label_private_message">[Messaggio privato]</string>
+  <string name="label_missing_public_key">[Chiave pubblica mancante]</string>
 </resources>

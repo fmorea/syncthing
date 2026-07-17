@@ -2,6 +2,7 @@ package com.fmorea.syncthing.syncthing
 
 import com.google.gson.Gson
 import java.io.File
+import android.util.Log
 
 data class UserProfile(
     val deviceId: String,
@@ -12,7 +13,8 @@ data class UserProfile(
     val address: String = "",
     val gender: String = "",
     val height: String = "",
-    val photoPath: String? = null
+    val photoPath: String? = null,
+    val publicKey: String? = null
 ) {
     fun getDisplayName(): String {
         return if (firstName.isNotBlank() || lastName.isNotBlank()) {
@@ -35,24 +37,53 @@ data class UserProfile(
         fun load(targetDeviceId: String, myDeviceId: String, rootDir: File): UserProfile {
             // 1. My disclosure about them
             val myInfo = File(rootDir, "${targetDeviceId}_${myDeviceId}.INFO")
-            if (myInfo.exists()) return loadFromFile(myInfo, targetDeviceId, myDeviceId)
+            val p1 = if (myInfo.exists()) loadFromFile(myInfo, targetDeviceId, myDeviceId) else null
+            if (p1?.publicKey != null) return p1
 
             // 2. Their disclosure about themselves
             val selfInfo = File(rootDir, "${targetDeviceId}_${targetDeviceId}.INFO")
-            if (selfInfo.exists()) return loadFromFile(selfInfo, targetDeviceId, targetDeviceId)
+            val p2 = if (selfInfo.exists()) loadFromFile(selfInfo, targetDeviceId, targetDeviceId) else null
+            if (p2?.publicKey != null) return p2
 
             // 3. Fallback to old format or first found
             val oldInfo = File(rootDir, "${targetDeviceId}.INFO")
-            if (oldInfo.exists()) return loadFromFile(oldInfo, targetDeviceId, "")
+            val p3 = if (oldInfo.exists()) loadFromFile(oldInfo, targetDeviceId, "") else null
+            if (p3?.publicKey != null) return p3
 
             val match = rootDir.listFiles { _, name -> name.startsWith("${targetDeviceId}_") && name.endsWith(".INFO") }
                 ?.firstOrNull()
-            if (match != null) {
+            val pMatch = if (match != null) {
                 val discloser = match.name.removeSuffix(".INFO").substringAfterLast("_")
-                return loadFromFile(match, targetDeviceId, discloser)
+                loadFromFile(match, targetDeviceId, discloser)
+            } else null
+            
+            val bestProfile = p1 ?: p2 ?: p3 ?: pMatch ?: UserProfile(targetDeviceId)
+            
+            // IF PUBLIC KEY IS STILL MISSING, SEARCH IN .NET FILES AS FALLBACK
+            if (bestProfile.publicKey == null) {
+                val netKey = findPublicKeyInNetFiles(targetDeviceId, rootDir)
+                if (netKey != null) return bestProfile.copy(publicKey = netKey)
             }
 
-            return UserProfile(targetDeviceId)
+            return bestProfile
+        }
+
+        private fun findPublicKeyInNetFiles(targetDeviceId: String, rootDir: File): String? {
+            // Search all .net files involving this device
+            val netFiles = rootDir.listFiles { _, name -> 
+                name.endsWith(".net") && (name.startsWith("${targetDeviceId}_") || name.contains("_$targetDeviceId.net"))
+            } ?: return null
+            
+            netFiles.forEach { file ->
+                try {
+                    val content = file.readText().trim()
+                    if (content.contains(":")) {
+                        val key = content.substringAfter(":")
+                        if (key.isNotBlank()) return key
+                    }
+                } catch (e: Exception) {}
+            }
+            return null
         }
 
         fun loadAll(targetDeviceId: String, rootDir: File): List<UserProfile> {
@@ -138,6 +169,46 @@ data class UserProfile(
             }?.firstOrNull()
             
             return match
+        }
+
+        /**
+         * Migrates legacy profiles (targetDeviceId.INFO) to the new format (targetDeviceId_discloserId.INFO).
+         * Since we don't know the discloser for old files, we assume discloserId = targetDeviceId (Self-disclosure).
+         */
+        fun migrateLegacyProfiles(rootDir: File) {
+            val legacyFiles = rootDir.listFiles { _, name -> 
+                name.endsWith(".INFO") && !name.contains("_")
+            } ?: return
+
+            val extensions = listOf("jpg", "jpeg", "png", "webp")
+
+            legacyFiles.forEach { file ->
+                try {
+                    val deviceId = file.name.removeSuffix(".INFO")
+                    val profile = loadFromFile(file, deviceId, deviceId)
+                    
+                    // Save to new format
+                    save(profile, deviceId, rootDir)
+                    
+                    // Migrate photo if exists
+                    for (ext in extensions) {
+                        val oldPhoto = File(rootDir, "$deviceId.$ext")
+                        if (oldPhoto.exists()) {
+                            val newPhoto = File(rootDir, "${deviceId}_${deviceId}.$ext")
+                            if (!newPhoto.exists()) {
+                                oldPhoto.copyTo(newPhoto)
+                            }
+                            oldPhoto.delete()
+                        }
+                    }
+                    
+                    // Delete legacy info file
+                    file.delete()
+                    Log.d("UserProfile", "Migrated legacy profile for $deviceId")
+                } catch (e: Exception) {
+                    Log.e("UserProfile", "Failed to migrate ${file.name}", e)
+                }
+            }
         }
     }
 }

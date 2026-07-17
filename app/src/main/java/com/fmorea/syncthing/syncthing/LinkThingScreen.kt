@@ -38,6 +38,7 @@ import android.content.Intent
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -56,10 +57,24 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.os.Build
+import androidx.core.os.ConfigurationCompat
+import androidx.compose.ui.platform.LocalConfiguration
 
 enum class LinkThingTab {
     CHAT, FILE_DRIVE, NETWORK, NETWORK_GRAPH, APPLICATIONS, CALENDAR
 }
+
+enum class LinkThingChatMode {
+    HUB, BROADCAST, PRIVATE
+}
+
+data class PrivateChatSummary(
+    val deviceId: String,
+    val displayName: String,
+    val lastMsg: LinkThingMessage,
+    val profile: UserProfile?
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -98,10 +113,42 @@ fun LinkThingScreen(
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
     var isSearching by remember { mutableStateOf(false) }
     var currentTab by remember { mutableStateOf(LinkThingTab.CHAT) }
+    var chatMode by remember { mutableStateOf(LinkThingChatMode.HUB) }
     var vaultTargetFile by remember { mutableStateOf<File?>(null) }
     var vaultTargetCategory by remember { mutableStateOf<String?>(null) }
     var resetVaultTrigger by remember { mutableStateOf(0) }
     var chatTargetMessageId by remember { mutableStateOf<String?>(null) }
+    var selectedRecipientId by remember { mutableStateOf<String?>(null) }
+    
+    val privateConversations = remember(messages, friends, friendProfiles) {
+        messages.filter { it.isMail }
+            .groupBy { if (it.isLocal) it.recipientId else it.deviceId }
+            .mapNotNull { (id, msgs) ->
+                if (id == null) return@mapNotNull null
+                val lastMsg = msgs.firstOrNull() ?: return@mapNotNull null
+                PrivateChatSummary(
+                    deviceId = id,
+                    displayName = friendProfiles[id]?.getDisplayName() ?: id.take(8),
+                    lastMsg = lastMsg,
+                    profile = friendProfiles[id]
+                )
+            }.sortedByDescending { it.lastMsg.timestamp }
+    }
+
+    val broadcastLastMsg = remember(messages) {
+        messages.filter { !it.isMail }.firstOrNull()
+    }
+
+    val filteredMessages = remember(messages, chatMode, selectedRecipientId) {
+        when (chatMode) {
+            LinkThingChatMode.BROADCAST -> messages.filter { !it.isMail }
+            LinkThingChatMode.PRIVATE -> {
+                if (selectedRecipientId == null) emptyList()
+                else messages.filter { it.isMail && (it.deviceId == selectedRecipientId || it.recipientId == selectedRecipientId) }
+            }
+            LinkThingChatMode.HUB -> emptyList()
+        }
+    }
 
     val listState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
@@ -176,6 +223,9 @@ fun LinkThingScreen(
     BackHandler(enabled = true) {
         if (selectedIds.isNotEmpty()) {
             selectedIds = emptySet()
+        } else if (chatMode != LinkThingChatMode.HUB) {
+            chatMode = LinkThingChatMode.HUB
+            selectedRecipientId = null
         } else if (showMenu) {
             showMenu = false
         } else if (currentTab == LinkThingTab.NETWORK_GRAPH) {
@@ -228,6 +278,16 @@ fun LinkThingScreen(
     LaunchedEffect(scannedDeviceId) {
         if (scannedDeviceId.isNotBlank()) {
             showAddFriendDialog = true
+        }
+    }
+
+    // Auto-request public key for private chat if missing
+    LaunchedEffect(chatMode, selectedRecipientId, friendProfiles) {
+        if (chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId != null) {
+            val profile = friendProfiles[selectedRecipientId]
+            if (profile != null && profile.publicKey == null) {
+                viewModel.requestPublicKey(selectedRecipientId!!)
+            }
         }
     }
 
@@ -319,7 +379,11 @@ fun LinkThingScreen(
                         Text("Nessuno ancora", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                     } else {
                         val ackList = showMessageInfo!!.acknowledgments.toList().sortedBy { it.second }
-                        val infoDateFormat = remember { SimpleDateFormat("HH:mm, dd/MM", Locale.getDefault()) }
+                        val configuration = LocalConfiguration.current
+                        val infoDateFormat = remember(configuration) { 
+                            val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                            SimpleDateFormat("HH:mm, dd/MM", locale) 
+                        }
                         ackList.forEach { (readerId, ackTime) ->
                             val readerName = deviceNames[readerId] ?: readerId.take(8)
                             val timeStr = infoDateFormat.format(Date(ackTime))
@@ -435,14 +499,15 @@ fun LinkThingScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            val alias = localDevice?.name ?: "Io"
+                            val alias = when {
+                                chatMode == LinkThingChatMode.HUB -> "EtherMesh"
+                                chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId != null -> deviceNames[selectedRecipientId] ?: selectedRecipientId!!.take(8)
+                                chatMode == LinkThingChatMode.PRIVATE -> "Inizia Chat"
+                                else -> localDevice?.name ?: "Broadcast EtherMesh"
+                            }
+                            
                             val title = when (currentTab) {
-                                LinkThingTab.CHAT -> {
-                                    val id = localDevice?.deviceID ?: ""
-                                    val shortId = id.take(6)
-                                    val endId = id.takeLast(6)
-                                    "$alias ($shortId..$endId)"
-                                }
+                                LinkThingTab.CHAT -> alias
                                 LinkThingTab.NETWORK -> "Network"
                                 LinkThingTab.NETWORK_GRAPH -> "Network Graph"
                                 LinkThingTab.APPLICATIONS -> "Applicazioni"
@@ -451,8 +516,20 @@ fun LinkThingScreen(
                             
                             Text(text = title, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                LiveConnectionBadge(friends = friends, onClick = { showConnectedDialog = true })
-                                Spacer(modifier = Modifier.width(8.dp))
+                                if (chatMode == LinkThingChatMode.BROADCAST) {
+                                    LiveConnectionBadge(friends = friends, onClick = { showConnectedDialog = true })
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                } else if (selectedRecipientId != null) {
+                                    val isOnline = friends.find { it.deviceID == selectedRecipientId }?.numConnections ?: 0 > 0
+                                    Surface(
+                                        modifier = Modifier.size(8.dp),
+                                        shape = CircleShape,
+                                        color = if (isOnline) Color(0xFF4CAF50) else Color.Gray
+                                    ) {}
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(if (isOnline) "Online" else "Offline", style = MaterialTheme.typography.bodySmall)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
                                 Text(
                                     syncStatus,
                                     style = MaterialTheme.typography.bodySmall,
@@ -462,6 +539,16 @@ fun LinkThingScreen(
                                         else -> MaterialTheme.colorScheme.secondary
                                     }
                                 )
+                            }
+                        }
+                    },
+                    navigationIcon = {
+                        if (chatMode != LinkThingChatMode.HUB) {
+                            IconButton(onClick = { 
+                                chatMode = LinkThingChatMode.HUB
+                                selectedRecipientId = null
+                            }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
                             }
                         }
                     },
@@ -521,6 +608,20 @@ fun LinkThingScreen(
                 )
             }
         },
+        floatingActionButton = {
+            if (currentTab == LinkThingTab.CHAT && chatMode == LinkThingChatMode.HUB) {
+                FloatingActionButton(
+                    onClick = { 
+                        chatMode = LinkThingChatMode.PRIVATE
+                        selectedRecipientId = null
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(Icons.Default.Chat, contentDescription = "Nuova Chat Privata")
+                }
+            }
+        },
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
                 Column(modifier = Modifier.navigationBarsPadding()) {
@@ -540,91 +641,121 @@ fun LinkThingScreen(
                                 }
                             }
                         }
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (isRecording) {
-                                Icon(Icons.Default.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 12.dp))
-                                Text("Registrazione in corso...", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-                                IconButton(onClick = {
-                                    isRecording = false
-                                    recorder?.apply { try { stop() } catch(e: Exception) {}; release() }
-                                    recorder = null
-                                    audioFile?.delete()
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Annulla", tint = MaterialTheme.colorScheme.error)
+                        if (selectedRecipientId != null) {
+                            val recipientName = deviceNames[selectedRecipientId] ?: selectedRecipientId!!.take(8)
+                            Surface(color = MaterialTheme.colorScheme.tertiaryContainer, modifier = Modifier.fillMaxWidth()) {
+                                Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Messaggio privato per: ", style = MaterialTheme.typography.labelSmall)
+                                    Text(recipientName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    IconButton(onClick = { selectedRecipientId = null }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Annulla")
+                                    }
                                 }
-                                IconButton(onClick = {
-                                    isRecording = false
-                                    recorder?.apply { try { stop(); release() } catch (e: Exception) {} }
-                                    recorder = null
-                                    audioFile?.let { viewModel.sendAudio(it) }
-                                }) {
-                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia Audio", tint = MaterialTheme.colorScheme.primary)
-                                }
-                            } else {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    FormattingToolbar(textValue = inputText, onValueChange = { inputText = it }, modifier = Modifier.fillMaxWidth())
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        IconButton(onClick = { filePickerLauncher.launch("*/*") }) {
-                                            Icon(Icons.Default.AttachFile, contentDescription = "Allega", tint = MaterialTheme.colorScheme.primary)
-                                        }
-                                        TextField(
-                                            value = inputText,
-                                            onValueChange = { inputText = it },
-                                            modifier = Modifier.weight(1f),
-                                            placeholder = { Text("Messaggio...") },
-                                            maxLines = 4,
-                                            shape = RoundedCornerShape(24.dp),
-                                            colors = TextFieldDefaults.colors(
-                                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                focusedIndicatorColor = Color.Transparent,
-                                                unfocusedIndicatorColor = Color.Transparent,
-                                                disabledIndicatorColor = Color.Transparent,
-                                                errorIndicatorColor = Color.Transparent
-                                            )
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        if (inputText.text.isNotBlank()) {
-                                            IconButton(
-                                                onClick = {
-                                                    viewModel.sendMessage(inputText.text, replyingTo)
-                                                    inputText = TextFieldValue("")
-                                                    replyingTo = null
-                                                    focusManager.clearFocus()
-                                                },
-                                                modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
-                                            ) {
-                                                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia", tint = MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
+                        val showChatInput = chatMode != LinkThingChatMode.HUB && (chatMode != LinkThingChatMode.PRIVATE || selectedRecipientId != null)
+                        if (showChatInput) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (isRecording) {
+                                    Icon(Icons.Default.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 12.dp))
+                                    Text("Registrazione in corso...", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                                    IconButton(onClick = {
+                                        isRecording = false
+                                        recorder?.apply { try { stop() } catch(e: Exception) {}; release() }
+                                        recorder = null
+                                        audioFile?.delete()
+                                    }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Annulla", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                    IconButton(onClick = {
+                                        isRecording = false
+                                        recorder?.apply { try { stop(); release() } catch (e: Exception) {} }
+                                        recorder = null
+                                        audioFile?.let { viewModel.sendAudio(it) }
+                                    }) {
+                                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Invia Audio", tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                } else {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        FormattingToolbar(textValue = inputText, onValueChange = { inputText = it }, modifier = Modifier.fillMaxWidth())
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            IconButton(onClick = { filePickerLauncher.launch("*/*") }) {
+                                                Icon(Icons.Default.AttachFile, contentDescription = "Allega", tint = MaterialTheme.colorScheme.primary)
                                             }
-                                        } else {
-                                            IconButton(
-                                                onClick = {
-                                                    if (recordPermissionState.status.isGranted) {
-                                                        try {
-                                                            val file = File(context.cacheDir, "rec_${System.currentTimeMillis()}.m4a")
-                                                            audioFile = file
-                                                            val newRecorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) MediaRecorder(context) else @Suppress("DEPRECATION") MediaRecorder()
-                                                            newRecorder.apply {
-                                                                setAudioSource(MediaRecorder.AudioSource.MIC)
-                                                                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                                                                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                                                                setAudioSamplingRate(44100)
-                                                                setAudioEncodingBitRate(128000)
-                                                                setOutputFile(file.absolutePath)
-                                                                prepare()
-                                                                start()
-                                                            }
-                                                            recorder = newRecorder
-                                                            isRecording = true
-                                                        } catch (e: Exception) { isRecording = false; audioFile = null }
-                                                    } else { recordPermissionState.launchPermissionRequest() }
-                                                },
-                                                modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
-                                            ) {
-                                                Icon(Icons.Default.Mic, contentDescription = "Registra", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            TextField(
+                                                value = inputText,
+                                                onValueChange = { inputText = it },
+                                                modifier = Modifier.weight(1f),
+                                                placeholder = { Text("Messaggio...") },
+                                                maxLines = 4,
+                                                shape = RoundedCornerShape(24.dp),
+                                                colors = TextFieldDefaults.colors(
+                                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                    focusedIndicatorColor = Color.Transparent,
+                                                    unfocusedIndicatorColor = Color.Transparent,
+                                                    disabledIndicatorColor = Color.Transparent,
+                                                    errorIndicatorColor = Color.Transparent
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            if (inputText.text.isNotBlank()) {
+                                                IconButton(
+                                                    onClick = {
+                                                        if (selectedRecipientId != null) {
+                                                            viewModel.sendMail(selectedRecipientId!!, inputText.text)
+                                                        } else {
+                                                            viewModel.sendMessage(inputText.text, replyingTo)
+                                                        }
+                                                        inputText = TextFieldValue("")
+                                                        replyingTo = null
+                                                        selectedRecipientId = null
+                                                        focusManager.clearFocus()
+                                                    },
+                                                    modifier = Modifier.background(
+                                                        if (selectedRecipientId != null) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary, 
+                                                        CircleShape
+                                                    )
+                                                ) {
+                                                    Icon(
+                                                        if (selectedRecipientId != null) Icons.Default.Lock else Icons.AutoMirrored.Filled.Send, 
+                                                        contentDescription = "Invia", 
+                                                        tint = if (selectedRecipientId != null) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary
+                                                    )
+                                                }
+                                            } else {
+                                                IconButton(
+                                                    onClick = {
+                                                        if (recordPermissionState.status.isGranted) {
+                                                            try {
+                                                                val file = File(context.cacheDir, "rec_${System.currentTimeMillis()}.m4a")
+                                                                audioFile = file
+                                                                val newRecorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) MediaRecorder(context) else @Suppress("DEPRECATION") MediaRecorder()
+                                                                newRecorder.apply {
+                                                                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                                                                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                                                                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                                                                    setAudioSamplingRate(44100)
+                                                                    setAudioEncodingBitRate(128000)
+                                                                    setOutputFile(file.absolutePath)
+                                                                    prepare()
+                                                                    start()
+                                                                }
+                                                                recorder = newRecorder
+                                                                isRecording = true
+                                                            } catch (e: Exception) { isRecording = false; audioFile = null }
+                                                        } else { recordPermissionState.launchPermissionRequest() }
+                                                    },
+                                                    modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                                                ) {
+                                                    Icon(Icons.Default.Mic, contentDescription = "Registra", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                                }
                                             }
                                         }
                                     }
@@ -714,82 +845,168 @@ fun LinkThingScreen(
             ) { targetTab ->
                 when (targetTab) {
                     LinkThingTab.CHAT -> {
-                        if (messages.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.ChatBubbleOutline, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text("Nessun messaggio", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.outline)
-                                    Text("Inizia una conversazione con i tuoi amici", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f))
+                        when {
+                            chatMode == LinkThingChatMode.HUB -> {
+                                ChatHub(
+                                    broadcastLastMsg = broadcastLastMsg,
+                                    privateConversations = privateConversations,
+                                    onOpenBroadcast = { chatMode = LinkThingChatMode.BROADCAST },
+                                    onOpenPrivate = { 
+                                        chatMode = LinkThingChatMode.PRIVATE
+                                        selectedRecipientId = it 
+                                    }
+                                )
+                            }
+                            chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId == null -> {
+                                // Private Chat List (Selection)
+                                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                    item {
+                                        SectionHeader(text = "Seleziona un amico")
+                                    }
+                                    items(friends) { friend ->
+                                        val profile = friendProfiles[friend.deviceID]
+                                        ListItem(
+                                            headlineContent = { Text(profile?.getDisplayName() ?: friend.getDisplayName()) },
+                                            supportingContent = { Text(friend.deviceID.take(16) + "...") },
+                                            leadingContent = { Avatar(deviceId = friend.deviceID, profile = profile) },
+                                            modifier = Modifier.clickable { selectedRecipientId = friend.deviceID },
+                                            trailingContent = {
+                                                if (profile?.publicKey == null) {
+                                                    Icon(Icons.Default.LockOpen, contentDescription = "Chiave mancante", tint = MaterialTheme.colorScheme.error)
+                                                } else {
+                                                    Icon(Icons.Default.Lock, contentDescription = "Cifrato", tint = MaterialTheme.colorScheme.primary)
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
                             }
-                        }
-                        LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(items = messages, key = { it.uniqueId }) { message ->
-                                Column(modifier = Modifier.fillMaxWidth().animateItem()) {
-                                    if (message.dateHeader != null) { key(message.dateHeader) { DateDivider(message.dateHeader!!) } }
-                                    var showMessageMenu by remember { mutableStateOf(false) }
-                                    val isSelected = selectedIds.contains(message.uniqueId)
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent).padding(vertical = 2.dp, horizontal = 4.dp),
-                                        horizontalArrangement = if (message.isLocal) Arrangement.End else Arrangement.Start,
-                                        verticalAlignment = Alignment.Bottom
-                                    ) {
-                                        if (!message.isLocal) {
-                                            Avatar(deviceId = message.deviceId, profile = friendProfiles[message.deviceId], onClick = { if (isSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { editingProfileByDeviceId = message.deviceId } })
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                        }
-                                        Box(modifier = Modifier.weight(1f, fill = false).pointerInput(isSelectionMode, isSelected) {
-                                            detectTapGestures(onTap = { if (isSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { replyingTo = message } }, onLongPress = { if (!isSelectionMode) { showMessageMenu = true } else { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } })
-                                        }) {
-                                            val senderProfile = if (message.isLocal) userProfile else friendProfiles[message.deviceId]
-                                            MessageBubble(
-                                                message = message, 
-                                                deviceNames = deviceNames, 
-                                                profile = senderProfile, 
-                                                allMessages = messages,
-                                                onOpenCalendar = { currentTab = LinkThingTab.CALENDAR }
+                            else -> {
+                            // Main Chat (Broadcast or specific Private)
+                            val messagesToDisplay = filteredMessages
+                            if (messagesToDisplay.isEmpty()) {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(Icons.Default.ChatBubbleOutline, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            if (chatMode == LinkThingChatMode.PRIVATE) "Nessun messaggio privato" else "Nessun messaggio", 
+                                            style = MaterialTheme.typography.bodyLarge, 
+                                            color = MaterialTheme.colorScheme.outline
+                                        )
+                                        if (chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId != null && friendProfiles[selectedRecipientId]?.publicKey == null) {
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                "Scambio chiavi di cifratura in corso...", 
+                                                style = MaterialTheme.typography.bodySmall, 
+                                                color = MaterialTheme.colorScheme.primary,
+                                                textAlign = TextAlign.Center
                                             )
-                                            DropdownMenu(expanded = showMessageMenu, onDismissRequest = { showMessageMenu = false }) {
-                                                DropdownMenuItem(
-                                                    text = { Text("Seleziona") },
-                                                    onClick = { 
-                                                        showMessageMenu = false
-                                                        selectedIds = selectedIds + message.uniqueId 
-                                                    },
-                                                    leadingIcon = { Icon(Icons.Default.CheckCircle, null) }
+                                            Text(
+                                                "Il messaggio verrà inviato non appena il destinatario sarà online per confermare l'identità.", 
+                                                style = MaterialTheme.typography.labelSmall, 
+                                                color = MaterialTheme.colorScheme.outline,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(horizontal = 32.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                items(items = messagesToDisplay, key = { it.uniqueId }) { message ->
+                                    Column(modifier = Modifier.fillMaxWidth().animateItem()) {
+                                        if (message.dateHeader != null) { key(message.dateHeader) { DateDivider(message.dateHeader!!) } }
+                                        var showMessageMenu by remember { mutableStateOf(false) }
+                                        val localIsSelectionMode = selectedIds.isNotEmpty()
+                                        val isSelected = selectedIds.contains(message.uniqueId)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent).padding(vertical = 2.dp, horizontal = 4.dp),
+                                            horizontalArrangement = if (message.isLocal) Arrangement.End else Arrangement.Start,
+                                            verticalAlignment = Alignment.Bottom
+                                        ) {
+                                            if (!message.isLocal) {
+                                                Avatar(deviceId = message.deviceId, profile = friendProfiles[message.deviceId], onClick = { if (localIsSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { 
+                                                    chatMode = LinkThingChatMode.PRIVATE
+                                                    selectedRecipientId = message.deviceId 
+                                                } })
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                            }
+                                            Box(modifier = Modifier.weight(1f, fill = false).pointerInput(localIsSelectionMode, isSelected) {
+                                                detectTapGestures(onTap = { if (localIsSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { replyingTo = message } }, onLongPress = { if (!localIsSelectionMode) { showMessageMenu = true } else { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } })
+                                            }) {
+                                                val senderProfile = if (message.isLocal) userProfile else friendProfiles[message.deviceId]
+                                                MessageBubble(
+                                                    message = message, 
+                                                    deviceNames = deviceNames, 
+                                                    profile = senderProfile, 
+                                                    allMessages = messages,
+                                                    onOpenCalendar = { currentTab = LinkThingTab.CALENDAR }
                                                 )
-                                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                                                if (message.file != null) {
-                                                    DropdownMenuItem(text = { Text("Vedi nel Drive") }, onClick = { showMessageMenu = false; vaultTargetFile = message.file; currentTab = LinkThingTab.FILE_DRIVE }, leadingIcon = { Icon(Icons.Default.Folder, null) })
-                                                }
-                                                if (message.isAttachment && message.file != null) {
-                                                    val ext = message.file.extension.lowercase()
-                                                    if (ext == "chess") {
-                                                        DropdownMenuItem(text = { Text("Apri scacchi") }, onClick = { showMessageMenu = false; val intent = Intent(context, com.fmorea.syncthing.chess.ChessActivity::class.java).apply { action = Intent.ACTION_VIEW; val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", message.file); data = uri; addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }; context.startActivity(intent) }, leadingIcon = { Icon(Icons.Default.Extension, null) })
-                                                    } else {
-                                                        DropdownMenuItem(text = { Text("Apri file") }, onClick = { showMessageMenu = false; FileUtils.openFile(context, message.file.absolutePath) }, leadingIcon = { Icon(Icons.Default.FileOpen, null) })
+                                                DropdownMenu(expanded = showMessageMenu, onDismissRequest = { showMessageMenu = false }) {
+                                                    DropdownMenuItem(
+                                                        text = { Text("Seleziona") },
+                                                        onClick = { 
+                                                            showMessageMenu = false
+                                                            selectedIds = selectedIds + message.uniqueId 
+                                                        },
+                                                        leadingIcon = { Icon(Icons.Default.CheckCircle, null) }
+                                                    )
+                                                    DropdownMenuItem(
+                                                        text = { Text("Vedi Profilo") },
+                                                        onClick = { 
+                                                            showMessageMenu = false
+                                                            editingProfileByDeviceId = message.deviceId 
+                                                        },
+                                                        leadingIcon = { Icon(Icons.Default.AccountCircle, null) }
+                                                    )
+                                                    if (!message.isLocal && !message.isMail) {
+                                                        DropdownMenuItem(
+                                                            text = { Text("Risposta Privata") },
+                                                            onClick = { 
+                                                                showMessageMenu = false
+                                                                chatMode = LinkThingChatMode.PRIVATE
+                                                                selectedRecipientId = message.deviceId 
+                                                            },
+                                                            leadingIcon = { Icon(Icons.Default.Lock, null) }
+                                                        )
                                                     }
+                                                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                                    if (message.file != null) {
+                                                        DropdownMenuItem(text = { Text("Vedi nel Drive") }, onClick = { showMessageMenu = false; vaultTargetFile = message.file; currentTab = LinkThingTab.FILE_DRIVE }, leadingIcon = { Icon(Icons.Default.Folder, null) })
+                                                    }
+                                                    if (message.isAttachment && message.file != null) {
+                                                        val ext = message.file.extension.lowercase()
+                                                        if (ext == "chess") {
+                                                            DropdownMenuItem(text = { Text("Apri scacchi") }, onClick = { showMessageMenu = false; val intent = Intent(context, com.fmorea.syncthing.chess.ChessActivity::class.java).apply { action = Intent.ACTION_VIEW; val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", message.file); data = uri; addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }; context.startActivity(intent) }, leadingIcon = { Icon(Icons.Default.Extension, null) })
+                                                        } else {
+                                                            DropdownMenuItem(text = { Text("Apri file") }, onClick = { showMessageMenu = false; FileUtils.openFile(context, message.file.absolutePath) }, leadingIcon = { Icon(Icons.Default.FileOpen, null) })
+                                                        }
+                                                    }
+                                                    DropdownMenuItem(text = { Text("Copia Testo") }, onClick = { showMessageMenu = false; clipboardManager.setText(AnnotatedString(message.content)); android.widget.Toast.makeText(context, "Copiato", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) })
+                                                    DropdownMenuItem(text = { Text("Condividi Esternamente") }, onClick = { showMessageMenu = false; val sendIntent = Intent().apply { action = Intent.ACTION_SEND; if (message.isAttachment && message.file != null) { val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", message.file); putExtra(Intent.EXTRA_STREAM, uri); type = context.contentResolver.getType(uri) ?: "*/*"; addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) } else { putExtra(Intent.EXTRA_TEXT, message.content); type = "text/plain" } }; context.startActivity(Intent.createChooser(sendIntent, null)) }, leadingIcon = { Icon(Icons.Default.Share, null) })
+                                                    if (!message.isAttachment) {
+                                                        DropdownMenuItem(text = { Text("Modifica") }, onClick = { showMessageMenu = false; selectedMessage = message; editContent = message.content; showEditDialog = true }, leadingIcon = { Icon(Icons.Default.Edit, null) })
+                                                    }
+                                                    DropdownMenuItem(text = { Text("Info") }, onClick = { showMessageInfo = message }, leadingIcon = { Icon(Icons.Default.Info, null) })
+                                                    DropdownMenuItem(text = { Text("Elimina") }, onClick = { showMessageMenu = false; viewModel.deleteMessage(message) }, leadingIcon = { Icon(Icons.Default.Delete, null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error, leadingIconColor = MaterialTheme.colorScheme.error))
                                                 }
-                                                DropdownMenuItem(text = { Text("Copia Testo") }, onClick = { showMessageMenu = false; clipboardManager.setText(AnnotatedString(message.content)); android.widget.Toast.makeText(context, "Copiato", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) })
-                                                DropdownMenuItem(text = { Text("Condividi Esternamente") }, onClick = { showMessageMenu = false; val sendIntent = Intent().apply { action = Intent.ACTION_SEND; if (message.isAttachment && message.file != null) { val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", message.file); putExtra(Intent.EXTRA_STREAM, uri); type = context.contentResolver.getType(uri) ?: "*/*"; addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) } else { putExtra(Intent.EXTRA_TEXT, message.content); type = "text/plain" } }; context.startActivity(Intent.createChooser(sendIntent, null)) }, leadingIcon = { Icon(Icons.Default.Share, null) })
-                                                if (!message.isAttachment) {
-                                                    DropdownMenuItem(text = { Text("Modifica") }, onClick = { showMessageMenu = false; selectedMessage = message; editContent = message.content; showEditDialog = true }, leadingIcon = { Icon(Icons.Default.Edit, null) })
-                                                }
-                                                DropdownMenuItem(text = { Text("Info") }, onClick = { showMessageMenu = false; showMessageInfo = message }, leadingIcon = { Icon(Icons.Default.Info, null) })
-                                                DropdownMenuItem(text = { Text("Elimina") }, onClick = { showMessageMenu = false; viewModel.deleteMessage(message) }, leadingIcon = { Icon(Icons.Default.Delete, null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error, leadingIconColor = MaterialTheme.colorScheme.error))
+                                            }
+                                            if (message.isLocal) {
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Avatar(deviceId = message.deviceId, profile = userProfile, onClick = { if (localIsSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { editingProfileByDeviceId = message.deviceId } })
                                             }
                                         }
-                                        if (message.isLocal) {
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Avatar(deviceId = message.deviceId, profile = userProfile, onClick = { if (isSelectionMode) { selectedIds = if (isSelected) selectedIds - message.uniqueId else selectedIds + message.uniqueId } else { editingProfileByDeviceId = message.deviceId } })
-                                        }
+
                                     }
                                 }
                             }
                         }
                     }
-                    LinkThingTab.FILE_DRIVE -> FileVaultScreen(
+                }
+                LinkThingTab.FILE_DRIVE -> FileVaultScreen(
                         viewModel = viewModel, 
                         initialFile = vaultTargetFile, 
                         initialCategory = vaultTargetCategory,
@@ -858,7 +1075,11 @@ fun CalendarView(viewModel: LinkThingViewModel, onBack: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { 
-                    val sdf = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
+                    val configuration = LocalConfiguration.current
+                    val sdf = remember(configuration) { 
+                        val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                        SimpleDateFormat("MMMM yyyy", locale) 
+                    }
                     Text(
                         text = sdf.format(displayedDate.time).replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.titleLarge,
@@ -929,7 +1150,10 @@ fun CalendarView(viewModel: LinkThingViewModel, onBack: () -> Unit) {
                         displayedDate = newDate
                     }) { Icon(Icons.Default.ChevronLeft, "Precedente") }
                     
-                    val currentLocale = Locale.getDefault()
+                    val configuration = LocalConfiguration.current
+                    val currentLocale = remember(configuration) {
+                        ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                    }
                     val dayMonthSdf = remember(currentLocale) { SimpleDateFormat("d MMM", currentLocale) }
 
                     Text(
@@ -956,7 +1180,6 @@ fun CalendarView(viewModel: LinkThingViewModel, onBack: () -> Unit) {
                 }
             }
 
-            val currentLocale = Locale.getDefault()
             when (viewMode) {
                 "MONTH" -> MonthGridView(
                     displayedMonth = displayedDate,
@@ -1108,7 +1331,8 @@ fun WeekView(currentWeek: Calendar, events: List<CalendarEvent>, viewModel: Link
     val friendProfiles by viewModel.friendProfiles.collectAsState()
     
     Column(modifier = Modifier.fillMaxSize().padding(8.dp).verticalScroll(rememberScrollState())) {
-        val currentLocale = Locale.getDefault()
+        val configuration = LocalConfiguration.current
+        val currentLocale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
         val sdf = remember(currentLocale) { SimpleDateFormat("EEE d", currentLocale) }
         
         for (i in 0 until 7) {
@@ -1169,7 +1393,8 @@ fun EventListView(allEvents: List<CalendarEvent>, viewModel: LinkThingViewModel,
             }
         }
     } else {
-        val currentLocale = Locale.getDefault()
+        val configuration = LocalConfiguration.current
+        val currentLocale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
         val sdf = remember(currentLocale) { SimpleDateFormat("EEEE d MMMM", currentLocale) }
         val eventsByDate = allEvents.groupBy { 
             val cal = Calendar.getInstance().apply { timeInMillis = it.date }
@@ -1245,7 +1470,11 @@ fun CalendarEventItem(event: CalendarEvent, viewModel: LinkThingViewModel, profi
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.History, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.width(4.dp))
-                val sdf = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+                val configuration = LocalConfiguration.current
+                val locale = remember(configuration) {
+                    ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                }
+                val sdf = remember(locale) { SimpleDateFormat("dd/MM HH:mm", locale) }
                 val creatorName = profile?.getDisplayName() ?: event.creatorId.take(8)
                 val modifierName = modifierProfile?.getDisplayName() ?: event.lastModifierId.take(8)
                 
@@ -1290,7 +1519,11 @@ fun AddEventDialog(
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
 
-    val dateFormatter = remember { SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()) }
+    val configuration = LocalConfiguration.current
+    val dateFormatter = remember(configuration) { 
+        val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+        SimpleDateFormat("dd MMMM yyyy", locale) 
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -1376,8 +1609,12 @@ fun AddEventDialog(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
+                            val configuration = LocalConfiguration.current
+                            val locale = remember(configuration) {
+                                ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                            }
                             Text("Inizio", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                            Text(String.format("%02d:%02d", startTimeState.hour, startTimeState.minute))
+                            Text(String.format(locale, "%02d:%02d", startTimeState.hour, startTimeState.minute))
                         }
                     }
                     OutlinedCard(
@@ -1386,8 +1623,12 @@ fun AddEventDialog(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
+                            val configuration = LocalConfiguration.current
+                            val locale = remember(configuration) {
+                                ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                            }
                             Text("Fine", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                            Text(String.format("%02d:%02d", endTimeState.hour, endTimeState.minute))
+                            Text(String.format(locale, "%02d:%02d", endTimeState.hour, endTimeState.minute))
                         }
                     }
                 }
@@ -1411,18 +1652,18 @@ fun AddEventDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(CalendarEvent(
-                        id = eventToEdit?.id ?: UUID.randomUUID().toString(),
-                        title = title,
-                        description = desc,
-                        date = datePickerState.selectedDateMillis ?: initialDate,
-                        startTime = String.format("%02d:%02d", startTimeState.hour, startTimeState.minute),
-                        endTime = String.format("%02d:%02d", endTimeState.hour, endTimeState.minute),
-                        creatorId = eventToEdit?.creatorId ?: viewModel.getLocalDeviceId(),
-                        lastModifierId = viewModel.getLocalDeviceId(),
-                        createdAt = eventToEdit?.createdAt ?: System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis()
-                    ))
+                onConfirm(CalendarEvent(
+                    id = eventToEdit?.id ?: UUID.randomUUID().toString(),
+                    title = title,
+                    description = desc,
+                    date = datePickerState.selectedDateMillis ?: initialDate,
+                    startTime = String.format(Locale.ROOT, "%02d:%02d", startTimeState.hour, startTimeState.minute),
+                    endTime = String.format(Locale.ROOT, "%02d:%02d", endTimeState.hour, endTimeState.minute),
+                    creatorId = eventToEdit?.creatorId ?: viewModel.getLocalDeviceId(),
+                    lastModifierId = viewModel.getLocalDeviceId(),
+                    createdAt = eventToEdit?.createdAt ?: System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                ))
                 },
                 enabled = title.isNotBlank()
             ) { Text(if (eventToEdit == null) "Crea" else "Aggiorna") }
@@ -1531,7 +1772,11 @@ fun MessageBubble(
     allMessages: List<LinkThingMessage> = emptyList(),
     onOpenCalendar: () -> Unit = {}
 ) {
-    val date = remember(message.timestamp) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)) }
+    val configuration = LocalConfiguration.current
+    val date = remember(message.timestamp, configuration) { 
+        val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+        SimpleDateFormat("HH:mm", locale).format(Date(message.timestamp)) 
+    }
     val bubbleColor = if (message.isLocal) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
     val shape = if (message.isLocal) RoundedCornerShape(16.dp, 16.dp, 2.dp, 16.dp) else RoundedCornerShape(16.dp, 16.dp, 16.dp, 2.dp)
     Surface(modifier = Modifier.widthIn(max = 280.dp).clip(shape), color = bubbleColor, shadowElevation = 0.5.dp, shape = shape) {
@@ -1551,6 +1796,18 @@ fun MessageBubble(
                             Text(repliedMsg?.content ?: "Messaggio originale non trovato", style = MaterialTheme.typography.bodySmall, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                }
+            }
+            if (message.isMail) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 2.dp)) {
+                    Icon(Icons.Default.Lock, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.tertiary)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (message.isLocal) "Privato per ${deviceNames[message.recipientId] ?: message.recipientId?.take(8)}" else "Messaggio Privato",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
             if (!message.isAttachment) {
@@ -1630,6 +1887,7 @@ fun ChessChallengeView(file: File, senderName: String) {
 @Composable
 fun CalendarCardView(file: File, senderName: String, onOpenCalendar: () -> Unit) {
     val event = remember(file) { CalendarEvent.fromFile(file) }
+    val configuration = LocalConfiguration.current
     Surface(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f), shape = RoundedCornerShape(12.dp)) {
         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.secondary)
@@ -1646,7 +1904,10 @@ fun CalendarCardView(file: File, senderName: String, onOpenCalendar: () -> Unit)
                 textAlign = TextAlign.Center
             )
             if (event != null) {
-                val locale = Locale.getDefault()
+                val configuration = LocalConfiguration.current
+                val locale = remember(configuration) {
+                    ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                }
                 val sdf = remember(locale) { SimpleDateFormat("dd/MM/yyyy", locale) }
                 Text(
                     text = "${sdf.format(Date(event.date))} | ${event.startTime ?: "00:00"}",
@@ -1666,3 +1927,84 @@ fun CalendarCardView(file: File, senderName: String, onOpenCalendar: () -> Unit)
         }
     }
 }
+
+@Composable
+fun ChatHub(
+    broadcastLastMsg: LinkThingMessage?,
+    privateConversations: List<PrivateChatSummary>,
+    onOpenBroadcast: () -> Unit,
+    onOpenPrivate: (String) -> Unit
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            SectionHeader(text = "Conversazioni di Gruppo")
+        }
+        item {
+            ListItem(
+                headlineContent = { Text("EtherMesh Broadcast") },
+                supportingContent = { 
+                    Text(
+                        broadcastLastMsg?.content ?: "Nessun messaggio",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    ) 
+                },
+                leadingContent = {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Groups, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
+                },
+                modifier = Modifier.clickable { onOpenBroadcast() }
+            )
+        }
+        
+        item {
+            SectionHeader(text = "Chat Private")
+        }
+        
+        if (privateConversations.isEmpty()) {
+            item {
+                Text(
+                    "Nessuna conversazione privata attiva.",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        } else {
+            items(privateConversations) { summary ->
+                ListItem(
+                    headlineContent = { Text(summary.displayName) },
+                    supportingContent = { 
+                        Text(
+                            summary.lastMsg.content,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        ) 
+                    },
+                    leadingContent = { Avatar(deviceId = summary.deviceId, profile = summary.profile, size = 40) },
+                    trailingContent = {
+                        val configuration = LocalConfiguration.current
+                        val timeStr = remember(summary.lastMsg.timestamp, configuration) {
+                            val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                            SimpleDateFormat("HH:mm", locale).format(Date(summary.lastMsg.timestamp))
+                        }
+                        Text(
+                            timeStr,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    },
+                    modifier = Modifier.clickable { onOpenPrivate(summary.deviceId) }
+                )
+            }
+        }
+    }
+}
+

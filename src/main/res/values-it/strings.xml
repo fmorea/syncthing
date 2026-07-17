@@ -324,6 +324,7 @@ Riferisci tramite Github i problemi che incontri.</string>
   <string name="type_net">Nodo Rete (Mesh)</string>
   <string name="type_net_unknown">Nodo Rete (formato ignoto)</string>
   <string name="type_chess">Partita Scacchi</string>
+  <string name="type_mail">Messaggio Privato (Cifrato)</string>
   <string name="type_attachment">Allegato (%1$s)</string>
   <string name="type_generic">File Generico</string>
   <string name="action_bold">Grassetto</string>

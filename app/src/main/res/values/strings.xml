@@ -664,6 +664,7 @@
     <string name="type_net">Network Node (Mesh)</string>
     <string name="type_net_unknown">Network Node (unknown format)</string>
     <string name="type_chess">Chess Game</string>
+    <string name="type_mail">Private Message (Encrypted)</string>
     <string name="type_attachment">Attachment (%1$s)</string>
     <string name="type_generic">Generic File</string>
     <string name="action_bold">Bold</string>
@@ -703,6 +704,10 @@
     <string name="label_viewed_by">Viewed by:</string>
     <string name="label_nobody_yet">Nobody yet</string>
     <string name="label_viewed_on">Viewed on %1$s</string>
+    <string name="error_missing_public_key">Friend has no public key. Requesting it now...</string>
+    <string name="error_decryption_failed">[Decryption error]</string>
+    <string name="label_private_message">[Private message]</string>
+    <string name="label_missing_public_key">[Missing public key]</string>
 </resources>
 
 
