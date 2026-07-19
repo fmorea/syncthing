@@ -316,6 +316,8 @@ fun FileVaultScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = Color.Transparent,
         topBar = {
             if (isSelectionMode) {
                 TopAppBar(
@@ -533,7 +535,7 @@ fun FileVaultScreen(
                         )
                     }
                     "BROWSER" -> {
-                        Column(modifier = Modifier.fillMaxSize()) {
+                        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                             FileVaultListHeader(
                                 currentPath = currentPath,
                                 rootDir = viewModel.getRootDir(),

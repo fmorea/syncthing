@@ -625,8 +625,8 @@ fun LinkThingScreen(
             }
         },
         bottomBar = {
-            Surface(tonalElevation = 2.dp) {
-                Column(modifier = Modifier.navigationBarsPadding()) {
+            Surface(tonalElevation = 0.dp) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     if (currentTab == LinkThingTab.CHAT) {
                         if (replyingTo != null) {
                             val replierName = deviceNames[replyingTo!!.deviceId] ?: replyingTo!!.deviceId.take(8)
@@ -765,7 +765,7 @@ fun LinkThingScreen(
                             }
                         }
                     }
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp, modifier = Modifier.height(64.dp)) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                         NavigationBarItem(
                             icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null) },
                             label = { Text("Chat") },
@@ -1850,7 +1850,7 @@ fun MessageBubble(
                         Text(
                             "EtherMesh Bootstrapper", 
                             style = MaterialTheme.typography.labelSmall, 
-                            color = Color(0xFF4CAF50),
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.ExtraBold,
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -1865,7 +1865,7 @@ fun MessageBubble(
                 Text(
                     "EtherMesh Bootstrapper", 
                     style = MaterialTheme.typography.labelSmall, 
-                    color = Color(0xFF4CAF50),
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(top = 2.dp)
                 )

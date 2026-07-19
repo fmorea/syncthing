@@ -286,14 +286,14 @@ fun DeviceItem(
     val isBootstrap = Constants.isBootstrapId(device.deviceID)
     val statusText = when {
         isMe -> "Tu"
-        isBootstrap -> "EtherMesh Bootstrapper"
+        isBootstrap -> if (isOnline) "EtherMesh Bootstrapper (Online)" else "EtherMesh Bootstrapper (Offline)"
         device.paused -> "In pausa"
         isOnline -> "Online"
         else -> "Offline"
     }
     
     val statusColor = when {
-        isMe || isOnline || isBootstrap -> Color(0xFF4CAF50)
+        isMe || isOnline -> Color(0xFF4CAF50)
         device.paused -> Color(0xFFF44336)
         else -> Color(0xFF9E9E9E)
     }

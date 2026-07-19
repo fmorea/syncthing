@@ -255,7 +255,7 @@ fun NetworkGraphView(
                 val outerRadius = baseRadius + 5f
 
                 val color = when {
-                    node.id == localDevice?.deviceID || isOnline || isBootstrap -> Color(0xFF4CAF50) // Me, Online or Bootstrap are green
+                    node.id == localDevice?.deviceID || isOnline -> Color(0xFF4CAF50) // Me or Online are green
                     else -> secondaryColor
                 }
                 
