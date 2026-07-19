@@ -44,11 +44,17 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
         _friendProfiles,
         _privateKey
     ) { allMessages, query, profiles, privKey ->
-        val decrypted = allMessages.map { msg ->
+        val myId = prefsLocalDeviceId
+        
+        // PRIVACY: Filter out private messages that don't involve the local user
+        val filteredForPrivacy = allMessages.filter { msg ->
+            !msg.isMail || msg.deviceId == myId || msg.recipientId == myId
+        }
+
+        val decrypted = filteredForPrivacy.map { msg ->
             if (msg.isMail && !msg.isDecrypted && privKey != null) {
                 val senderId = msg.deviceId
                 val recipientId = msg.recipientId
-                val myId = prefsLocalDeviceId
                 
                 if (recipientId == myId || senderId == myId) {
                     val peerId = if (senderId == myId) recipientId else senderId
@@ -68,6 +74,7 @@ class LinkThingViewModel(application: Application) : AndroidViewModel(applicatio
                         msg.copy(content = getApplication<Application>().getString(com.fmorea.syncthing.R.string.label_missing_public_key), isDecrypted = false)
                     }
                 } else {
+                    // This case should be handled by the filter above, but keeping it for safety
                     msg.copy(content = getApplication<Application>().getString(com.fmorea.syncthing.R.string.label_private_message), isDecrypted = false)
                 }
             } else msg

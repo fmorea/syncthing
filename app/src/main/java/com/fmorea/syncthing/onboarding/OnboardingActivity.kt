@@ -93,19 +93,6 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         }
     }
 
-    private val coarseLocationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        refreshPermissionState()
-        if (isGranted) {
-            Toast.makeText(this, R.string.permission_granted, Toast.LENGTH_SHORT).show()
-            Log.i(TAG, "User granted ACCESS_COARSE_LOCATION permission.")
-            advanceIfCurrentPage(OnboardingPage.LOCATION_PERMISSION)
-        } else {
-            Log.i(TAG, "User denied ACCESS_COARSE_LOCATION permission.")
-        }
-    }
-
     private val fineLocationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -171,7 +158,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
         val savedState = restoreUiState(savedInstanceState)
 
         if (savedState == null) {
-            val shouldSkipToMain = haveNotificationPermission && haveCameraPermission && haveConfig
+            val shouldSkipToMain = haveNotificationPermission && haveCameraPermission && haveConfig && haveLocationPermission && haveIgnoreDozePermission
             if (shouldSkipToMain) {
                 // minimum requirements met, go to main
                 return startApp()
@@ -404,7 +391,7 @@ class OnboardingActivity : ThemedAppCompatActivity() {
                 )
             }
             else -> {
-                coarseLocationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                fineLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }

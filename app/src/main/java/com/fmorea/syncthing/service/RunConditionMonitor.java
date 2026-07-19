@@ -239,8 +239,7 @@ public class RunConditionMonitor {
         public void onReceive(Context context, Intent intent) {
             if (Intent.ACTION_POWER_CONNECTED.equals(intent.getAction())
                     || Intent.ACTION_POWER_DISCONNECTED.equals(intent.getAction())) {
-                SystemClock.sleep(5000);
-                updateShouldRunDecision();
+                new Handler(Looper.getMainLooper()).postDelayed(RunConditionMonitor.this::updateShouldRunDecision, 5000);
             }
         }
     }

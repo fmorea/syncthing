@@ -202,19 +202,33 @@ fun FileVaultScreen(
 
     val allFilesOnDisk = remember(currentPath, activeCategoryLabel) {
         val root = viewModel.getRootDir()
-        if (activeCategoryLabel != null) {
+        val myId = viewModel.getLocalDeviceId()
+        
+        val rawList = if (activeCategoryLabel != null) {
             when (activeCategoryLabel) {
                 labelNet -> root.listFiles { _, name -> name.lowercase().endsWith(".net") }?.toList() ?: emptyList()
                 labelProfile -> root.listFiles { _, name -> name.lowercase().endsWith(".info") }?.toList() ?: emptyList()
-                labelComm -> root.walkTopDown().filter { it.isFile && (it.extension.lowercase() == "msg" || it.extension.lowercase() == "ack") }.toList()
+                labelComm -> root.walkTopDown().filter { it.isFile && (it.extension.lowercase() == "msg" || it.extension.lowercase() == "ack" || it.extension.lowercase() == "mail") }.toList()
                 labelMedia -> {
-                    val special = listOf("msg", "ack", "net", "info")
+                    val special = listOf("msg", "ack", "net", "info", "mail")
                     root.walkTopDown().filter { it.isFile && it.extension.lowercase() !in special }.toList()
                 }
                 else -> root.walkTopDown().filter { it.isFile || it.isDirectory }.toList()
             }
         } else {
             currentPath.listFiles()?.toList() ?: emptyList()
+        }
+
+        // PRIVACY FILTER: Only show private messages (.mail) if involving current user
+        rawList.filter { file ->
+            if (file.name.endsWith(".mail")) {
+                val parts = file.name.split("_")
+                if (parts.size >= 3) {
+                    val senderId = parts[1]
+                    val recipientId = parts[2].substringBefore(".")
+                    senderId == myId || recipientId == myId
+                } else false // Invalid mail filename, hide it
+            } else true
         }
     }
     

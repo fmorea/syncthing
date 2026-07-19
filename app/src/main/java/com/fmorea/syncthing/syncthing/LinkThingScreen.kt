@@ -495,41 +495,27 @@ fun LinkThingScreen(
                         }
                     }
                 )
-            } else if (currentTab != LinkThingTab.FILE_DRIVE) {
+            } else if (currentTab != LinkThingTab.FILE_DRIVE && currentTab != LinkThingTab.CALENDAR) {
                 TopAppBar(
                     title = {
-                        Column {
-                            val alias = when {
-                                chatMode == LinkThingChatMode.HUB -> "EtherMesh"
-                                chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId != null -> deviceNames[selectedRecipientId] ?: selectedRecipientId!!.take(8)
-                                chatMode == LinkThingChatMode.PRIVATE -> "Inizia Chat"
-                                else -> localDevice?.name ?: "Broadcast EtherMesh"
-                            }
-                            
-                            val title = when (currentTab) {
-                                LinkThingTab.CHAT -> alias
-                                LinkThingTab.NETWORK -> "Network"
-                                LinkThingTab.NETWORK_GRAPH -> "Network Graph"
-                                LinkThingTab.APPLICATIONS -> "Applicazioni"
-                                else -> ""
-                            }
-                            
-                            Text(text = title, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (chatMode == LinkThingChatMode.BROADCAST) {
-                                    LiveConnectionBadge(friends = friends, onClick = { showConnectedDialog = true })
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                } else if (selectedRecipientId != null) {
-                                    val isOnline = friends.find { it.deviceID == selectedRecipientId }?.numConnections ?: 0 > 0
-                                    Surface(
-                                        modifier = Modifier.size(8.dp),
-                                        shape = CircleShape,
-                                        color = if (isOnline) Color(0xFF4CAF50) else Color.Gray
-                                    ) {}
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(if (isOnline) "Online" else "Offline", style = MaterialTheme.typography.bodySmall)
-                                    Spacer(modifier = Modifier.width(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                val alias = when {
+                                    chatMode == LinkThingChatMode.HUB -> "EtherMesh"
+                                    chatMode == LinkThingChatMode.PRIVATE && selectedRecipientId != null -> deviceNames[selectedRecipientId] ?: selectedRecipientId!!.take(8)
+                                    chatMode == LinkThingChatMode.PRIVATE -> "Inizia Chat"
+                                    else -> localDevice?.name ?: "Broadcast EtherMesh"
                                 }
+                                
+                                val titleText = when (currentTab) {
+                                    LinkThingTab.CHAT -> alias
+                                    LinkThingTab.NETWORK -> "Network"
+                                    LinkThingTab.NETWORK_GRAPH -> "Network Graph"
+                                    LinkThingTab.APPLICATIONS -> "App"
+                                    else -> ""
+                                }
+                                
+                                Text(text = titleText, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(
                                     syncStatus,
                                     style = MaterialTheme.typography.bodySmall,
@@ -537,8 +523,24 @@ fun LinkThingScreen(
                                         syncStatus == "Attivo" -> MaterialTheme.colorScheme.primary
                                         syncStatus.startsWith("Errore") -> MaterialTheme.colorScheme.error
                                         else -> MaterialTheme.colorScheme.secondary
-                                    }
+                                    },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
+                            }
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            if (chatMode != LinkThingChatMode.PRIVATE) {
+                                LiveConnectionBadge(friends = friends, onClick = { showConnectedDialog = true })
+                            } else if (selectedRecipientId != null) {
+                                val isOnline = friends.find { it.deviceID == selectedRecipientId }?.numConnections ?: 0 > 0
+                                Surface(
+                                    modifier = Modifier.size(10.dp),
+                                    shape = CircleShape,
+                                    color = if (isOnline) Color(0xFF4CAF50) else Color.Gray,
+                                    border = BorderStroke(1.dp, Color.White)
+                                ) {}
                             }
                         }
                     },
@@ -1075,16 +1077,23 @@ fun CalendarView(viewModel: LinkThingViewModel, onBack: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { 
-                    val configuration = LocalConfiguration.current
-                    val sdf = remember(configuration) { 
-                        val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
-                        SimpleDateFormat("MMMM yyyy", locale) 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            val configuration = LocalConfiguration.current
+                            val sdf = remember(configuration) { 
+                                val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
+                                SimpleDateFormat("MMMM yyyy", locale) 
+                            }
+                            Text(
+                                text = sdf.format(displayedDate.time).replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            ) 
+                        }
+                        val friendsState by viewModel.friends.collectAsState()
+                        LiveConnectionBadge(friends = friendsState)
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(
-                        text = sdf.format(displayedDate.time).replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -1686,8 +1695,6 @@ fun ApplicationsTabContent(
     onOpenCalendar: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "Applicazioni EtherMesh", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 16.dp))
-        
         AppCard(
             title = "Rubrica",
             description = "Gestisci i contatti e le identità verificate.",
@@ -1802,8 +1809,16 @@ fun MessageBubble(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 2.dp)) {
                     Icon(Icons.Default.Lock, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.tertiary)
                     Spacer(modifier = Modifier.width(4.dp))
+                    
+                    val senderName = profile?.getDisplayName() ?: deviceNames[message.deviceId] ?: message.deviceId.take(8)
+                    val labelText = if (message.isLocal) {
+                        "Privato per ${deviceNames[message.recipientId] ?: message.recipientId?.take(8)}"
+                    } else {
+                        "Inviato da $senderName (Cifrato)"
+                    }
+                    
                     Text(
-                        text = if (message.isLocal) "Privato per ${deviceNames[message.recipientId] ?: message.recipientId?.take(8)}" else "Messaggio Privato",
+                        text = labelText,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Bold

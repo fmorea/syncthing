@@ -1551,8 +1551,12 @@ public class RestApi {
         }
     }
 
+    private long mLastNotificationUpdateTime = 0;
+    private static final long NOTIFICATION_UPDATE_DEBOUNCE_MS = 2000;
+    private final Handler mNotificationHandlerThread = new Handler(Looper.getMainLooper());
+    private Runnable mPendingNotificationUpdate = null;
+
     private void onTotalSyncCompletionChange() {
-        // LogV("onTotalSyncCompletionChange fired.");
         if (mNotificationHandler == null) {
             return;
         }
@@ -1563,14 +1567,31 @@ public class RestApi {
                 (totalSyncCompletion == mLastTotalSyncCompletion)) {
             return;
         }
-        mNotificationHandler.updatePersistentNotification(
-                (SyncthingService) mContext,
-                false,                                              // Do not persist previous notification text.
-                onlineDeviceCount,
-                totalSyncCompletion
-        );
-        mLastOnlineDeviceCount = onlineDeviceCount;
-        mLastTotalSyncCompletion = totalSyncCompletion;
+
+        synchronized (mNotificationHandlerThread) {
+            if (mPendingNotificationUpdate != null) {
+                mNotificationHandlerThread.removeCallbacks(mPendingNotificationUpdate);
+            }
+
+            mPendingNotificationUpdate = () -> {
+                mNotificationHandler.updatePersistentNotification(
+                        (SyncthingService) mContext,
+                        false,
+                        onlineDeviceCount,
+                        totalSyncCompletion
+                );
+                mLastOnlineDeviceCount = onlineDeviceCount;
+                mLastTotalSyncCompletion = totalSyncCompletion;
+                mLastNotificationUpdateTime = System.currentTimeMillis();
+                synchronized (mNotificationHandlerThread) {
+                    mPendingNotificationUpdate = null;
+                }
+            };
+
+            long now = System.currentTimeMillis();
+            long delay = Math.max(0, NOTIFICATION_UPDATE_DEBOUNCE_MS - (now - mLastNotificationUpdateTime));
+            mNotificationHandlerThread.postDelayed(mPendingNotificationUpdate, delay);
+        }
     }
 
     private Gson getGson() {

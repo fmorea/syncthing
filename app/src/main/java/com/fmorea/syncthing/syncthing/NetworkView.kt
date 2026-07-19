@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -133,34 +134,68 @@ fun NetworkView(
             SectionHeader("IL MIO PROFILO")
         }
 
-        if (localDevice != null) {
-            item {
-                DeviceItem(
-                    device = localDevice!!,
-                    isMe = true,
-                    profile = userProfile,
-                    introducedBy = null,
-                    deviceNames = deviceNames,
-                    onDelete = {},
-                    onEditProfile = { onEditMyProfile() },
-                    onViewIdentities = { viewingIdentitiesForDeviceId = localDevice!!.deviceID },
-                    onTogglePause = {}
-                )
-            }
-            item {
-                Row(
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(onClick = { viewModel.showMyId() }) {
-                        Icon(Icons.Default.QrCode, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Il mio ID QR")
+        item {
+            Card(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Avatar(deviceId = localDevice?.deviceID ?: "", profile = userProfile, size = 64, onClick = onEditMyProfile)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = userProfile.getDisplayName(),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "La tua identità nel network",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
                     }
-                    TextButton(onClick = onShowGraph) {
-                        Icon(Icons.Default.Hub, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Network Graph")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onEditMyProfile,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("MODIFICA IL TUO PROFILO")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { viewModel.showMyId() },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.QrCode, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Il mio QR", style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedButton(
+                            onClick = { viewingIdentitiesForDeviceId = localDevice?.deviceID },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Badge, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Identità", style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedButton(
+                            onClick = onShowGraph,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Hub, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Mappa", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
