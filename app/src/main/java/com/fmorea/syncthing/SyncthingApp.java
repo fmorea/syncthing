@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 import com.fmorea.syncthing.service.Constants;
 import com.fmorea.syncthing.util.PreferenceMigration;
+import androidx.emoji2.bundled.BundledEmojiCompatConfig;
+import androidx.emoji2.text.EmojiCompat;
 
 import javax.inject.Inject;
 
@@ -41,6 +43,9 @@ public class SyncthingApp extends Application {
                 .penaltyLog()
                 .build();
         StrictMode.setVmPolicy(vmPolicy);
+
+        // Initialize EmojiCompat with bundled font for compatibility on older Android versions
+        EmojiCompat.init(new BundledEmojiCompatConfig(this));
 
         /*
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P)
